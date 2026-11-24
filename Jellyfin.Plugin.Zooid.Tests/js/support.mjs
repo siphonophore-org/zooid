@@ -257,7 +257,7 @@ export function pageView(dom, children) {
 // Output
 // [object]: names and hrefs of every entry in order, and current, the index of the entry marked current.
 export function sidebar(view) {
-    var entries = Array.prototype.slice.call(view.querySelectorAll('.stolon-tool-shell-item'));
+    var entries = Array.prototype.slice.call(view.querySelectorAll('.stolon-tool-shell-item')).filter(function (e) { return e.getAttribute('data-key'); });
     return {
         names: entries.map(function (e) { return e.querySelector('.stolon-menu-label').textContent; }),
         hrefs: entries.map(function (e) { return e.getAttribute('href'); }),

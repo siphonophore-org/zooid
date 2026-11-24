@@ -21,7 +21,7 @@ namespace Jellyfin.Plugin.Zooid.Services.Links;
 
 /// <summary>
 /// Checks this server's links against the servers they stream from as part of every content sync, so a
-/// link that can no longer play shows on the Sync tab with the reason and one that can play again is
+/// link that can no longer play shows on the Sync page with the reason and one that can play again is
 /// settled. Links whose item still has no media info are given the source's.
 /// </summary>
 [PluginService(ServiceLifetime.Singleton)]

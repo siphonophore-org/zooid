@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Services.Database;
 
 /// <summary>
-/// Keeps what the Statistics tab charts, in the sync database: the last scans of each sync type, and how many link streams started for each server on each day.
+/// Keeps what the Statistics page charts, in the sync database: the last scans of each sync type, and how many link streams started for each server on each day.
 /// It holds only what the charts show, so each write trims the rest.
 /// </summary>
 [PluginService(ServiceLifetime.Singleton)]

@@ -144,7 +144,7 @@ public class UpdateSyncTablesTask
     /// <param name="linkFiles">Reads and writes link files, or null when linking is not available.</param>
     /// <param name="applicationHost">Gives this server's id and name.</param>
     /// <param name="rehomer">Points links at another server, or null when linking is not available.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     public UpdateSyncTablesTask(
         ILogger<UpdateSyncTablesTask> logger,
         IPluginConfigurationManager configManager,

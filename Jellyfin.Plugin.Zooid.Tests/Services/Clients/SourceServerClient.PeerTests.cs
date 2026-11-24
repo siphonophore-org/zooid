@@ -78,7 +78,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
 
     /// <summary>
     /// Each answer to the access check maps to one result code.
-    /// True: the Servers tab shows whether this key may sync there, and why not.
+    /// True: the Servers page shows whether this key may sync there, and why not.
     /// False: a refusal would be shown as allowed, or a missing plugin as a refusal.
     /// </summary>
     [Theory]
@@ -325,7 +325,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
 
     /// <summary>
     /// A peer with no Zooid to answer the link question gives null.
-    /// True: the Servers tab shows the peer as not running Zooid.
+    /// True: the Servers page shows the peer as not running Zooid.
     /// False: the page would fail on a plain Jellyfin server.
     /// </summary>
     [Fact]

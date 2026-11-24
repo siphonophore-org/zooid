@@ -3,7 +3,7 @@ using System;
 namespace Jellyfin.Plugin.Zooid.Models.Statistics;
 
 /// <summary>
-/// One scan of a sync type, as the Statistics tab charts it.
+/// One scan of a sync type, as the Statistics page charts it.
 /// </summary>
 public class ScanRunDto
 {

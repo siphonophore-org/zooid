@@ -76,8 +76,8 @@ public class PeerCallerPolicyTests
     };
 
     /// <summary>
-    /// An administrator is allowed from an address a Servers tab entry names, and only while that entry is enabled.
-    /// True: a peer on the Servers tab can call, a stranger or a disabled entry cannot.
+    /// An administrator is allowed from an address a Servers page entry names, and only while that entry is enabled.
+    /// True: a peer on the Servers page can call, a stranger or a disabled entry cannot.
     /// False: any address could call, or a disabled server could still call.
     /// </summary>
     [Fact]

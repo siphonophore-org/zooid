@@ -43,7 +43,7 @@ public class RefreshPeopleSyncTableTask : RefreshSyncTaskBase<PeopleSyncItem, Pe
     /// <param name="configManager">Reads and saves the plugin settings.</param>
     /// <param name="manager">Reads and writes the sync table.</param>
     /// <param name="conflicts">Settles which server speaks for an item both sides changed.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     public RefreshPeopleSyncTableTask(
         ILogger<RefreshPeopleSyncTableTask> logger,
         ILibraryManager libraryManager,

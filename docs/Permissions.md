@@ -48,7 +48,7 @@ These user settings on the other server affect a standard user's entry:
 
 With Push and Sync, a change is announced as a hint and the receiving server pulls the change itself. So two credentials are involved:
 
-* **The sender's key for the receiver** must be allowed by the receiver's whitelist. An administrator's key is allowed from any server on the receiver's **Servers** tab. A standard user's key needs that user on the receiver's whitelist.
+* **The sender's key for the receiver** must be allowed by the receiver's whitelist. An administrator's key is allowed from any server on the receiver's **Servers** page. A standard user's key needs that user on the receiver's whitelist.
 * **The receiver's key for the sender** decides what the receiver can read when it pulls. If it is a standard user's key, the receiver only gets what that user can see, and only that user's history and settings. The sender is never announced a change the receiver could not read.
 
 **Check link** reports both. It says whether the other server lists this one, and the access the other server holds for this one.
@@ -59,7 +59,7 @@ The routes under `/Zooid/Peer` are what other servers call to send changes, pair
 
 | Caller | Allowed when |
 | :--- | :--- |
-| Administrator or API Key | It calls from the address of an enabled server on the **Servers** tab, by its Server URL or External URL, or it has a whitelist row that covers its location |
+| Administrator or API Key | It calls from the address of an enabled server on the **Servers** page, by its Server URL or External URL, or it has a whitelist row that covers its location |
 | Standard user | It has a whitelist row that covers its location |
 
 Each whitelist row is one user and the locations they may call from, separated by commas, such as `myserver.example.com, 192.168.1.0/24`. A location is a host name, a URL, an IP address, or a range. Leave the locations blank to allow every location. Select **API keys** as the user to cover API Keys.
@@ -71,7 +71,7 @@ A standard user who is let in reaches only their own data. History and version r
 | Message | Meaning |
 | :--- | :--- |
 | This user is not whitelisted | The user has no whitelist row there |
-| This IP is not whitelisted | An administrator calling from an address that is not on that server's **Servers** tab or whitelist |
+| This IP is not whitelisted | An administrator calling from an address that is not on that server's **Servers** page or whitelist |
 | This user is not whitelisted for this IP | The user has a row, but none of its locations match |
 | Zooid is not installed there | The other server has no Zooid |
 | A version message | Zooid there is a different version |

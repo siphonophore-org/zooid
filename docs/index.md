@@ -15,7 +15,7 @@ When a source also runs Zooid, the two can keep each other current between sched
 
 A library can also hold the source's files as **links** instead of copies. A link is a small `.strm` file that appears at once, uses almost no disk, and streams from the source when played. The source decides who may stream and shows each play on its dashboard. See [Links](Links.md).
 
-When several servers are set up, their order on the **Servers** tab is their rank. For metadata, people, users, and playlists, **Precedence** decides which server speaks for an item that several hold. Content has no such setting. The order of the servers and the server a file first came from decide where a file comes from. Reordering the list moves an item to the new server on the next scan without deleting anything already downloaded. See [Sync Types](SyncTypes.md#several-servers).
+When several servers are set up, their order on the **Servers** page is their rank. For metadata, people, users, and playlists, **Precedence** decides which server speaks for an item that several hold. Content has no such setting. The order of the servers and the server a file first came from decide where a file comes from. Reordering the list moves an item to the new server on the next scan without deleting anything already downloaded. See [Sync Types](SyncTypes.md#several-servers).
 
 ## Before You Start
 

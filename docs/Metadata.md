@@ -23,7 +23,7 @@ Metadata syncing copies item details from a source Jellyfin server onto matching
     * **Consolidate other segments** joins overlapping segments of the same type, other than intros and outros, into one that covers both, so 1:00 to 1:30 and 1:05 to 1:45 become 1:00 to 1:45. It is off by default.
 * **Precedence** chooses which server is heard for an item that several servers hold, either the one whose edit is newest or always the highest ranked. See [Several servers](SyncTypes.md#several-servers).
 
-The library filter on the **Storage** tab applies to metadata as it does to content.
+The library filter on the **Storage** page applies to metadata as it does to content.
 
 ## Images
 

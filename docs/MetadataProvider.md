@@ -5,7 +5,7 @@ Zooid is also a metadata and image provider for every media type. Turn on **Zooi
 It answers for items only while **Enable metadata sync** and its **Enable metadata provider** are both on, and for people only while **Enable people sync** and its **Enable metadata provider** are both on. Otherwise it asks no server and returns nothing, so Jellyfin's other fetchers fill the item.
 
 * **Refresh** reads from the highest ranked server that has the item, found by path, then provider ids, then show ids with season and episode numbers, and by name for people, artists, and collections.
-* **Identify** lists every server that has the item, named after its server, in the order of the **Servers** tab. Picking one pins the item to that server, shown as **Zooid Item** among its external ids.
+* **Identify** lists every server that has the item, named after its server, in the order of the **Servers** page. Picking one pins the item to that server, shown as **Zooid Item** among its external ids.
 * **Images** lists the images of every server that has the item, the pinned one first, each named after its server.
 
 ## Media Segments

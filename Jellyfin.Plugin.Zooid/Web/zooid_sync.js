@@ -1,11 +1,11 @@
 // zooid_sync.js
-// The Sync tab: picks the sync type to show and builds each view from the page context.
+// The Sync tool: picks the sync type to show and builds each view from the page context.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
 // zooid_sync
-// Builds the Sync tab. It sets the tabs, loads the page's modules, switches between the sync type views, and
-// stops every task poller, queue refresh, and table observer when the page hides.
+// Builds the Sync tool. It loads the page's modules, switches between the sync type views, and stops every task
+// poller and table observer when the page hides.
 //
 // Inputs
 // view [HTMLElement]: The page the dashboard passes to the controller.
@@ -18,7 +18,7 @@ export default function (view) {
     var _activePollIntervals = [];
 
     // hidePage
-    // Stops every task poller, the queue refresh, and the table observers when the page hides.
+    // Stops every task poller and the table observers when the page hides.
     function hidePage() {
         _activePollIntervals.forEach(function(handle) {
             if (handle && typeof handle.cancel === 'function') handle.cancel();
@@ -26,7 +26,6 @@ export default function (view) {
         _activePollIntervals.length = 0;
 
         // The page's modules are built once their imports land, so a hide before then has nothing to stop.
-        if (QueueModule) QueueModule.stopAutoRefresh();
         [SyncTableModule, HistorySyncTableModule, MetadataSyncTableModule, UserSyncTableModule, PeopleSyncTableModule].forEach(function(mod) {
             if (mod && mod.table && mod.table.disconnectObserver) {
                 mod.table.disconnectObserver();
@@ -34,7 +33,7 @@ export default function (view) {
         });
     }
 
-    // Stolon sets the tabs and runs load each time the page shows.
+    // Stolon runs load each time the page shows.
     var made = zooidModule.createZooidPage(view, {
         page: 'zooid_sync',
         load: function () { if (_pageReady) SyncViewManager.init(); },
@@ -53,7 +52,6 @@ export default function (view) {
     var MetadataSyncTableModule = null;
     var UserSyncTableModule = null;
     var PeopleSyncTableModule = null;
-    var QueueModule = null;
 
     // Relative specifiers so a server hosted under a base URL still resolves them.
     var _sharedPromise = Promise.all([
@@ -64,7 +62,6 @@ export default function (view) {
         import('./configurationpage?name=zooid_sync_metadata.js'),
         import('./configurationpage?name=zooid_sync_users.js'),
         import('./configurationpage?name=zooid_sync_people.js'),
-        import('./configurationpage?name=zooid_sync_queue.js'),
         made.shared.translations
     ]).then(function(loaded) {
         var shared = loaded[0];
@@ -87,7 +84,6 @@ export default function (view) {
         MetadataSyncTableModule = loaded[4].createMetadataSyncTableModule(ctx, kit);
         UserSyncTableModule = loaded[5].createUserSyncTableModule(ctx, kit);
         PeopleSyncTableModule = loaded[6].createPeopleSyncTableModule(ctx, kit);
-        QueueModule = loaded[7].createQueueModule(ctx);
     });
 
     var SyncViewManager = {
@@ -107,17 +103,8 @@ export default function (view) {
                 }
             }
 
-            // The config is fetched again on every show and handed to the dropdown, the queue, and every
-            // table module, so a change saved on the Settings page shows here without a reload.
+            // The config is fetched again on every show and handed to the dropdown and every table module, so a change saved on the Settings page shows here without a reload.
             _sharedPromise.then(function() {
-                // Coming back to the page re-selects the view it showed, which does not switch views, so the
-                // queue's refresh is restarted here rather than only on a switch.
-                if (self.currentView === 'queue') {
-                    QueueModule._signature = null;
-                    QueueModule.startAutoRefresh();
-                    QueueModule.load(true);
-                }
-
                 // Leaving the page disconnects every table's infinite scroll observer, and re-selecting the
                 // same view does not switch views either, so the open table's observer is reconnected here.
                 // Without this, scrolling stops loading more rows after a visit to another page.
@@ -127,7 +114,6 @@ export default function (view) {
                 }
 
                 ZooidShared.getConfig().then(function(config) {
-                    QueueModule._config = config;
                     self._applyConfig(config);
                     self._applyEnabledTypes(config);
                 }).catch(function() {
@@ -155,8 +141,8 @@ export default function (view) {
             var dropdown = view.querySelector('#syncTypeDropdown');
             if (!dropdown) return;
 
-            // The Queue has no config key and is always offered, so with every module off it is the
-            // view that opens: a server that only receives hints still has its queue to watch.
+            // With every sync type off there is nothing to show, so the page says so in place of the picker.
+            var anyOn = false;
             var options = dropdown.querySelectorAll('option');
             for (var i = 0; i < options.length; i++) {
                 var opt = options[i];
@@ -164,15 +150,39 @@ export default function (view) {
                 var isEnabled = !configKey || (config && config[configKey]);
                 opt.classList.toggle('stolon-hidden', !isEnabled);
                 opt.disabled = !isEnabled;
+                if (isEnabled) anyOn = true;
+            }
+            view.querySelector('#syncAllOff').classList.toggle('stolon-hidden', anyOn);
+            view.querySelector('#syncTypeContainer').classList.toggle('stolon-hidden', !anyOn);
+            if (!anyOn) {
+                var shown = view.querySelectorAll('.zooid-sync-view');
+                for (var v = 0; v < shown.length; v++) shown[v].classList.add('stolon-hidden');
+                var desc = view.querySelector('#syncTypeDescription');
+                if (desc) desc.textContent = '';
+                made.shared.setPageTitle('');
+                this.currentView = null;
+                return;
             }
 
             this._selectFirstEnabled();
         },
 
-        // Preserves the current view if it's still enabled.
+        // Opens the view a dashboard card asked for when it is offered, else keeps the current view if it is
+        // still enabled.
         _selectFirstEnabled: function() {
             var dropdown = view.querySelector('#syncTypeDropdown');
             if (!dropdown) return;
+
+            var wanted = view.getAttribute(zooidModule.TOOL_PARAM_ATTRIBUTE);
+            if (wanted) {
+                view.removeAttribute(zooidModule.TOOL_PARAM_ATTRIBUTE);
+                var wantedOpt = dropdown.querySelector('option[value="' + wanted + '"]');
+                if (wantedOpt && !wantedOpt.disabled) {
+                    dropdown.value = wanted;
+                    if (this.currentView !== wanted) this.switchView(wanted);
+                    return;
+                }
+            }
 
             if (this.currentView) {
                 var currentOpt = dropdown.querySelector('option[value="' + this.currentView + '"]');
@@ -218,7 +228,7 @@ export default function (view) {
         switchView: function(viewName) {
             if (this.currentView === viewName) return;
 
-            // Disconnect IntersectionObserver on the outgoing tab's table
+            // Disconnect IntersectionObserver on the outgoing view's table
             // (prevents stale triggers while the container is hidden)
             var outgoingModule = this._getTableModule(this.currentView);
             if (outgoingModule && outgoingModule.table && outgoingModule.table.disconnectObserver) {
@@ -240,20 +250,9 @@ export default function (view) {
                 history: 'LabelHistorySync',
                 metadata: 'LabelMetadataSync',
                 people: 'LabelPeopleSync',
-                users: 'TitleUsersSync',
-                queue: 'HeaderChangeQueue'
+                users: 'TitleUsersSync'
             };
             made.shared.setPageTitle(titles[viewName] ? made.shared.t.tr(titles[viewName]) : viewName);
-
-            // The queue view refreshes itself while it is showing. Before the page's modules load there is
-            // no queue yet, and init starts its refresh once they land if the queue is the open view.
-            if (QueueModule) {
-                if (viewName === 'queue') {
-                    QueueModule.startAutoRefresh();
-                } else {
-                    QueueModule.stopAutoRefresh();
-                }
-            }
 
             var descEl = view.querySelector('#syncTypeDescription');
             if (descEl) {
@@ -262,15 +261,14 @@ export default function (view) {
                     history: 'DescSyncHistory',
                     metadata: 'DescSyncMetadata',
                     people: 'DescSyncPeople',
-                    users: 'DescSyncUsers',
-                    queue: 'DescSyncQueue'
+                    users: 'DescSyncUsers'
                 };
                 descEl.textContent = descriptions[viewName] ? made.shared.t.tr(descriptions[viewName]) : '';
             }
 
             this.currentView = viewName;
 
-            // Reconnect IntersectionObserver on the incoming tab's table
+            // Reconnect IntersectionObserver on the incoming view's table
             // (restores infinite scroll after the container is visible again)
             var incomingModule = this._getTableModule(viewName);
             if (incomingModule && incomingModule.table && incomingModule.table.reconnectObserver) {
@@ -296,9 +294,6 @@ export default function (view) {
                             break;
                         case 'people':
                             openSyncView(PeopleSyncTableModule);
-                            break;
-                        case 'queue':
-                            QueueModule.init();
                             break;
                     }
                 });

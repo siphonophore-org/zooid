@@ -74,7 +74,7 @@ Two visible tasks run every six hours. Each runs hidden tasks in order. Each ste
 | **Sync Content** (`SyncContentTask`) | `UpdateSyncTablesTask`, then `SyncMissingContentTask` when the refresh succeeded, then `SyncCollectionsTask` |
 | **Sync Information** (`SyncInformationTask`) | Metadata, People, Users, and History, each a refresh then an apply, then `SyncPlaylistsTask` |
 
-**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Zooid/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Sync** tab.
+**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Zooid/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Sync** page.
 
 The task bases live in `Tasks/Common/`.
 
@@ -239,11 +239,13 @@ The five sync table managers extend `SyncTableManagerBase`, and every other stor
 
 ## Config Pages
 
-Each tab is a page in `Web/` with a script of the same name. Each page calls `createZooidPage` in `zooid_shared.js`, which runs the page through Stolon's `createConfigPage`, sets the tabs, and builds the helper bag with the `Sync` route prefix. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the page is left with unsaved changes. Every page calls `Health` as it loads and shows the reason at its top while the plugin is held. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
+Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's tool app. The app shows a sidebar of tools, swaps each tool in place, and keeps the open tool in the address as `tool=`. Each tool is its own page in `Web/` with a script of the same name, loaded the first time it opens. Each tool's script calls `createZooidPage` in `zooid_shared.js`, which runs it through Stolon's `createConfigPage` and builds the helper bag with the `Zooid` route prefix. The tool list is `zooidTools` in the same file. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the tool is left with unsaved changes. Every tool calls `Health` as it loads and shows the reason at its top while the plugin is held. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
 
-| Tab | Page | Calls |
+| Tool | Page | Calls |
 | :--- | :--- | :--- |
-| **Sync** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes, `Tasks/{taskKey}/Run`, and the `Hints` routes |
+| **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics` |
+| **Sync** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes and `Tasks/{taskKey}/Run` |
+| **Change queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
 | **Storage** | `zooid_storage.html` | `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep` |
 | **Statistics** | `zooid_statistics.html` | `Statistics` |

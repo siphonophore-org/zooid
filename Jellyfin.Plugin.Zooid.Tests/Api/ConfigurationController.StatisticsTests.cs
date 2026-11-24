@@ -38,7 +38,7 @@ public sealed class ConfigurationControllerStatisticsTests : IDisposable
         => ControllerRouteAssert.Elevated(typeof(ConfigurationController), nameof(ConfigurationController.GetStatistics), "GET", "Statistics");
 
     /// <summary>
-    /// Only a sync type that is on is listed, in the order of the Sync tab, each with its own scans.
+    /// Only a sync type that is on is listed, in the order of the Sync page, each with its own scans.
     /// True: the tab shows one section for each sync type in use.
     /// False: the tab would show an empty section for a sync type that is off.
     /// </summary>

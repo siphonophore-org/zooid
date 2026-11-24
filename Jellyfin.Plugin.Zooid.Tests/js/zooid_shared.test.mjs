@@ -1,5 +1,5 @@
 // zooid_shared.test.mjs
-// Tests for zooid_shared.js: the config readers, the request body, the Storage tab flag, the save helper,
+// Tests for zooid_shared.js: the config readers, the request body, the Storage page flag, the save helper,
 // the thumbnail markup, and the health banner.
 
 import { test, beforeEach } from 'node:test';
@@ -241,7 +241,7 @@ test('createSaveBars clears the unsaved mark only once a save lands', async func
     assert.equal(handle.guard(), false);
 });
 
-test('syncStatus shows a result on the Sync tab status line, in the error color for a failure', function () {
+test('syncStatus shows a result on the Sync page status line, in the error color for a failure', function () {
     shared.syncStatus('Item deleted.', false);
     var el = view.querySelector('#syncStatus');
     assert.equal(statusText(el), 'Item deleted.');

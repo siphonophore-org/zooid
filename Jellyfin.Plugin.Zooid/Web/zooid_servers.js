@@ -1,5 +1,5 @@
 // zooid_servers.js
-// The Servers tab: the map of servers, each server's steps, and its library and user mappings.
+// The Servers page: the map of servers, each server's steps, and its library and user mappings.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
@@ -17,7 +17,7 @@ export function urlWasCleared(storedUrl, editedUrl) {
 }
 
 // zooid_servers
-// Builds the Servers tab. It draws the server list and the pool map, edits one server at a time, tests its
+// Builds the Servers page. It draws the server list and the pool map, edits one server at a time, tests its
 // connection and sign in, and edits its library and user mappings.
 //
 // Inputs
@@ -33,7 +33,7 @@ export default function (view) {
     // Helpers called by bare name, taken from the shared bag.
     var escapeHtml, apiRequest, setVisible, bindClick, getEl, setChecked, getChecked, setValue, getValue, requestFor;
 
-    // Stolon runs bindPage once and loadConfig each time the page shows, and sets the tabs.
+    // Stolon runs bindPage once and loadConfig each time the page shows.
     var made = zooidModule.createZooidPage(view, { page: 'zooid_servers', bind: function () { bindPage(); }, load: function () { loadConfig(); } });
     ZooidShared = made.shared;
     createSortableCardList = zooidModule.createSortableCardList;
@@ -1301,7 +1301,7 @@ export default function (view) {
         });
     }
 
-    // The fields of a library mapping edited on the Storage tab. This page never shows them, and a save
+    // The fields of a library mapping edited on the Storage page. This page never shows them, and a save
     // here carries them through from the stored mapping so it never drops them.
     var STORAGE_FIELDS = ['StorageMode', 'ExcludeFromLinkCache', 'PermanentItems', 'FilterMode', 'FilteredItems', 'NegotiateHistory'];
 
@@ -1324,8 +1324,8 @@ export default function (view) {
         });
     }
 
-    // Puts the Storage tab's fields of the stored config onto each mapping about to be saved, so a
-    // change made on the Storage tab since this page loaded survives a save here.
+    // Puts the Storage page's fields of the stored config onto each mapping about to be saved, so a
+    // change made on the Storage page since this page loaded survives a save here.
     function keepStoredStorageFields(storedServers, list) {
         (list || []).forEach(function (server) {
             var stored = (storedServers || []).find(function (s) { return s.Key === server.Key; });
@@ -1365,7 +1365,7 @@ export default function (view) {
 
         container.appendChild(div);
 
-        // The mapping as loaded. Its Storage tab fields go back out with the save.
+        // The mapping as loaded. Its Storage page fields go back out with the save.
         div._storedMapping = mapping;
 
         var sourceSelect = div.querySelector('.zooid-source-library-select');
@@ -1435,7 +1435,7 @@ export default function (view) {
                 FilterMode: 'AllowAll',
                 FilteredItems: []
             };
-            // The Storage tab settings stay with the row. Picks name items of one source library, so a
+            // The Storage page settings stay with the row. Picks name items of one source library, so a
             // row moved to another source library keeps its storage, cache, and filter mode but starts
             // with no picks.
             copyStorageFields(stored, mapping);

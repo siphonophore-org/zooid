@@ -49,7 +49,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// A listed row carries its library names and its server's name, ID, and browser URL from the settings.
-    /// True: the Sync tab shows where each row came from and links to the right server.
+    /// True: the Sync page shows where each row came from and links to the right server.
     /// False: rows would show bare IDs, or link to the address only this server can reach.
     /// </summary>
     [Fact]
@@ -215,7 +215,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// The pending size sums downloads, replacements, and queued rows, less deletions.
-    /// True: the Sync tab shows how much disk the next run needs.
+    /// True: the Sync page shows how much disk the next run needs.
     /// False: the figure would count synced files, or ignore space a deletion frees.
     /// </summary>
     [Fact]
@@ -236,7 +236,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     /// <summary>
     /// Disk space is an empty list when no library is mapped.
     /// True: a server with no mappings shows no disks.
-    /// False: the Sync tab would fail before any library is mapped.
+    /// False: the Sync page would fail before any library is mapped.
     /// </summary>
     [Fact]
     public void GetDiskSpace_NoMappings_AnswersAnEmptyList()
@@ -319,7 +319,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// The link cache report is all zeroes while the cache is off, and counts its files and bytes while it is on.
-    /// True: the Storage tab shows what the cache holds and how large it may grow.
+    /// True: the Storage page shows what the cache holds and how large it may grow.
     /// False: the tab would show a cache that is off as holding files, or an on cache as empty.
     /// </summary>
     [Theory]
@@ -405,7 +405,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// Kept copies are listed for one entry's Link libraries only, and a copy with no recorded reason reads as Unknown.
-    /// True: the Storage tab lists the copies that could go back to links, each with why it is a copy.
+    /// True: the Storage page lists the copies that could go back to links, each with why it is a copy.
     /// False: copies in a Copy library, links, or another server's rows would be offered to turn back.
     /// </summary>
     [Fact]
@@ -430,7 +430,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// Kept copies are an empty page when no entry is named, the entry is unknown, or it has no Link library.
-    /// True: the Storage tab shows nothing to turn back.
+    /// True: the Storage page shows nothing to turn back.
     /// False: the tab would list every copy on the server, or fail without an entry.
     /// </summary>
     [Theory]
@@ -479,7 +479,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     [InlineData("link", "it is not a copy")]
     [InlineData("errored", "it is not a synced copy yet")]
     [InlineData("copy-library", "its library is not mapped as Link")]
-    [InlineData("picked", "an Always keep pick covers it. Remove the pick on the Storage tab instead")]
+    [InlineData("picked", "an Always keep pick covers it. Remove the pick on the Storage page instead")]
     [InlineData("is-strm", "it cannot be a link")]
     [InlineData("no-file", "its file is not here")]
     public void UnkeepCopies_RowThatCannotTurnBack_IsSkippedWithTheReason(string scenario, string reason)

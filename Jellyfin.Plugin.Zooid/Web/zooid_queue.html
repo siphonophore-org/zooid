@@ -1,0 +1,86 @@
+<!-- zooid_queue.html -->
+<!-- The Change queue tool: the hints this server sends and receives, each one row for its whole life. -->
+
+<div id="ZooidQueuePage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-button"
+     data-controller="__plugin/zooid_queue.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="DescSyncQueue">Changes sent between servers as they happen. Outbound rows wait for a Push or Sync server to finish them, and inbound rows wait to be applied here.</div>
+                <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                    <div id="queueView">
+
+                        <!-- Summary cards, which double as filters -->
+                        <div class="stolon-cards stolon-compact zooid-queue-cards">
+                            <div class="stolon-card stolon-gray zooid-queue-card zooid-on" data-state="Gathering" title="Local changes waiting out Send changes after." data-str-title="HelpHintsGathering">
+                                <span class="stolon-card-count" id="queueGatheringCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusGathering">Gathering</span>
+                            </div>
+                            <div class="stolon-card stolon-orange zooid-queue-card zooid-on" data-state="Pending" title="Hints waiting to be sent to a server." data-str-title="HelpHintsWaiting">
+                                <span class="stolon-card-count" id="queuePendingCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusPending">Pending</span>
+                            </div>
+                            <div class="stolon-card stolon-blue zooid-queue-card zooid-on" data-state="Sent" title="Hints a server accepted and is still working on." data-str-title="HelpHintsAccepted">
+                                <span class="stolon-card-count" id="queueSentCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusSent">Sent</span>
+                            </div>
+                            <div class="stolon-card stolon-purple zooid-queue-card zooid-on" data-state="Received" title="Hints received from servers and not yet applied." data-str-title="HelpHintsReceived">
+                                <span class="stolon-card-count" id="queueInboundCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusReceived">Received</span>
+                            </div>
+                            <div class="stolon-card stolon-red zooid-queue-card zooid-on" data-state="Failed" title="Hints a server refused as malformed." data-str-title="HelpHintsMalformed">
+                                <span class="stolon-card-count" id="queueFailedCount">0</span>
+                                <span class="stolon-card-label" data-str="LabelFailed">Failed</span>
+                            </div>
+                        </div>
+
+                        <!-- Servers -->
+                        <div id="queuePeers" class="zooid-health-dashboard">
+                            <div class="zooid-health-row" id="queuePeerRow"></div>
+                        </div>
+                        <div id="queueNoPeers" class="stolon-callout-info zooid-mb-md stolon-hidden" data-str="QueueNoPeers">No server is set to Push or Sync, so this server sends no hints. Hints it receives from other servers still appear below.</div>
+                        <div id="queueUnmatched" class="stolon-callout-warn zooid-mb-md stolon-hidden"><span id="queueUnmatchedText"></span> <button is="emby-button" type="button" id="btnQueueUnmatchedDismiss" class="raised stolon-button stolon-small"><span data-str="ButtonDismiss">Dismiss</span></button></div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnQueueRefresh" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnQueueRun" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="ButtonRunNow">Run now</span>
+                            </button>
+                        </div>
+                        <div id="queueFailedActions" class="stolon-button-row stolon-hidden">
+                            <button is="emby-button" type="button" id="btnQueueRetryFailed" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="ButtonRetryFailed">Retry failed</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnQueueDismissFailed" class="raised stolon-button stolon-destructive stolon-fill">
+                                <span data-str="ButtonDismissFailed">Dismiss failed</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Direction and server filters -->
+                        <div class="zooid-filter-pills" id="queueFilters">
+                            <button type="button" class="zooid-filter-pill zooid-on" data-dir="all" data-str="All">All</button>
+                            <button type="button" class="zooid-filter-pill" data-dir="out" data-str="FilterOutbound">Outbound</button>
+                            <button type="button" class="zooid-filter-pill" data-dir="in" data-str="FilterInbound">Inbound</button>
+                        </div>
+
+                        <!-- One list, a change is one row for its whole life -->
+                        <div id="queueEmpty" class="stolon-empty-section stolon-hidden" data-str="EmptyQueue">Nothing is moving between servers right now.</div>
+                        <div id="queueList" class="zooid-queue-list"></div>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

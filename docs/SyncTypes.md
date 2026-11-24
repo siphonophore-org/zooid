@@ -11,7 +11,7 @@ Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recyc
 | Users | User mapping | No, scheduled only | [Users](Users.md) |
 | Playlists | Owner mapping, items by file path | Yes, including deletions | [Playlists](Playlists.md) |
 
-Content, History, Metadata, People, and Users each have a table on the **Sync** tab, and each row opens to show what was found and what happens next. Playlists have no table. Their live changes show on the **Queue** view.
+Content, History, Metadata, People, and Users each have a table on the **Sync** page, and each row opens to show what was found and what happens next. Playlists have no table. Their live changes show on the **Change queue** page.
 
 ## Several Servers
 
@@ -22,9 +22,9 @@ A server can pull from one source, pull from several ranked sources, sync with o
 | Setting | Who speaks |
 | :--- | :--- |
 | Newest | The server that changed it last, wherever it ranks. Rank decides only when nothing says which is newer, such as before any change has been recorded, when two servers hold the same change, and against a server without Zooid |
-| Ranked | The highest ranked server on the **Servers** tab that holds it, whatever the others hold. A lower ranked server only speaks for what the ones above it do not have |
+| Ranked | The highest ranked server on the **Servers** page that holds it, whatever the others hold. A lower ranked server only speaks for what the ones above it do not have |
 
-Content has no **Precedence** setting. The order of the servers on the **Servers** tab and the server a file first came from decide which server supplies it. See [Content](Content.md#servers-that-sync-with-each-other).
+Content has no **Precedence** setting. The order of the servers on the **Servers** page and the server a file first came from decide which server supplies it. See [Content](Content.md#servers-that-sync-with-each-other).
 
 | Type | How the newest change is known |
 | :--- | :--- |

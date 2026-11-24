@@ -1,0 +1,20 @@
+<!-- zooid_dashboard.html -->
+<!-- The Dashboard tool, one card for the servers, the change queue, and each sync type. A card opens its tool. -->
+
+<div id="ZooidDashboardPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-controller="__plugin/zooid_dashboard.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="HelpDashboard">Shows how the servers, the change queue, and each sync type stand. Select a card to open it.</div>
+                <div id="dashboardStatus" class="stolon-status-text" role="status"></div>
+                <div id="dashboardCards"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

@@ -1,12 +1,12 @@
 // zooid_storage.js
 // How each library mapping keeps its files: Copy or Link, the link cache, Always keep, and the
 // library filter, plus the permanent copies of the Link libraries. The mappings themselves are made on
-// the Servers tab. A save here changes only these fields of the matching stored mapping.
+// the Servers page. A save here changes only these fields of the matching stored mapping.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
 // zooid_storage
-// Builds the Storage tab. It draws a card for each enabled library mapping of the picked server, saves
+// Builds the Storage page. It draws a card for each enabled library mapping of the picked server, saves
 // their storage settings, and lists the permanent copies of its Link libraries.
 //
 // Inputs
@@ -45,8 +45,8 @@ export default function (view) {
         return ZooidShared.t.format.apply(null, arguments);
     }
 
-    // Stolon runs bindPage once and loadConfig each time the page shows, and sets the tabs.
-    var made = zooidModule.createZooidPage(view, { page: 'zooid_storage', alwaysStorage: true, bind: function () { bindPage(); }, load: function () { loadConfig(); }, onHide: function () { hidePage(); } });
+    // Stolon runs bindPage once and loadConfig each time the page shows.
+    var made = zooidModule.createZooidPage(view, { page: 'zooid_storage', bind: function () { bindPage(); }, load: function () { loadConfig(); }, onHide: function () { hidePage(); } });
     ZooidShared = made.shared;
     createPaginatedTable = zooidModule.createPaginatedTable;
     ({ escapeHtml, apiRequest, setVisible, bindClick, getEl } = ZooidShared.pageHelpers());

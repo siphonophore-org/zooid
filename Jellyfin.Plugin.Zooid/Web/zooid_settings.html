@@ -1,5 +1,5 @@
 <!-- zooid_settings.html -->
-<!-- The Settings tab, with bandwidth, processing, the whitelist, one section for each sync type, and table resets. -->
+<!-- The Settings page, with bandwidth, processing, the whitelist, one section for each sync type, and table resets. -->
 
 <div id="ZooidSettingsPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
@@ -163,7 +163,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkMirrorSyncedCollections" />
                                             <span class="checkboxLabel" data-str="LabelMirrorSyncedCollections">Mirror synced collections</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpRecreateCollectionsWhitelistedLibrary">Recreate collections whitelisted in a library filter on the Storage tab, with their synced items.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpRecreateCollectionsWhitelistedLibrary">Recreate collections whitelisted in a library filter on the Storage page, with their synced items.</div>
                                     </div>
 
                                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -269,7 +269,7 @@
                                     <div class="fieldDescription zooid-mb-md" data-str="HelpStreamsFilmHighestRanked">Streams a film from the highest ranked server that is idle for this server, or else the one with the most streams free. 0 is no limit.</div>
 
                                     <h3 class="stolon-subsection-title" data-str="HeaderLinkCache">Link cache</h3>
-                                    <div class="fieldDescription zooid-mb-md" data-str="HelpKeepsLocalCopiesPlayed">Keeps local copies of played links and upcoming episodes, which play from here even while the source is down. Each library can opt out on the Storage tab.</div>
+                                    <div class="fieldDescription zooid-mb-md" data-str="HelpKeepsLocalCopiesPlayed">Keeps local copies of played links and upcoming episodes, which play from here even while the source is down. Each library can opt out on the Storage page.</div>
                                     <div class="selectContainer">
                                         <label for="selLinkCacheSizing" data-str="LabelCacheSize">Cache size</label>
                                         <select is="emby-select" id="selLinkCacheSizing">
@@ -357,7 +357,7 @@
                                 </div>
                             </div>
 
-                            <div id="historyNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers tab first.</div>
+                            <div id="historyNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                             <div id="historySyncOptions">
 
@@ -446,7 +446,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers tab order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
                                     </div>
                                 </div>
 
@@ -605,7 +605,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers tab order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
                                     </div>
                                 </div>
 
@@ -659,7 +659,7 @@
                                     <div class="zooid-role-row"><span class="zooid-role-label" data-str="PermissionChangesDeletionsThey">Changes and deletions as they happen</span><span><span class="stolon-badge stolon-orange" data-str="BadgeLimited">Limited</span></span><span><span class="stolon-badge stolon-green" data-str="Yes">Yes</span></span></div>
                                     <div class="zooid-role-note" data-str="HelpLimitedNeedsUserServers">Limited needs the user on that server's whitelist.</div>
                                 </div>
-                                <div id="playlistNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers tab first.</div>
+                                <div id="playlistNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                                 <div id="playlistSyncOptions">
                                     <div class="selectContainer">
@@ -668,7 +668,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers tab order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
                                     </div>
                                     <div class="selectContainer">
                                         <label for="selPlaylistRemovedAction" data-str="LabelRemovedPlaylists">Removed playlists</label>
@@ -715,7 +715,7 @@
                                 </div>
                             </div>
 
-                            <div id="userNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers tab first.</div>
+                            <div id="userNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                             <div id="userSyncOptions">
 
@@ -727,7 +727,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers tab order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
                                     </div>
                                     <div class="selectContainer">
                                         <label for="selUserSyncConflict" data-str="LabelUserConflicts">User conflicts</label>

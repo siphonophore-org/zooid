@@ -187,7 +187,7 @@ public sealed class LinkStorageTests : IDisposable
 
     /// <summary>
     /// An ignored link stays ignored.
-    /// True: the user's choice on the Sync tab is kept.
+    /// True: the user's choice on the Sync page is kept.
     /// False: an ignored link would be written again.
     /// </summary>
     [Fact]
@@ -675,7 +675,7 @@ public sealed class LinkStorageTests : IDisposable
     /// <summary>
     /// The link check flags a link whose file the source no longer has, leaves a healthy one alone,
     /// and settles a flagged one again once the source has the file.
-    /// True: a dead link shows on the Sync tab with the reason before someone presses play, and recovers on its own.
+    /// True: a dead link shows on the Sync page with the reason before someone presses play, and recovers on its own.
     /// False: a dead link would only be found by playing it, or would stay flagged after the source came back.
     /// </summary>
     [Fact]

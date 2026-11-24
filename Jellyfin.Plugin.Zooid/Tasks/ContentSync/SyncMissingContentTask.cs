@@ -878,7 +878,7 @@ public class SyncMissingContentTask
     }
 
     /// <summary>
-    /// Checks this server's links against the servers they stream from, so a link that cannot play shows on the Sync tab before someone presses play.
+    /// Checks this server's links against the servers they stream from, so a link that cannot play shows on the Sync page before someone presses play.
     /// A link still without media info takes the source's.
     /// </summary>
     private async Task VerifyLinksAsync(CancellationToken cancellationToken)

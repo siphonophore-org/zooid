@@ -511,7 +511,7 @@ public static class SyncSchema
     }
 
     /// <summary>
-    /// Creates the tables the Statistics tab reads, added in schema 37: the last scans of each sync type, and the link streams started for each server on each day.
+    /// Creates the tables the Statistics page reads, added in schema 37: the last scans of each sync type, and the link streams started for each server on each day.
     /// Both hold counts only, and each write trims them to what the charts show.
     /// </summary>
     private static void CreateStatisticsTables(SqliteConnection connection)

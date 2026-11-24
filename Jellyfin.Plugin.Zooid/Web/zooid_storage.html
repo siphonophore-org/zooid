@@ -1,5 +1,5 @@
 <!-- zooid_storage.html -->
-<!-- The Storage tab, how each mapped library keeps its files, and the permanent copies of the Link libraries. -->
+<!-- The Storage page, how each mapped library keeps its files, and the permanent copies of the Link libraries. -->
 
 <div id="ZooidStoragePage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
@@ -9,7 +9,7 @@
             <form id="ZooidStorageForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpStorage">Sets how each mapped library keeps its files, and which items it syncs. Libraries are mapped on the Servers tab.</div>
+                    <div class="fieldDescription zooid-mb-md" data-str="HelpStorage">Sets how each mapped library keeps its files, and which items it syncs. Libraries are mapped on the Servers page.</div>
 
                     <div id="storageStatus" class="stolon-status-text" role="status"></div>
                     <div id="storageDisabled" class="stolon-callout-neutral zooid-mb-md stolon-hidden" data-str="StorageAllOff">Content, history, and metadata sync are off, so nothing here applies. Turn one on under Settings.</div>
@@ -35,7 +35,7 @@
                             <label for="selStorageServer" data-str="TabServer">Server</label>
                             <select is="emby-select" id="selStorageServer" class="emby-select-withcolor emby-select"></select>
                         </div>
-                        <div id="storageNoServers" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageServers">No server has library mappings yet. Map libraries on the Servers tab.</div>
+                        <div id="storageNoServers" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageServers">No server has library mappings yet. Map libraries on the Servers page.</div>
 
                         <!-- Files -->
                         <!-- Shows how many of the picked server's synced files are copies, links, and cached links. -->
@@ -59,7 +59,7 @@
                             <div id="storageLibrariesContent" class="stolon-collapsible-content stolon-collapsed">
                                 <div class="fieldDescription zooid-mb-md" data-str="HelpStorageLibraries">Shows one card for each enabled library mapping of this server.</div>
                                 <div id="storageLibrariesContainer"></div>
-                                <div id="storageNoLibraries" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageLibraries">This server has no enabled library mappings. Map libraries on the Servers tab.</div>
+                                <div id="storageNoLibraries" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageLibraries">This server has no enabled library mappings. Map libraries on the Servers page.</div>
                             </div>
                         </div>
 

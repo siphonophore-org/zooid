@@ -16,7 +16,7 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | Source | A server this one reads files or data from | `SourceServer` | Parent, origin, upstream |
 | Peer | A server that also runs Zooid and talks to this one. Used in the API docs and code, not the UI | `Peer*` | Partner, remote |
 | Pool | Every server that syncs with each other | | Cluster, mesh, network |
-| Server entry | One server's settings on the **Servers** tab | `SourceServer` | Connection, profile |
+| Server entry | One server's settings on the **Servers** page | `SourceServer` | Connection, profile |
 | Server URL | The base address this server uses to reach another | `Url` | Address, host, endpoint |
 | External URL | The address a browser uses for that server, when it differs | `ExternalUrl` | Public URL |
 | Allow private network address | Lets a server entry use a loopback or LAN address | `AllowPrivateNetwork` | Allow LAN, local address |
@@ -62,7 +62,7 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | Sync Information | The scheduled task for metadata, people, users, history, and playlists | | Info task |
 | Scan | A scheduled pass that compares everything with every source | Refresh | Poll, crawl |
 | Full scan | A scan that also checks each synced file on disk | | Deep scan |
-| Sync table | The table of tracked items for one sync type on the **Sync** tab | `ISyncTableManager` | Grid, list |
+| Sync table | The table of tracked items for one sync type on the **Sync** page | `ISyncTableManager` | Grid, list |
 | Precedence | Who speaks for an item held on several servers, **Newest** or **Ranked** | `SyncPrecedence` | Priority, winner |
 | Newest | The server that changed an item last speaks for it | `SyncPrecedence.Newest` | Latest |
 | Ranked | The highest ranked server that holds an item speaks for it | `SyncPrecedence.Rank` | Priority |
@@ -93,7 +93,7 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | :--- | :--- | :--- | :--- |
 | Live changes | Changes servers announce to each other as they happen | Hints | Real time sync, push sync |
 | Hint | A message that says what changed, never the value | `OutboundHint`, `InboundHint` | Event, notification, update |
-| Change queue | The **Queue** view of hints waiting, sent, and failed | | Hint queue, outbox |
+| Change queue | The **Change queue** page of hints waiting, sent, and failed | | Hint queue, outbox |
 | Send changes after | How long an item must go untouched before its hint goes out | | Debounce, delay |
 | Gathering | A change waiting out **Send changes after** | | Collecting, buffering |
 | Sent | A hint the peer accepted, waiting for it to finish | `OutboundState.Sent` | Delivered |
@@ -124,6 +124,6 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | Activity page | Jellyfin's dashboard activity log | Activity feed, log page |
 | Server log | Jellyfin's log files | Debug log |
 | Reset | Forgets a sync table's tracking, never media | Wipe, purge |
-| Files | The **Storage** tab's chart of one server's synced files as copies, links, and cached links | File stats, breakdown |
-| Usage | The **Storage** tab's bar of how much of the link cache is used | Disk usage, capacity |
+| Files | The **Storage** page's chart of one server's synced files as copies, links, and cached links | File stats, breakdown |
+| Usage | The **Storage** page's bar of how much of the link cache is used | Disk usage, capacity |
 | Prune safety limit | The stop that refuses to remove a large share of links or rows in one run | Breaker, guard |

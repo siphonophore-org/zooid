@@ -1,6 +1,6 @@
 # Playlist Syncing
 
-Playlist syncing copies the playlists of mapped users between servers. Users without a user mapping keep their playlists to themselves. It needs a user mapping on the **Servers** tab before it can be turned on. It runs as the last step of the scheduled **Sync Information** task, and between servers that both run Zooid it also travels as hints the moment a playlist changes.
+Playlist syncing copies the playlists of mapped users between servers. Users without a user mapping keep their playlists to themselves. It needs a user mapping on the **Servers** page before it can be turned on. It runs as the last step of the scheduled **Sync Information** task, and between servers that both run Zooid it also travels as hints the moment a playlist changes.
 
 ## Settings
 

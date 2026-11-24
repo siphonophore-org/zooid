@@ -1,10 +1,10 @@
 // zooid_settings.js
-// The Settings tab: bandwidth, processing, the whitelist, one section for each sync type, and table resets.
+// The Settings page: bandwidth, processing, the whitelist, one section for each sync type, and table resets.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
 // zooid_settings
-// Builds the Settings tab. It loads the config into each section, saves a section on its own, and resets
+// Builds the Settings page. It loads the config into each section, saves a section on its own, and resets
 // sync tables after a question.
 //
 // Inputs
@@ -18,7 +18,7 @@ export default function (view) {
     // Helpers called by bare name, taken from the shared bag.
     var escapeHtml, apiRequest, bindClick, setChecked, getChecked, setValue, getValue, getIntValue, requestFor, getEl, setVisible;
 
-    // Stolon runs bindPage once and loadConfig each time the page shows, and sets the tabs.
+    // Stolon runs bindPage once and loadConfig each time the page shows.
     var made = zooidModule.createZooidPage(view, { page: 'zooid_settings', bind: function () { bindPage(); }, load: function () { loadConfig(); } });
     ZooidShared = made.shared;
     confirmDialog = zooidModule.confirmDialog;

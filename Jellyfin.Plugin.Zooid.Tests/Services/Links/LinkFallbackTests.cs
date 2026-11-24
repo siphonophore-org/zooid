@@ -262,7 +262,7 @@ public class LinkFallbackTests
     /// <summary>
     /// The others are asked together, and the highest in priority that allows the play wins, however
     /// quickly a lower one answers.
-    /// True: fallback keeps the Servers tab's order.
+    /// True: fallback keeps the Servers page's order.
     /// False: whichever server answered first would be used.
     /// </summary>
     [Fact]

@@ -141,7 +141,7 @@ public sealed class SourceServerClientTests
 
     /// <summary>
     /// A connection that cannot be made tests as failed with the HTTP error.
-    /// True: an unreachable server shows why on the Servers tab.
+    /// True: an unreachable server shows why on the Servers page.
     /// False: the page's request would fail with an unhandled error.
     /// </summary>
     [Fact]

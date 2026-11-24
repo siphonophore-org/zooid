@@ -48,7 +48,7 @@ public abstract class RefreshSyncTaskBase<TRecord, TSource, TKey> : IScheduledTa
     /// <param name="clientFactory">Builds the client for each source.</param>
     /// <param name="configManager">Reads and saves the plugin settings.</param>
     /// <param name="watermarks">Holds when each source was last scanned, or null when scans are never incremental.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     protected RefreshSyncTaskBase(
         ILogger logger,
         ISyncTableManager<TRecord, TKey> manager,
@@ -883,7 +883,7 @@ public abstract class RefreshSyncTaskBase<TRecord, TSource, TKey> : IScheduledTa
     }
 
     /// <summary>
-    /// Keeps what this scan found for the Statistics tab. A failure to keep it is logged and never fails the scan.
+    /// Keeps what this scan found for the Statistics page. A failure to keep it is logged and never fails the scan.
     /// </summary>
     private void RecordStatistics(RefreshRun run, int pruned)
     {
@@ -898,7 +898,7 @@ public abstract class RefreshSyncTaskBase<TRecord, TSource, TKey> : IScheduledTa
         }
         catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
         {
-            Logger.LogDebug(ex, "{Task}: could not record the scan for the Statistics tab", Name);
+            Logger.LogDebug(ex, "{Task}: could not record the scan for the Statistics page", Name);
         }
     }
 

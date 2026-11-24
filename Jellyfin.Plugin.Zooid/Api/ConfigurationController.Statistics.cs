@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The route of the Statistics tab.
+/// The route of the Statistics page.
 /// </summary>
 public partial class ConfigurationController
 {
@@ -18,7 +18,7 @@ public partial class ConfigurationController
     /// Reads the last scans of each sync type that is turned on, and the link streams of the last thirty days for each server that may link to this one.
     /// </summary>
     /// <param name="statistics">Reads what each scan found and the link streams started each day.</param>
-    /// <returns>The numbers the Statistics tab charts.</returns>
+    /// <returns>The numbers the Statistics page charts.</returns>
     [HttpGet("Statistics")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<SyncStatisticsDto> GetStatistics([FromServices] SyncStatisticsStore statistics)

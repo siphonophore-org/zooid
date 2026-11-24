@@ -44,7 +44,7 @@ public class RefreshHistorySyncTableTask
     /// <param name="libraryManager">Reads and changes Jellyfin's library.</param>
     /// <param name="links">Looks up which files are links.</param>
     /// <param name="manager">Reads and writes the sync table.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     public RefreshHistorySyncTableTask(
         ILogger<RefreshHistorySyncTableTask> logger,
         IPluginConfigurationManager configManager,

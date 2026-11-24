@@ -359,7 +359,7 @@ div:not(.zooid-form-row) + .zooid-form-row {
 }
 
 /* zooid-pool-map */
-/* The web of servers on the Servers tab, with this server in the middle. A dot shows a server's state, and a line's color shows its direction. */
+/* The web of servers on the Servers page, with this server in the middle. A dot shows a server's state, and a line's color shows its direction. */
 /* Example: <div id="poolMap" class="zooid-pool-map" role="img"><svg><rect class="zooid-pool-pill" /><circle class="zooid-pool-dot zooid-pool-ok" /><path class="zooid-pool-line zooid-pool-pull" /></svg></div> */
 .zooid-pool-map { margin: 0.5em 0 1.25em; }
 .zooid-pool-map svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
@@ -393,7 +393,7 @@ div:not(.zooid-form-row) + .zooid-form-row {
 .zooid-mb-md { margin-bottom: 12px; }
 
 /* zooid-sync-status */
-/* Result line under the Sync tab description, spaced from the field below only while it holds a message. */
+/* Result line under the Sync page description, spaced from the field below only while it holds a message. */
 /* Example: <div class="stolon-status-text zooid-sync-status" role="status"></div> */
 .zooid-sync-status:not(:empty) { margin-bottom: 12px; }
 
@@ -624,7 +624,7 @@ div:not(.zooid-form-row) + .zooid-form-row {
 }
 
 /* zooid-library-card */
-/* Card for one library mapping on the Storage tab, a route header above its storage settings. */
+/* Card for one library mapping on the Storage page, a route header above its storage settings. */
 /* Example: <div class="zooid-library-card"><div class="zooid-library-card-header"></div></div> */
 #storageServerContainer { margin-bottom: 1.5em; }
 .zooid-library-card {

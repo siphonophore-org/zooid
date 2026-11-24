@@ -14,7 +14,7 @@ https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/manifest.js
 
 ## Install the Plugin
 
-1. Open the **Catalog** tab in the Plugins section.
+1. Open the **Catalog** page in the Plugins section.
 2. Find **Zooid** and select **Install**.
 3. Wait for the installation to complete.
 

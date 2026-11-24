@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The Content routes of the Sync tab and the Storage tab.
+/// The Content routes of the Sync page and the Storage page.
 /// </summary>
 public partial class ConfigurationController
 {
@@ -379,7 +379,7 @@ public partial class ConfigurationController
     }
 
     /// <summary>
-    /// Lists the permanent copies one server's Link libraries hold, for the Storage tab, with why each is a copy.
+    /// Lists the permanent copies one server's Link libraries hold, for the Storage page, with why each is a copy.
     /// Copies already going back to links are listed too.
     /// </summary>
     /// <param name="manager">Reads and writes the Content sync table.</param>

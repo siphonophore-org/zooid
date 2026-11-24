@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The People routes of the Sync tab.
+/// The People routes of the Sync page.
 /// </summary>
 public partial class ConfigurationController
 {

@@ -5,10 +5,10 @@
 // Every page loads the plugin's strings once from TRANSLATIONS_URL. The bag's t is the handle, and a page's
 // bind and load run once it has them, so script text and the marked markup are in the viewer's language.
 //
-// Each page sits in Stolon's tool shell, whose sidebar lists every Zooid page. The Storage page is listed
-// while content, history, or metadata sync is on. A page cannot wait for the config before it builds the
-// sidebar, so the last known answer is kept per browser under STORAGE_TAB_KEY. A missing answer lists it.
-// When the answer changes, the page's onTabsChanged callback runs.
+// Zooid is one page, zooid, whose sidebar lists every tool, and each tool is its own registered page that the
+// tool app swaps in place. Storage is listed while content, history, or metadata sync is on. The sidebar is
+// built before any config is read, so the last known answer is kept per browser under STORAGE_TAB_KEY. A
+// missing answer lists it. When the answer changes, the tool's onTabsChanged callback runs.
 
 // The specifier is relative so it resolves against this module's own URL, and a server hosted under
 // a base URL still loads the bundle.
@@ -28,7 +28,12 @@ import {
     bindDialog,
     confirmDialog,
     createConfigPage,
-    createToolShell,
+    createToolApp,
+    setToolTitle,
+    refreshTools,
+    openTool,
+    createStatusCardGrid,
+    TOOL_PARAM_ATTRIBUTE,
     loadTranslations,
     createTranslations,
     SECRET_KEPT
@@ -36,7 +41,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, SECRET_KEPT };
+export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, openTool, createStatusCardGrid, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 
@@ -44,16 +49,16 @@ var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 // The route that gives the pages their strings in the viewer's language.
 export var TRANSLATIONS_URL = 'Zooid/Translations';
 
-// The strings once a page has loaded them, so the tab names follow the viewer's language.
+// The strings once a page has loaded them, so the sidebar names follow the viewer's language.
 var tabStrings = null;
 
 // STORAGE_TAB_KEY
-// The browser storage key that holds whether the Storage tab shows. Each page controller reads it
-// inline before this module loads, so a page sets its tabs without waiting for the config.
+// The browser storage key that holds whether the Storage page shows. Each page controller reads it
+// inline before this module loads, so the sidebar is built without waiting for the config.
 export var STORAGE_TAB_KEY = 'zooid.storageTab';
 
 // readStorageTabFlag
-// Reads the stored answer for whether the Storage tab shows.
+// Reads the stored answer for whether the Storage page shows.
 //
 // Output
 // [string]: '1' or '0', or null when nothing is stored or storage is blocked.
@@ -66,110 +71,90 @@ function readStorageTabFlag() {
 }
 
 // writeStorageTabFlag
-// Stores whether the Storage tab shows. A blocked storage leaves the tab at its default of shown.
+// Stores whether the Storage page shows. A blocked storage leaves the page at its default of shown.
 //
 // Inputs
-// value [string]: '1' to show the tab or '0' to hide it.
+// value [string]: '1' to show the page or '0' to hide it.
 function writeStorageTabFlag(value) {
     try {
         window.localStorage.setItem(STORAGE_TAB_KEY, value);
     } catch (e) {
-        // Storage blocked: the tab keeps its default of shown.
+        // Storage blocked: the page keeps its default of shown.
     }
 }
 
 // tabName
-// Names a tab in the viewer's language, or in English until the strings have loaded.
+// Names a sidebar entry in the viewer's language, or in English until the strings have loaded.
 //
 // Inputs
-// key [string]: The key of the tab's name.
+// key [string]: The key of the entry's name.
 // english [string]: The name to show before the strings load.
 //
 // Output
-// [string]: The tab's name.
+// [string]: The entry's name.
 function tabName(key, english) {
     return tabStrings ? tabStrings.tr(key, english) : english;
 }
 
-// zooidTabs
-// Lists the dashboard tabs in order. The Storage tab shows unless the last config read said no sync type uses it.
-//
-// Inputs
-// alwaysStorage [boolean]: Whether to list Storage whatever is stored, as the Storage page does for itself.
+// zooidTools
+// Lists Zooid's tools in the order the sidebar shows them, the dashboard first. Storage is listed unless the last
+// config read said no sync type uses it.
 //
 // Output
-// [object[]]: Each tab's href and name.
-export function zooidTabs(alwaysStorage) {
-    var tabs = [
-        { href: 'configurationpage?name=zooid_sync', name: tabName('TabSync', 'Sync') },
-        { href: 'configurationpage?name=zooid_servers', name: tabName('TabServers', 'Servers') }
+// [object[]]: Each tool's key, name, icon, and the registered page it shows.
+export function zooidTools() {
+    var tools = [
+        { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
+        { key: 'sync', name: tabName('TabSync', 'Sync'), icon: 'sync', page: 'zooid_sync' },
+        { key: 'queue', name: tabName('HeaderChangeQueue', 'Change queue'), icon: 'swap_horiz', page: 'zooid_queue' },
+        { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' }
     ];
-    if (alwaysStorage || readStorageTabFlag() !== '0') tabs.push({ href: 'configurationpage?name=zooid_storage', name: tabName('TabStorage', 'Storage') });
-    tabs.push({ href: 'configurationpage?name=zooid_statistics', name: tabName('TabStatistics', 'Statistics') });
-    tabs.push({ href: 'configurationpage?name=zooid_settings', name: tabName('Settings', 'Settings') });
-    return tabs;
+    if (readStorageTabFlag() !== '0') tools.push({ key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' });
+    tools.push({ key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' });
+    tools.push({ key: 'settings', name: tabName('Settings', 'Settings'), icon: 'settings', page: 'zooid_settings' });
+    return tools;
 }
 
-// The sidebar icon for each page.
-var TOOL_ICONS = {
-    zooid_sync: 'sync',
-    zooid_servers: 'dns',
-    zooid_storage: 'storage',
-    zooid_statistics: 'insights',
-    zooid_settings: 'settings'
-};
-
-// toolShellTools
-// Turns the tab list into the tool shell's tools, each linking to its own page.
+// createZooidApp
+// Builds the Zooid page: Stolon's tool app with every Zooid tool, which swaps each tool in place. The app is built
+// at once, so it catches the page's first show, and the sidebar names turn to the viewer's language once the
+// strings arrive.
 //
 // Inputs
-// tabs [object[]]: Each tab's href and name, from zooidTabs.
+// view [HTMLElement]: The host page the dashboard passes to the controller.
 //
 // Output
-// [object[]]: Each tool's key, name, icon, and href.
-function toolShellTools(tabs) {
-    return tabs.map(function (tab) {
-        var key = tab.href.split('name=')[1];
-        return { key: key, name: tab.name, icon: TOOL_ICONS[key], href: '#/' + tab.href };
-    });
+// [object]: The tool app's handle.
+export function createZooidApp(view) {
+    var app = createToolApp(view, { storageKey: 'zooid', name: 'Zooid', tools: zooidTools });
+    loadTranslations(TRANSLATIONS_URL).then(function (t) {
+        tabStrings = t;
+        app.refreshTools();
+    }, function () { /* the English names stay */ });
+    return app;
 }
 
 // createZooidPage
-// Wires a Zooid page through Stolon's page lifecycle, with the Zooid helper bag, inside the tool shell.
-// The page's bind and load wait for the strings, and the marked markup is translated before bind runs.
-// The shell is built once the strings are in, so the sidebar names are in the viewer's language.
+// Wires a Zooid tool's page through Stolon's page lifecycle, with the Zooid helper bag. The page's bind and load
+// wait for the strings, and the marked markup is translated before bind runs.
 //
 // Inputs
-// view [HTMLElement]: The page the dashboard passes to the controller.
-// opts [object]: page is the tab's own page name. alwaysStorage lists the Storage tab whatever is stored.
-//   bind, load, and onHide are Stolon's, and each is given the Zooid bag and the page handle.
+// view [HTMLElement]: The tool's view, which the tool app passes to the controller.
+// opts [object]: page is the tool's own page name. bind, load, and onHide are Stolon's, and each is given the
+//   Zooid bag and the page handle.
 //
 // Output
 // [object]: shared is the Zooid helper bag, and page is Stolon's page handle with addCleanup and createPoller.
 export function createZooidPage(view, opts) {
     var bag = null;
-    var shell = null;
-    var pageTitle = '';
-    var tools = function () { return toolShellTools(zooidTabs(opts.alwaysStorage)); };
     var pass = function (fn) { return fn ? function (shared, page) { fn(bag, page); } : undefined; };
     var bound = null;
-
-    // Moves the page's content into the shell's content, with the sidebar beside it.
-    function mountShell() {
-        var host = view.querySelector('.content-primary');
-        if (shell || !host) return;
-        shell = createToolShell({ tools: tools(), current: opts.page, title: pageTitle || undefined });
-        while (host.firstChild) shell.content.appendChild(host.firstChild);
-        host.appendChild(shell.element);
-    }
-
     var page = createConfigPage(view, {
         pluginId: PLUGIN_ID,
         apiPrefix: 'Zooid',
         bind: function () {
             bound = bag.translations.then(function (t) {
                 t.apply(view);
-                mountShell();
                 if (opts.bind) opts.bind(bag, page);
             });
         },
@@ -179,17 +164,10 @@ export function createZooidPage(view, opts) {
         onHide: pass(opts.onHide)
     });
     bag = createZooidShared(view, page.shared);
-    // A config load that turns a sync type on or off adds or drops the Storage page from the sidebar.
-    bag.onTabsChanged = function () {
-        if (!shell) return;
-        shell.setTools(tools(), opts.page);
-        if (pageTitle) shell.setCurrent(opts.page, pageTitle);
-    };
-    // Sets the heading over the page, which is the page's name in the sidebar by default.
-    bag.setPageTitle = function (text) {
-        pageTitle = text || '';
-        if (shell) shell.setCurrent(opts.page, pageTitle || undefined);
-    };
+    // A config load that turns a sync type on or off adds or drops Storage from the sidebar.
+    bag.onTabsChanged = function () { refreshTools(view); };
+    // Sets the heading over the tool, which is the tool's name by default.
+    bag.setPageTitle = function (text) { setToolTitle(view, text); };
     return { shared: bag, page: page };
 }
 
@@ -282,11 +260,11 @@ export function createZooidShared(view, bag) {
         return t;
     });
 
-    // Set by a page to set its tabs again when the Storage tab appears or disappears.
+    // Set by a page to read the sidebar again when the Storage page appears or disappears.
     shared.onTabsChanged = null;
 
     // rememberContentSync
-    // Records whether the Storage tab shows, and tells the page when that changed the tab list. The tab
+    // Records whether the Storage page shows, and tells the page when that changed the sidebar. The page
     // holds the library filter, which content, history, and metadata sync all apply.
     //
     // Inputs
@@ -297,7 +275,7 @@ export function createZooidShared(view, bag) {
         var before = readStorageTabFlag();
         if (before === value) return;
         writeStorageTabFlag(value);
-        // A missing flag already showed the tab, so only a change of what shows reruns setTabs.
+        // A missing flag already showed the page, so only a change of what shows reads the sidebar again.
         var shownBefore = before !== '0';
         if (shownBefore !== (value === '1') && typeof shared.onTabsChanged === 'function') {
             shared.onTabsChanged();
@@ -308,7 +286,7 @@ export function createZooidShared(view, bag) {
     var baseSaveConfig = shared.saveConfig;
 
     // getConfig
-    // Reads the plugin configuration and remembers whether the Storage tab shows.
+    // Reads the plugin configuration and remembers whether the Storage page shows.
     //
     // Output
     // [Promise]: Resolves with the configuration.
@@ -320,7 +298,7 @@ export function createZooidShared(view, bag) {
     };
 
     // saveConfig
-    // Saves the plugin configuration and remembers whether the Storage tab shows.
+    // Saves the plugin configuration and remembers whether the Storage page shows.
     //
     // Inputs
     // config [object]: The configuration to save.
@@ -576,7 +554,7 @@ export function createZooidShared(view, bag) {
     };
 
     // syncStatus
-    // Reports a result on the Sync tab's status line.
+    // Reports a result on the Sync page's status line.
     //
     // Inputs
     // message [string]: What happened, as one sentence.

@@ -232,7 +232,7 @@ A color means the same thing on every page and in every plugin.
 
 ### Shell
 
-Every config page uses Jellyfin's page shell. `createZooidPage` moves what is in `content-primary` into Stolon's tool shell, beside the sidebar, and the shell's heading names the page.
+Every tool page uses Jellyfin's page shell. The tool app takes the page's view out of its markup and shows it beside the sidebar, and the shell's heading names it.
 
 ```html
 <div data-role="page" class="page type-interior pluginConfigurationPage"
@@ -253,11 +253,12 @@ Every config page uses Jellyfin's page shell. `createZooidPage` moves what is in
 
 ### Sidebar
 
-* One registered page per sidebar entry, wired with `createZooidPage`, which builds the tool shell. A page sets no Jellyfin tabs.
+* Zooid is one page, `zooid`, built by `createZooidApp` with Stolon's tool app. Each sidebar entry is its own registered page and script, wired with `createZooidPage`, and swapped in place. A page sets no Jellyfin tabs.
+* The dashboard is the first entry. Its cards open the tool they sum up with `openTool`.
 * A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading, as the Sync page does for each sync type.
-* Entry names are one word, each with a Material icon.
-* Keep the list in one place, `zooidTabs` in the shared module, never copied into each page.
-* Order entries from what is used most to what is set once. Zooid is **Sync**, **Servers**, **Storage**, **Statistics**, **Settings**.
+* Entry names are short, each with a Material icon.
+* Keep the list in one place, `zooidTools` in the shared module, never copied into each page.
+* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Sync**, **Change queue**, **Servers**, **Storage**, **Statistics**, **Settings**.
 
 ### Sections
 

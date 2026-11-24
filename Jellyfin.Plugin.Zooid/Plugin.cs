@@ -267,14 +267,51 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
     {
         var ns = typeof(Plugin).Namespace;
 
+        // The one page the menu opens. It holds every tool below in a sidebar and swaps them in place.
         yield return new PluginPageInfo
         {
-            Name = "zooid_sync",
-            EmbeddedResourcePath = $"{ns}.Web.zooid_sync.html",
+            Name = "zooid",
+            EmbeddedResourcePath = $"{ns}.Web.zooid.html",
             MenuSection = "server",
             DisplayName = "Zooid",
             EnableInMainMenu = true,
             MenuIcon = "sync"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid.js",
+            EmbeddedResourcePath = $"{ns}.Web.zooid.js"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_dashboard",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_dashboard.html"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_dashboard.js",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_dashboard.js"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_sync",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_sync.html"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_queue",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_queue.html"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_queue.js",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_queue.js"
         };
 
         yield return new PluginPageInfo

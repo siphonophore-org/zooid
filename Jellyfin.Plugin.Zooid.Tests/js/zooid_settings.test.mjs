@@ -1,10 +1,10 @@
 // zooid_settings.test.mjs
-// Tests for zooid_settings.js: its place in the sidebar, that a load failure and every result show on a status line
+// Tests for zooid_settings.js: that a load failure and every result show on a status line
 // and never in an alert, that a reset and a cache delete ask first, and that a saved section posts its fields.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installPage, loadScript, settle, clickDialogButton, dialogText, statusText, pageView, sidebar } from './support.mjs';
+import { installPage, loadScript, settle, clickDialogButton, dialogText, statusText } from './support.mjs';
 
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
@@ -23,7 +23,7 @@ async function openPage(opts) {
         .concat(BUTTONS.concat(opts.buttons || []).map(function (id) { return page.dom.el('button', { id: id }); }))
         .concat((opts.checkboxes || []).map(function (id) { return page.dom.el('input', { id: id, type: 'checkbox' }); }))
         .concat([page.dom.el('input', { id: 'txtMaxDownloadSpeed' })]);
-    var view = pageView(page.dom, children);
+    var view = page.dom.el('div', {}, children);
     page.dom.document.documentElement.appendChild(view);
     if (opts.answer) globalThis.ApiClient.fetch = function (options) { page.requests.push(options); return opts.answer(options); };
     if (opts.fail) globalThis.ApiClient.getPluginConfiguration = function () { return Promise.reject(new Error('refused')); };
@@ -51,18 +51,6 @@ function barStatus(view, contentId) {
 function posts(opened) {
     return opened.page.requests.filter(function (r) { return r.type === 'POST' || r.type === 'DELETE'; });
 }
-
-test('the Settings page is last in the sidebar, after Storage when that shows', async function () {
-    var opened = await openPage();
-    assert.equal(sidebar(opened.view).current, 4);
-    assert.equal(sidebar(opened.view).names[4], 'Settings');
-});
-
-test('the Settings page moves up one place when Storage is hidden', async function () {
-    var opened = await openPage({ storage: { 'zooid.storageTab': '0' } });
-    assert.equal(sidebar(opened.view).current, 3);
-    assert.deepEqual(sidebar(opened.view).names, ['Sync', 'Servers', 'Statistics', 'Settings']);
-});
 
 test('a config that cannot be loaded shows an error on the page status and never opens an alert', async function () {
     var opened = await openPage({ fail: true });

@@ -42,7 +42,7 @@ public class RefreshMetadataSyncTableTask
     /// <param name="manager">Reads and writes the sync table.</param>
     /// <param name="conflicts">Settles which server speaks for an item both sides changed.</param>
     /// <param name="watermarks">Holds when each source was last scanned, or null when scans are never incremental.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     /// <param name="segments">Holds the local segment table, which each row's media segments are compared with, or null to read no segments.</param>
     /// <param name="applicationHost">Gives this server's id, so its own segments are never taken back, or null.</param>
     public RefreshMetadataSyncTableTask(

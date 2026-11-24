@@ -29,7 +29,7 @@
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Siphonophore.Stolon" Version="12.4.1" />
+    <PackageReference Include="Siphonophore.Stolon" Version="12.4.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -109,6 +109,7 @@
     <JellyfinString Include="OptionReleaseDate" Case="sentence" />
     <JellyfinString Include="Overview" />
     <JellyfinString Include="People" />
+    <JellyfinString Include="TabDashboard" />
     <JellyfinString Include="Person" />
     <JellyfinString Include="Played" />
     <JellyfinString Include="Playlists" />

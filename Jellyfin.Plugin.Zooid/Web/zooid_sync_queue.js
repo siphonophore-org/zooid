@@ -1,13 +1,12 @@
 // zooid_sync_queue.js
-// The Change queue view. Built by zooid_sync.js from the page context once the shared
-// module is in.
+// The Change queue view. Built by zooid_queue.js once the shared module is in.
 
 // createQueueModule
 // Builds the Change queue view: the hint counts, the servers' delivery states, and the list of changes. It
 // reloads itself every few seconds while it is the view on screen, and the page stops it on viewhide.
 //
 // Inputs
-// ctx [object]: The page context from zooid_sync.js.
+// ctx [object]: The page context from zooid_queue.js: the view, the shared bag, and confirmDialog.
 //
 // Output
 // [object]: A handle with init, load, startAutoRefresh, stopAutoRefresh, render, renderList, and the

@@ -34,7 +34,7 @@ public class RefreshUserSyncTableTask
     /// <param name="userManager">Reads Jellyfin's users.</param>
     /// <param name="builder">Builds user sync rows.</param>
     /// <param name="manager">Reads and writes the sync table.</param>
-    /// <param name="statistics">Keeps what each scan found for the Statistics tab, or null to keep nothing.</param>
+    /// <param name="statistics">Keeps what each scan found for the Statistics page, or null to keep nothing.</param>
     public RefreshUserSyncTableTask(
         ILogger<RefreshUserSyncTableTask> logger,
         IPluginConfigurationManager configManager,

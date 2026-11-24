@@ -379,7 +379,7 @@ public sealed class RefreshPeopleSyncTableTaskTests : IDisposable
 
     /// <summary>
     /// A scan records how many people it tracked for the first time, how many it found changed, and how many it stopped tracking.
-    /// True: the Statistics tab charts what each scan found.
+    /// True: the Statistics page charts what each scan found.
     /// False: the chart would stay empty, or count a person already waiting to sync again on every scan.
     /// </summary>
     [Fact]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Jellyfin.Plugin.Zooid.Models.Statistics;
 
 /// <summary>
-/// What the Statistics tab charts.
+/// What the Statistics page charts.
 /// </summary>
 public class SyncStatisticsDto
 {

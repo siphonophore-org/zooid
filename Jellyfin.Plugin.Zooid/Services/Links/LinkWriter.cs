@@ -55,7 +55,7 @@ public sealed class LinkWriter
     }
 
     /// <summary>
-    /// Writes the link, or throws with a reason the Sync tab shows when the path is taken.
+    /// Writes the link, or throws with a reason the Sync page shows when the path is taken.
     /// </summary>
     /// <param name="row">The row of the link to write.</param>
     /// <param name="table">The content sync table, which finds path collisions.</param>

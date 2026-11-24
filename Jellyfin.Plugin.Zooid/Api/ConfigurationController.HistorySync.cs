@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The History routes of the Sync tab.
+/// The History routes of the Sync page.
 /// </summary>
 public partial class ConfigurationController
 {

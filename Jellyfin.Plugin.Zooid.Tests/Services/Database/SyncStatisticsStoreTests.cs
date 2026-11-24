@@ -8,7 +8,7 @@ using Xunit;
 namespace Jellyfin.Plugin.Zooid.Tests.Services.Database;
 
 /// <summary>
-/// The store keeps only what the Statistics tab charts: the last scans of each sync type, and the link streams of the last thirty days.
+/// The store keeps only what the Statistics page charts: the last scans of each sync type, and the link streams of the last thirty days.
 /// </summary>
 public sealed class SyncStatisticsStoreTests : IDisposable
 {

@@ -101,7 +101,7 @@ export function streamChartData(linkStreams, t) {
 }
 
 // zooid_statistics
-// Builds the Statistics tab. Each time the page shows, it reads the Statistics route and draws one
+// Builds the Statistics page. Each time the page shows, it reads the Statistics route and draws one
 // section for each sync type that is on.
 //
 // Inputs

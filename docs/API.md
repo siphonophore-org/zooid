@@ -1,6 +1,6 @@
 # Zooid API
 
-Zooid adds a small HTTP API to Jellyfin. Two servers that both run the plugin talk to each other through the **Peer** routes, and the dashboard's **Servers** tab and **Queue** view use the **Hints** and **Servers** routes. The dashboard routes sit behind Jellyfin's own `RequiresElevation` policy. The `Peer` routes accept any signed in caller that the receiver's **Whitelist** allows. That is an administrator from a server on its **Servers** tab, or a user listed there calling from one of their locations. The plugin adds no login of its own. A standard user's token is refused with `403` on the dashboard routes, and no token gets `401` everywhere. See **[Permissions](Permissions.md)**.
+Zooid adds a small HTTP API to Jellyfin. Two servers that both run the plugin talk to each other through the **Peer** routes, and the dashboard's **Servers** page and **Change queue** page use the **Hints** and **Servers** routes. The dashboard routes sit behind Jellyfin's own `RequiresElevation` policy. The `Peer` routes accept any signed in caller that the receiver's **Whitelist** allows. That is an administrator from a server on its **Servers** page, or a user listed there calling from one of their locations. The plugin adds no login of its own. A standard user's token is refused with `403` on the dashboard routes, and no token gets `401` everywhere. See **[Permissions](Permissions.md)**.
 
 Requests and responses are JSON. Property names are Pascal case, enums travel as their names, and dates are UTC in ISO 8601. The server reads property names without regard to case.
 
@@ -71,7 +71,7 @@ Every request below that carries a `SenderServerId` must also carry the header `
 
 ### POST /Zooid/Peer/Queue
 
-Offer a batch of change hints. A hint says what changed and where, never the value. The receiver pulls the live state from the sender afterwards. The sender must be configured on the receiver as a Pull or Sync server and paired, and every hint's `OriginServerId` must equal `SenderServerId`, since hints are never forwarded. At most 500 hints per request. A hint whose `VersionTimestamp` lies more than five minutes ahead of the receiver's clock is declined with the reason, and one less far ahead is read as now. `ItemType` is the item's Jellyfin type, for the queue view's poster shape.
+Offer a batch of change hints. A hint says what changed and where, never the value. The receiver pulls the live state from the sender afterwards. The sender must be configured on the receiver as a Pull or Sync server and paired, and every hint's `OriginServerId` must equal `SenderServerId`, since hints are never forwarded. At most 500 hints per request. A hint whose `VersionTimestamp` lies more than five minutes ahead of the receiver's clock is declined with the reason, and one less far ahead is read as now. `ItemType` is the item's Jellyfin type, for the Change queue page's poster shape.
 
 ```json
 {
@@ -255,7 +255,7 @@ Negotiate watch history. Each entry proposes a merged state for one of the recei
 
 ### Link Routes
 
-These serve [links](Links.md). The source answers `Stream`, `Stream/Check`, `Playback`, `Links/Describe`, and `Links/{itemId}/Images`. The linking server answers `Control` and `Links`. All need the protocol headers. `Stream`, `Stream/Check`, `Playback`, `Control`, `Links/Describe`, and `Links/{itemId}/Images` also need the caller to be paired, as for `Queue`, and answer `400` when the server id or body is missing, `409` when the caller is not on the **Servers** tab, and `428` when it is not paired.
+These serve [links](Links.md). The source answers `Stream`, `Stream/Check`, `Playback`, `Links/Describe`, and `Links/{itemId}/Images`. The linking server answers `Control` and `Links`. All need the protocol headers. `Stream`, `Stream/Check`, `Playback`, `Control`, `Links/Describe`, and `Links/{itemId}/Images` also need the caller to be paired, as for `Queue`, and answer `400` when the server id or body is missing, `409` when the caller is not on the **Servers** page, and `428` when it is not paired.
 
 #### GET /Zooid/Peer/Stream/{itemId}?serverId={id}&userId={id}&sourceUserId={id}&probe={bool}&fill={bool}&download={bool}
 
@@ -412,7 +412,7 @@ Raises every gathering edit, delivers, and applies now instead of waiting for th
 
 ### POST /Zooid/Hints/CheckPeer
 
-What the **Servers** tab's **Check link** button calls. Judges a server entry against the direction it is about to be saved with.
+What the **Servers** page's **Check link** button calls. Judges a server entry against the direction it is about to be saved with.
 
 ```json
 { "ServerUrl": "http://source-a:8096", "ApiKey": "…", "ServerKey": "entry key", "AllowPrivateNetwork": true, "Mode": "Sync" }
@@ -439,7 +439,7 @@ What the **Servers** tab's **Check link** button calls. Judges a server entry ag
 }
 ```
 
-`Severity` is `ok`, `warn`, or `error`, which the page shows as green, orange, or red. `Headline` is the verdict in one line and `Details` holds one line for each thing learned. These are how the other server lists this one, which way changes travel, what it applies, the access it holds here, pairing, and the clocks when they differ. A line's `State` is `ok`, `limited`, `no`, or `none` when it is not known, which colors its badge. `Details` is empty when the check ended before the link could be judged, and `Message` then says why. `Incompatible` is true when the two servers' protocols do not overlap, and the **Servers** tab then refuses to save the entry as Push or Sync, or with a library kept as links. `Message` always holds the whole answer as sentences.
+`Severity` is `ok`, `warn`, or `error`, which the page shows as green, orange, or red. `Headline` is the verdict in one line and `Details` holds one line for each thing learned. These are how the other server lists this one, which way changes travel, what it applies, the access it holds here, pairing, and the clocks when they differ. A line's `State` is `ok`, `limited`, `no`, or `none` when it is not known, which colors its badge. `Details` is empty when the check ended before the link could be judged, and `Message` then says why. `Incompatible` is true when the two servers' protocols do not overlap, and the **Servers** page then refuses to save the entry as Push or Sync, or with a library kept as links. `Message` always holds the whole answer as sentences.
 
 ### GET /Zooid/Hints/Version?kind={kind}&localItemId={id}&localUserId={id}&name={name}
 
@@ -451,11 +451,11 @@ The version an object carries on this server, which is the server that last edit
 
 ### POST /Zooid/Hints/Failed/Retry and DELETE /Zooid/Hints/Failed
 
-Every failed row at once, the **Retry failed** and **Dismiss failed** buttons on the **Queue** view. A failed row is an outbound row in the `Failed` state, or an inbound row whose apply has failed at least once and waits to be tried again. Retry clears each row's attempts, then delivers the outbound rows and applies the inbound rows now, and answers `{ "Retried": 1200, "Outbound": 1150, "Inbound": 50 }`. Delete discards them, and answers `{ "Removed": 1200, "Outbound": 1150, "Inbound": 50 }`. A discarded inbound row is reported to its sender as finished, so it is not sent again. The scheduled tasks still carry the changes either way.
+Every failed row at once, the **Retry failed** and **Dismiss failed** buttons on the **Change queue** page. A failed row is an outbound row in the `Failed` state, or an inbound row whose apply has failed at least once and waits to be tried again. Retry clears each row's attempts, then delivers the outbound rows and applies the inbound rows now, and answers `{ "Retried": 1200, "Outbound": 1150, "Inbound": 50 }`. Delete discards them, and answers `{ "Removed": 1200, "Outbound": 1150, "Inbound": 50 }`. A discarded inbound row is reported to its sender as finished, so it is not sent again. The scheduled tasks still carry the changes either way.
 
 ### DELETE /Zooid/Hints/Unmatched
 
-Clears the count of local changes that no server entry wanted, the **Dismiss** button beside that count on the **Queue** view.
+Clears the count of local changes that no server entry wanted, the **Dismiss** button beside that count on the **Change queue** page.
 
 ### DELETE /Zooid/Hints/Outbound/{id} and DELETE /Zooid/Hints/Inbound/{id}
 
@@ -463,7 +463,7 @@ Discard one row from either queue by its `Id`. A discarded inbound row is report
 
 ### POST /Zooid/PromoteItems
 
-Turns links into full copies, the **Keep a full local copy** action on the **Sync** tab and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
+Turns links into full copies, the **Keep a full local copy** action on the **Sync** page and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
 
 ```json
 { "SourceItemIds": ["9c1e0f…", "77ab12…"] }
@@ -477,7 +477,7 @@ Content rows from `GET /Zooid/Items` carry `StorageMode`, which is `Copy`, `Link
 
 ### GET /Zooid/KeptCopies?serverKey={key}&search={text}&skip={n}&take={n}
 
-The full copies held in one server entry's Link mappings, the **Storage** tab's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Sync** tab, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
+The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Sync** page, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
 
 ### POST /Zooid/KeptCopies/Unkeep
 
@@ -493,7 +493,7 @@ Turns copies back into links, as **Turn back into links** does, and starts a **S
 
 ### GET /Zooid/LinkCache
 
-What the [link cache](Links.md#the-link-cache) holds now. The **Settings** tab shows it under the cache's settings.
+What the [link cache](Links.md#the-link-cache) holds now. The **Settings** page shows it under the cache's settings.
 
 ```json
 { "Enabled": true, "Sizing": "Fixed", "Location": "/cache/zooid-links", "Files": 12, "UsedBytes": 48318382080, "UsedFormatted": "45 GB", "LimitBytes": 107374182400, "LimitFormatted": "100 GB", "Waiting": 2 }
@@ -503,7 +503,7 @@ What the [link cache](Links.md#the-link-cache) holds now. The **Settings** tab s
 
 ### GET /Zooid/Statistics
 
-What the **Statistics** tab charts.
+What the **Statistics** page charts.
 
 ```json
 {
@@ -526,7 +526,7 @@ Deletes every cached file, as **Empty the Cache** does. Links keep playing from 
 
 ### DELETE /Zooid/Servers/{key}/Rows
 
-Removes every sync row and queued hint that came from one server entry, by the entry's `Key`. The **Servers** tab calls this after a server is removed. The links that streamed from that server are removed with their rows. Files already downloaded are not touched.
+Removes every sync row and queued hint that came from one server entry, by the entry's `Key`. The **Servers** page calls this after a server is removed. The links that streamed from that server are removed with their rows. Files already downloaded are not touched.
 
 ```json
 { "Content": 11, "History": 4, "Metadata": 11, "People": 1, "Users": 2, "Hints": 0 }
@@ -534,7 +534,7 @@ Removes every sync row and queued hint that came from one server entry, by the e
 
 ### POST /Zooid/Tasks/{taskKey}/Run
 
-Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on the **Sync** tab do. Answers `404` for any other key.
+Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on the **Sync** page do. Answers `404` for any other key.
 
 | Sync type | Refresh | Sync |
 | :--- | :--- | :--- |

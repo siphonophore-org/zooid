@@ -10,9 +10,9 @@ History syncing copies watch state from a source Jellyfin server onto this serve
 * **Play count** syncs how many times each item was played.
 * **Last played date** syncs the date each item was last played.
 * **Favorites** syncs which items are marked as favorites.
-* **Negotiate history**, on each library of a Sync server in the **Storage** tab, writes the merged history back to that server as well. See [Two way history](#two-way-history).
+* **Negotiate history**, on each library of a Sync server in the **Storage** page, writes the merged history back to that server as well. See [Two way history](#two-way-history).
 
-The library filter on the **Storage** tab applies to history as it does to content.
+The library filter on the **Storage** page applies to history as it does to content.
 
 A part that is switched off is left alone in both directions. It is not written on this server, not written back to the source, and not taken from another server that negotiates or sends live changes here. It is still read, so the parts left on merge as they otherwise would. Changing these switches makes the next scan read everything again. An item marked unplayed loses its last played date even with **Last played date** off, since clearing the date is how Jellyfin records the mark.
 

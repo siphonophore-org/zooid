@@ -55,7 +55,7 @@ public sealed class LinkSessionsTests
 
     /// <summary>
     /// The first request of a stream says it began one, and a further request of the same stream does not. A refused request began nothing.
-    /// True: the Statistics tab counts a film once however many range requests its player makes.
+    /// True: the Statistics page counts a film once however many range requests its player makes.
     /// False: every seek would count as another stream.
     /// </summary>
     [Fact]

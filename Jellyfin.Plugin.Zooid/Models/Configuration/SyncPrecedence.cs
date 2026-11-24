@@ -6,7 +6,7 @@ namespace Jellyfin.Plugin.Zooid.Models.Configuration;
 public enum SyncPrecedence
 {
     /// <summary>
-    /// The server that changed it last. A server ranked lower on the Servers tab is heard over the ones
+    /// The server that changed it last. A server ranked lower on the Servers page is heard over the ones
     /// above it when it holds the newer change, and rank decides when nothing says which is newer.
     /// </summary>
     Newest = 0,

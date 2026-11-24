@@ -33,7 +33,7 @@ public partial class PeerController
     /// <param name="policy">Decides whether the server and user may stream the file.</param>
     /// <param name="sessions">Counts the open link streams against the limits.</param>
     /// <param name="userManager">Finds the user a standard caller is held to.</param>
-    /// <param name="statistics">Counts a stream that starts, for the Statistics tab.</param>
+    /// <param name="statistics">Counts a stream that starts, for the Statistics page.</param>
     /// <param name="download">Whether the user is downloading the file, which also needs download permission here.</param>
     /// <returns>The file, or 403 or 429 with the reason.</returns>
     [HttpGet("Stream/{itemId}")]
@@ -134,7 +134,7 @@ public partial class PeerController
     }
 
     /// <summary>
-    /// Counts a link stream that just started toward today, for the Statistics tab. A failure to count is logged and never fails the stream.
+    /// Counts a link stream that just started toward today, for the Statistics page. A failure to count is logged and never fails the stream.
     /// </summary>
     private void CountLinkStream(Services.Database.SyncStatisticsStore? statistics, string serverKey)
     {
@@ -144,7 +144,7 @@ public partial class PeerController
         }
         catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
         {
-            _logger.LogDebug(ex, "Could not count a link stream for the Statistics tab");
+            _logger.LogDebug(ex, "Could not count a link stream for the Statistics page");
         }
     }
 

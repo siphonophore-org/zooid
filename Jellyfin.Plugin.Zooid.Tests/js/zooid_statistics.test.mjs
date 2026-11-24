@@ -1,10 +1,10 @@
 // zooid_statistics.test.mjs
-// Tests for zooid_statistics.js: its place in the sidebar, one section for each sync type that is on, the link
+// Tests for zooid_statistics.js: one section for each sync type that is on, the link
 // streams chart under Content only, what shows when nothing is on or the read fails, and the chart data builders.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installPage, loadScript, settle, strings, pageView, sidebar } from './support.mjs';
+import { installPage, loadScript, settle, strings } from './support.mjs';
 
 // The strings handle the chart builders name their series with, in US English.
 var t = { tr: function (key) { return strings[key] || key; } };
@@ -21,7 +21,7 @@ async function openPage(opts) {
     opts = opts || {};
     var calls = [];
     var page = installPage({ calls: calls, config: {}, storage: opts.storage });
-    var view = pageView(page.dom, IDS.map(function (id) { return page.dom.el('div', { id: id }); }));
+    var view = page.dom.el('div', {}, IDS.map(function (id) { return page.dom.el('div', { id: id }); }));
     page.dom.document.documentElement.appendChild(view);
     globalThis.ApiClient.fetch = function (options) {
         page.requests.push(options);
@@ -42,12 +42,6 @@ function run(added, updated, removed, at) {
 function titles(view) {
     return Array.from(view.querySelectorAll('.stolon-collapsible-title')).map(function (el) { return el.textContent; });
 }
-
-test('the Statistics page sits after Storage and before Settings', async function () {
-    var opened = await openPage();
-    assert.deepEqual(sidebar(opened.view).names, ['Sync', 'Servers', 'Storage', 'Statistics', 'Settings']);
-    assert.equal(sidebar(opened.view).current, 3);
-});
 
 test('each sync type the route answers with gets its own section, in order, with the Users heading for User', async function () {
     var opened = await openPage({ statistics: { Types: [{ Key: 'Content', Runs: [run(1, 2, 3)] }, { Key: 'People', Runs: [] }, { Key: 'User', Runs: [] }] } });

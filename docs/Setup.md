@@ -50,7 +50,7 @@ Steps are numbered in the order they show, so a Pull server's Libraries is step 
 
 ### Links
 
-**Allow linking** in the Linking step, and **Storage** set to **Link** on the **Storage** tab, hold a library as `.strm` links that stream from the source instead of full copies. The source allows linking on its entry for this server, and this server sets Storage on its entry for the source. Links that are played can also be kept in a link cache, set under Content in Settings. A Pull server can never link here. See [Links](Links.md).
+**Allow linking** in the Linking step, and **Storage** set to **Link** on the **Storage** page, hold a library as `.strm` links that stream from the source instead of full copies. The source allows linking on its entry for this server, and this server sets Storage on its entry for the source. Links that are played can also be kept in a link cache, set under Content in Settings. A Pull server can never link here. See [Links](Links.md).
 
 ### Keys and Permissions
 
@@ -60,7 +60,7 @@ A standard user's key works in every direction. It is limited to what that user 
 
 ![Storage](screenshots/settings/Storage.png)
 
-The **Storage** tab shows while content, history, or metadata sync is on. Pick a server, and each of its enabled library mappings has a card. With content sync off, only the filter and history settings show:
+The **Storage** page shows while content, history, or metadata sync is on. Pick a server, and each of its enabled library mappings has a card. With content sync off, only the filter and history settings show:
 
 | Setting | What it holds |
 | :--- | :--- |
@@ -76,7 +76,7 @@ Below the cards, **Permanent copies** lists the full copies held in that server'
 
 ![Statistics](screenshots/Statistics.png)
 
-The **Statistics** tab has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
+The **Statistics** page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
 
 | Bar | Counts |
 | :--- | :--- |
@@ -84,7 +84,7 @@ The **Statistics** tab has one section for each sync type that is on. Each chart
 | Updated | Items that were in step and that the scan found changed on a source |
 | Removed | Items the scan stopped tracking, since no source holds them any more |
 
-A scan of a sync type runs from its scheduled task or from **Refresh** on the **Sync** tab. An item that is already waiting to sync is not counted again by a later scan.
+A scan of a sync type runs from its scheduled task or from **Refresh** on the **Sync** page. An item that is already waiting to sync is not counted again by a later scan.
 
 While a server may link to this one, the tab also charts **Link streams**, under **Content** when content sync is on and in a section of its own when it is off: how many streams this server started for each such server on each of the last 30 days, one line for each server. A film counts once however often its player seeks. See [Links](Links.md).
 
@@ -96,6 +96,6 @@ While a server may link to this one, the tab also charts **Link streams**, under
 | :--- | :--- |
 | Bandwidth | Every speed limit, in Mbps, where 0 is no limit. **Downloads** is shared by every download to this server, and a **Streams to** row covers each server allowed to link. Each has a **Normal** and a **Scheduled** speed, and **Scheduled speed** uses the second one during the set hours |
 | Processing | How long changes wait before they are sent, retries, parallelism, and how often a full scan runs |
-| Whitelist | Who may call this server's sync routes, and from where. Administrators and API keys calling from an enabled server on the **Servers** tab always may |
+| Whitelist | Who may call this server's sync routes, and from where. Administrators and API keys calling from an enabled server on the **Servers** page always may |
 | Content, History, Metadata, People, Playlists, Users | One section per sync type, each with a table of what a standard user and an administrator can do. Options that do not apply are hidden |
 | Troubleshooting | Resets for each sync table, which forget tracking and never touch media |

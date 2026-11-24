@@ -1,10 +1,10 @@
 // zooid_servers.test.mjs
-// Tests for zooid_servers.js: its place in the sidebar, that a load failure shows on the page status and never in an
+// Tests for zooid_servers.js: that a load failure shows on the page status and never in an
 // alert, and that the pool map draws each server by name, escaped, with no inline style.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installPage, loadScript, settle, statusText, pageView, sidebar } from './support.mjs';
+import { installPage, loadScript, settle, statusText } from './support.mjs';
 
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
@@ -18,7 +18,7 @@ async function openPage(opts) {
     opts = opts || {};
     var calls = [];
     var page = installPage({ calls: calls, config: opts.config === undefined ? { Servers: [] } : opts.config, storage: opts.storage });
-    var view = pageView(page.dom, IDS.map(function (id) { return page.dom.el('div', { id: id }); }));
+    var view = page.dom.el('div', {}, IDS.map(function (id) { return page.dom.el('div', { id: id }); }));
     page.dom.document.documentElement.appendChild(view);
     if (opts.fail) globalThis.ApiClient.getPluginConfiguration = function () { return Promise.reject(new Error('refused')); };
     var serverName = opts.serverName === undefined ? 'Home <Server>' : opts.serverName;
@@ -29,20 +29,6 @@ async function openPage(opts) {
     await settle();
     return { page: page, view: view, calls: calls };
 }
-
-test('the Servers page is second in the sidebar', async function () {
-    var opened = await openPage();
-    var bar = sidebar(opened.view);
-    assert.equal(bar.current, 1);
-    assert.equal(bar.names[1], 'Servers');
-    assert.equal(bar.hrefs[1], '#/configurationpage?name=zooid_servers');
-});
-
-test('the Servers page leaves out Storage while it is hidden and still marks itself', async function () {
-    var opened = await openPage({ storage: { 'zooid.storageTab': '0' } });
-    assert.deepEqual(sidebar(opened.view).names, ['Sync', 'Servers', 'Statistics', 'Settings']);
-    assert.equal(sidebar(opened.view).current, 1);
-});
 
 test('a config that cannot be loaded shows an error on the server list status and never opens an alert', async function () {
     var opened = await openPage({ fail: true });
