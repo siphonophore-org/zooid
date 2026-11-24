@@ -195,7 +195,8 @@ export default function (view) {
 
     // scheduleHours
     // Builds the scheduled hours, once, as Stolon's Time Range Field in whole hours. A window may run past
-    // midnight, and equal times run all day.
+    // midnight, and equal times run all day. Each time box goes in its own column, under the speed it applies
+    // to, and the field's message goes under the row's hint.
     //
     // Output
     // [object]: The field's handle, or null when the page has no place for it.
@@ -209,7 +210,17 @@ export default function (view) {
             allowOvernight: true,
             onChange: function () { host.dispatchEvent(new Event('change', { bubbles: true })); }
         });
-        host.appendChild(hoursField.element);
+        var slots = host.querySelectorAll('.zooid-hours-slot');
+        var boxes = hoursField.element.querySelectorAll('.stolon-adorned');
+        if (slots.length === 2 && boxes.length === 2) {
+            slots[0].appendChild(boxes[0]);
+            slots[1].appendChild(boxes[1]);
+            var message = hoursField.element.querySelector('.stolon-field-message');
+            var label = host.querySelector('.zooid-form-label');
+            if (message && label) label.appendChild(message);
+        } else {
+            host.appendChild(hoursField.element);
+        }
         return hoursField;
     }
 

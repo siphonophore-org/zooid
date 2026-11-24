@@ -370,10 +370,13 @@ div:not(.zooid-form-row) + .zooid-form-row {
 .zooid-bandwidth.zooid-no-schedule .zooid-form-label > :first-child { grid-area: label; margin-bottom: 0.4em; }
 .zooid-bandwidth.zooid-no-schedule .zooid-form-hint { grid-area: hint; margin-top: 0.5em; font-size: 0.9em; }
 .zooid-bandwidth.zooid-no-schedule .zooid-form-cell { grid-area: cell; }
-/* The scheduled hours, Stolon's Time Range Field across both speed columns */
-/* Example: <span class="zooid-form-cell zooid-hours-cell"><div class="stolon-time-range"></div></span> */
-.zooid-bandwidth .zooid-hours-cell { grid-column: span 2; }
-.zooid-bandwidth .zooid-hours-cell > .stolon-time-range { flex: 1; }
+/* The scheduled hours: each time box of Stolon's Time Range Field in its own column, beside a hidden unit as wide as
+   the speeds' Mbps, so each box ends where the speed box above it ends */
+/* Example: <span class="zooid-form-cell"><span class="zooid-hours-slot"><span class="stolon-adorned"></span></span><span class="zooid-unit zooid-unit-spacer">Mbps</span></span> */
+.zooid-bandwidth .zooid-hours-slot { flex: 1; min-width: 0; display: flex; }
+.zooid-bandwidth .zooid-hours-slot > .stolon-adorned { flex: 1; min-width: 0; }
+.zooid-bandwidth .zooid-unit-spacer { visibility: hidden; }
+.zooid-bandwidth .zooid-unit { flex: 0 0 auto; }
 @media (max-width: 640px) {
     .zooid-bandwidth .zooid-form-row { grid-template-columns: minmax(0, 1fr) 6.5em 6.5em; }
 }
