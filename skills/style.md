@@ -232,17 +232,14 @@ A color means the same thing on every page and in every plugin.
 
 ### Shell
 
-Every config page uses Jellyfin's page shell.
+Every config page uses Jellyfin's page shell. `createZooidPage` moves what is in `content-primary` into Stolon's tool shell, beside the sidebar, and the shell's heading names the page.
 
 ```html
-<div data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+<div data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox">
     <div>
         <div class="content-primary">
             <div class="verticalSection">
-                <div class="sectionTitleContainer flex align-items-center">
-                    <h2 class="sectionTitle">Servers</h2>
-                </div>
                 <div class="fieldDescription">Connects this server to the others in the pool.</div>
             </div>
         </div>
@@ -254,12 +251,13 @@ Every config page uses Jellyfin's page shell.
 * List `data-require` in the order `emby-input,emby-button,emby-select,emby-checkbox`, dropping any the page does not use.
 * Use no inline `style` attributes. Add a class to the plugin CSS, or to Stolon when it is reusable.
 
-### Tabs
+### Sidebar
 
-* One registered page per tab, wired with `createConfigPage` and `setTabs`.
-* Tab names are one word.
-* Keep the tab list in one place, the plugin's shared module, never copied into each page.
-* Order tabs from what is used most to what is set once. Zooid is **Sync**, **Servers**, **Storage**, **Statistics**, **Settings**.
+* One registered page per sidebar entry, wired with `createZooidPage`, which builds the tool shell. A page sets no Jellyfin tabs.
+* A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading, as the Sync page does for each sync type.
+* Entry names are one word, each with a Material icon.
+* Keep the list in one place, `zooidTabs` in the shared module, never copied into each page.
+* Order entries from what is used most to what is set once. Zooid is **Sync**, **Servers**, **Storage**, **Statistics**, **Settings**.
 
 ### Sections
 

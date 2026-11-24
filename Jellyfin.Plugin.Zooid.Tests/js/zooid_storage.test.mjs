@@ -1,10 +1,10 @@
 // zooid_storage.test.mjs
-// Tests for zooid_storage.js: the tabs it sets, that a load failure shows on the page status and never in an
+// Tests for zooid_storage.js: its place in the sidebar, that a load failure shows on the page status and never in an
 // alert, that the page says so when no sync type that uses storage is on, and the chart of synced files.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installPage, loadScript, settle, statusText } from './support.mjs';
+import { installPage, loadScript, settle, statusText, pageView, sidebar } from './support.mjs';
 
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
@@ -19,7 +19,7 @@ async function openPage(opts) {
     opts = opts || {};
     var calls = [];
     var page = installPage({ calls: calls, config: opts.config === undefined ? {} : opts.config, storage: opts.storage });
-    var view = page.dom.el('div', {}, IDS.map(function (id) { return page.dom.el(id === 'selStorageServer' ? 'select' : 'div', { id: id }); }));
+    var view = pageView(page.dom, IDS.map(function (id) { return page.dom.el(id === 'selStorageServer' ? 'select' : 'div', { id: id }); }));
     page.dom.document.documentElement.appendChild(view);
     if (opts.answer) globalThis.ApiClient.fetch = function (options) { page.requests.push(options); return opts.answer(options); };
     if (opts.fail) globalThis.ApiClient.getPluginConfiguration = function () { return Promise.reject(new Error('refused')); };
@@ -30,10 +30,10 @@ async function openPage(opts) {
     return { page: page, view: view, calls: calls };
 }
 
-test('the Storage tab always lists itself, even while the stored answer says it is hidden', async function () {
+test('the Storage page always lists itself, even while the stored answer says it is hidden', async function () {
     var opened = await openPage({ storage: { 'zooid.storageTab': '0' } });
-    assert.equal(opened.calls[0].index, 2);
-    assert.deepEqual(opened.calls[0].tabs.map(function (t) { return t.name; }), ['Sync', 'Servers', 'Storage', 'Statistics', 'Settings']);
+    assert.equal(sidebar(opened.view).current, 2);
+    assert.deepEqual(sidebar(opened.view).names, ['Sync', 'Servers', 'Storage', 'Statistics', 'Settings']);
 });
 
 test('a config that cannot be loaded shows an error on the page status and never opens an alert', async function () {

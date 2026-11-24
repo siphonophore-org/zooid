@@ -1,7 +1,7 @@
 <!-- zooid_settings.html -->
 <!-- The Settings tab, with bandwidth, processing, the whitelist, one section for each sync type, and table resets. -->
 
-<div id="ZooidSettingsPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+<div id="ZooidSettingsPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
      data-controller="__plugin/zooid_settings.js">
     <div data-role="content">
@@ -9,11 +9,6 @@
             <form id="ZooidSettingsForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <!-- Settings Header -->
-
-                    <div class="sectionTitleContainer flex align-items-center">
-                        <h1 class="sectionTitle" data-str="Settings">Settings</h1>
-                    </div>
                     <div class="fieldDescription zooid-mb-md" data-str="HelpSettingsIntro">Sets how this server sends changes and who may call it. Each section saves on its own.</div>
                     <div id="settingsStatus" class="stolon-status-text" role="status"></div>
 

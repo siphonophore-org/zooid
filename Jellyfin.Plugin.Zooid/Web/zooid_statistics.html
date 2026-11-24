@@ -1,7 +1,7 @@
 <!-- zooid_statistics.html -->
 <!-- The Statistics tab, what the last scans of each sync type found, and the link streams served each day. -->
 
-<div id="ZooidStatisticsPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+<div id="ZooidStatisticsPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-button"
      data-controller="__plugin/zooid_statistics.js">
     <div data-role="content">
@@ -10,11 +10,6 @@
             <form id="ZooidStatisticsForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <!-- Statistics Header -->
-
-                    <div class="sectionTitleContainer flex align-items-center">
-                        <h1 class="sectionTitle" data-str="TabStatistics">Statistics</h1>
-                    </div>
                     <div id="statisticsIntro" class="fieldDescription zooid-mb-md stolon-hidden" data-str="StatisticsIntro">Shows what the last 10 scans of each sync type found, and the link streams this server started. A sync type that is off is not shown.</div>
 
                     <div id="statisticsStatus" class="stolon-status-text" role="status"></div>

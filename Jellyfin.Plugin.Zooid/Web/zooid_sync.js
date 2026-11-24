@@ -235,18 +235,15 @@ export default function (view) {
                 targetView.classList.remove('stolon-hidden');
             }
 
-            var titleEl = view.querySelector('#syncPageTitle');
-            if (titleEl) {
-                var titles = {
-                    content: 'LabelContentSync',
-                    history: 'LabelHistorySync',
-                    metadata: 'LabelMetadataSync',
-                    people: 'LabelPeopleSync',
-                    users: 'TitleUsersSync',
-                    queue: 'HeaderChangeQueue'
-                };
-                titleEl.textContent = titles[viewName] ? made.shared.t.tr(titles[viewName]) : viewName;
-            }
+            var titles = {
+                content: 'LabelContentSync',
+                history: 'LabelHistorySync',
+                metadata: 'LabelMetadataSync',
+                people: 'LabelPeopleSync',
+                users: 'TitleUsersSync',
+                queue: 'HeaderChangeQueue'
+            };
+            made.shared.setPageTitle(titles[viewName] ? made.shared.t.tr(titles[viewName]) : viewName);
 
             // The queue view refreshes itself while it is showing. Before the page's modules load there is
             // no queue yet, and init starts its refresh once they land if the queue is the open view.

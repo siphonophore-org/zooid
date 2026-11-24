@@ -93,7 +93,7 @@ if (!elementProto.remove) {
 //
 // Inputs
 // opts [object]: config is what ApiClient returns as the plugin configuration. storage seeds localStorage.
-// calls is an array that collects each LibraryMenu.setTabs call.
+// calls is an array that collects each LibraryMenu.setTabs call, which a Zooid page never makes.
 //
 // Output
 // [object]: The fake DOM helper from Stolon, plus the stubbed ApiClient requests it recorded.
@@ -233,4 +233,34 @@ export function dialogText(dom) {
 export function statusText(el) {
     var message = el && el.querySelector ? el.querySelector('.stolon-status-message') : null;
     return message ? message.textContent : '';
+}
+
+// pageView
+// Builds a page view whose content sits in content-primary, where the page's tool shell takes it.
+//
+// Inputs
+// dom [object]: The fake DOM helper from installPage.
+// children [HTMLElement[]]: The page's content.
+//
+// Output
+// [HTMLElement]: The view.
+export function pageView(dom, children) {
+    return dom.el('div', { class: 'page' }, [dom.el('div', { class: 'content-primary' }, children)]);
+}
+
+// sidebar
+// Reads the tool shell sidebar of a shown page.
+//
+// Inputs
+// view [HTMLElement]: The page view.
+//
+// Output
+// [object]: names and hrefs of every entry in order, and current, the index of the entry marked current.
+export function sidebar(view) {
+    var entries = Array.prototype.slice.call(view.querySelectorAll('.stolon-tool-shell-item'));
+    return {
+        names: entries.map(function (e) { return e.querySelector('.stolon-menu-label').textContent; }),
+        hrefs: entries.map(function (e) { return e.getAttribute('href'); }),
+        current: entries.findIndex(function (e) { return e.getAttribute('aria-current') === 'page'; })
+    };
 }

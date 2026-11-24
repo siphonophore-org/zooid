@@ -1,7 +1,7 @@
 <!-- zooid_servers.html -->
 <!-- The Servers tab, the map of servers and an editor with a step for each part of one server's setup. -->
 
-<div id="ZooidServersPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+<div id="ZooidServersPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
      data-controller="__plugin/zooid_servers.js">
     <div data-role="content">
@@ -9,11 +9,6 @@
             <form id="ZooidServersForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <!-- Servers Header -->
-
-                    <div class="sectionTitleContainer flex align-items-center">
-                        <h1 class="sectionTitle" data-str="TabServers">Servers</h1>
-                    </div>
                     <div id="poolMap" class="zooid-pool-map stolon-hidden" role="img"></div>
                     <div class="fieldDescription zooid-mb-md" data-str="HelpServerRank">Ranks servers from the top down. Drag a server to move it.</div>
 

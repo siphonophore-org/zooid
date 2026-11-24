@@ -1,7 +1,7 @@
 <!-- zooid_storage.html -->
 <!-- The Storage tab, how each mapped library keeps its files, and the permanent copies of the Link libraries. -->
 
-<div id="ZooidStoragePage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+<div id="ZooidStoragePage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
      data-controller="__plugin/zooid_storage.js">
     <div data-role="content">
@@ -9,11 +9,6 @@
             <form id="ZooidStorageForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <!-- Storage Header -->
-
-                    <div class="sectionTitleContainer flex align-items-center">
-                        <h1 class="sectionTitle" data-str="TabStorage">Storage</h1>
-                    </div>
                     <div class="fieldDescription zooid-mb-md" data-str="HelpStorage">Sets how each mapped library keeps its files, and which items it syncs. Libraries are mapped on the Servers tab.</div>
 
                     <div id="storageStatus" class="stolon-status-text" role="status"></div>
