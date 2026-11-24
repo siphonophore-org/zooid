@@ -79,7 +79,6 @@
     <JellyfinString Include="LabelBirthDate" />
     <JellyfinString Include="LabelCountry" />
     <JellyfinString Include="LabelCustomRating" />
-    <JellyfinString Include="LabelDatabase" />
     <JellyfinString Include="LabelDeathDate" />
     <JellyfinString Include="LabelEndDate" />
     <JellyfinString Include="LabelFailed" />

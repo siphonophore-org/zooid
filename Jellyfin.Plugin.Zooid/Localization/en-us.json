@@ -483,7 +483,6 @@
   "HelpRemoveFoldersLeftEmpty": "Remove folders left empty after a delete.",
   "HelpRemovesSegmentsZooid": "Removes the segments Zooid copied to a file when no server this one pulls from has any for it. Segments another provider made here are never removed.",
   "HelpReplacesSegmentsAnotherProvider": "Replaces the segments another provider gave a file with the ones copied from a server, type by type.",
-  "HelpResetsCannotUndone": "Resets cannot be undone.",
   "HelpResetsForgetTrackingOnly": "Resets forget tracking only. Media is untouched.",
   "HelpServerEnabled": "Keeps the settings and skips this server while off.",
   "HelpServerName": "Names the server in tables and logs. Empty uses the server's own name.",
