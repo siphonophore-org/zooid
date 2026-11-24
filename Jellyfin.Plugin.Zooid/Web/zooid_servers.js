@@ -532,7 +532,7 @@ export default function (view) {
         if (known) {
             var headline = getEl('accessHeadline');
             if (headline) {
-                headline.className = 'zooid-mb-md ' + (level === 'Administrator' ? 'stolon-success' : 'stolon-warn');
+                headline.className = 'zooid-mb-md ' + (level === 'Administrator' ? 'stolon-callout-success' : 'stolon-callout-warn');
                 headline.textContent = level !== 'Administrator'
                     ? ZooidShared.t.format('AccessStandardAs', server.AuthenticatedUser || ZooidShared.t.tr('AccessUnknownUser'))
                     : server.AuthenticatedUser ? ZooidShared.t.format('AccessAdminAs', server.AuthenticatedUser) : ZooidShared.t.tr('AccessAdmin');
@@ -679,7 +679,7 @@ export default function (view) {
         ZooidShared.setStatus('peerCheckStatus', '', false);
         var headline = getEl('peerCheckHeadline');
         if (headline) {
-            headline.className = 'zooid-mb-md ' + (severity === 'ok' ? 'stolon-success' : severity === 'warn' ? 'stolon-warn' : 'stolon-error');
+            headline.className = 'zooid-mb-md ' + (severity === 'ok' ? 'stolon-callout-success' : severity === 'warn' ? 'stolon-callout-warn' : 'stolon-callout-error');
             headline.textContent = result.Headline || result.Message;
         }
         var grid = getEl('peerCheckRows');
