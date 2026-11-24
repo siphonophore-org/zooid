@@ -33,6 +33,7 @@ import {
     refreshTools,
     openTool,
     createStatusCardGrid,
+    createSubTabs,
     TOOL_PARAM_ATTRIBUTE,
     loadTranslations,
     createTranslations,
@@ -41,7 +42,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, openTool, createStatusCardGrid, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
+export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, openTool, createStatusCardGrid, createSubTabs, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 
@@ -132,7 +133,7 @@ function tabName(key, english) {
 export function zooidTools() {
     var tools = [
         { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
-        { key: 'sync', name: tabName('TabSync', 'Sync'), icon: 'sync', page: 'zooid_sync' },
+        { key: 'sync', name: tabName('HeaderSynchronization', 'Synchronization'), icon: 'sync', page: 'zooid_sync' },
         { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
         { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
         { key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' },
@@ -582,7 +583,7 @@ export function createZooidShared(view, bag) {
     };
 
     // syncStatus
-    // Reports a result on the Sync page's status line.
+    // Reports a result on the Synchronization page's status line.
     //
     // Inputs
     // message [string]: What happened, as one sentence.

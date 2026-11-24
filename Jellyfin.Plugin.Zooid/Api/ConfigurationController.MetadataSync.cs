@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The Metadata routes of the Sync page.
+/// The Metadata routes of the Synchronization page.
 /// </summary>
 public partial class ConfigurationController
 {

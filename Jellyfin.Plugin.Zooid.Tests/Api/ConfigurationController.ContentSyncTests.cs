@@ -49,7 +49,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// A listed row carries its library names and its server's name, ID, and browser URL from the settings.
-    /// True: the Sync page shows where each row came from and links to the right server.
+    /// True: the Synchronization page shows where each row came from and links to the right server.
     /// False: rows would show bare IDs, or link to the address only this server can reach.
     /// </summary>
     [Fact]
@@ -215,7 +215,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
 
     /// <summary>
     /// The pending size sums downloads, replacements, and queued rows, less deletions.
-    /// True: the Sync page shows how much disk the next run needs.
+    /// True: the Synchronization page shows how much disk the next run needs.
     /// False: the figure would count synced files, or ignore space a deletion frees.
     /// </summary>
     [Fact]
@@ -236,7 +236,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     /// <summary>
     /// Disk space is an empty list when no library is mapped.
     /// True: a server with no mappings shows no disks.
-    /// False: the Sync page would fail before any library is mapped.
+    /// False: the Synchronization page would fail before any library is mapped.
     /// </summary>
     [Fact]
     public void GetDiskSpace_NoMappings_AnswersAnEmptyList()

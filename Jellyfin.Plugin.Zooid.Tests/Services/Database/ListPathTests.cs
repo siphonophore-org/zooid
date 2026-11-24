@@ -21,7 +21,7 @@ using Xunit;
 namespace Jellyfin.Plugin.Zooid.Tests.Services.Database;
 
 /// <summary>
-/// Every module's list path, the exact queries the Sync page runs, against a real database that was
+/// Every module's list path, the exact queries the Synchronization page runs, against a real database that was
 /// closed and opened again. A query whose column list drifts from its mapper throws on every row, which
 /// Jellyfin answers as a 400 and the tab shows as empty, so the real SQL runs here against real SQLite.
 /// </summary>
@@ -42,7 +42,7 @@ public sealed class ListPathTests : IDisposable
 
     /// <summary>
     /// Every module's list queries return rows from a database that was closed and opened again.
-    /// True: the Sync page lists every module's rows.
+    /// True: the Synchronization page lists every module's rows.
     /// False: a column drifting from its mapper would make a tab answer 400 and show empty.
     /// </summary>
     [Fact]

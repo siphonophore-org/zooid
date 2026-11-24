@@ -5,7 +5,7 @@ Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar fo
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
 | **Dashboard** | A card for the servers, the queue, and each sync type. A card opens its tool | Always |
-| **Sync** | Each sync type's table | A sync type is on |
+| **Synchronization** | Each sync type's table | A sync type is on |
 | **Queue** | The changes sent between servers as they happen | Always |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
@@ -95,7 +95,7 @@ The **Statistics** page has one section for each sync type that is on. Each char
 | Updated | Items that were in step and that the scan found changed on a source |
 | Removed | Items the scan stopped tracking, since no source holds them any more |
 
-A scan of a sync type runs from its scheduled task or from **Refresh** on the **Sync** page. An item that is already waiting to sync is not counted again by a later scan.
+A scan of a sync type runs from its scheduled task or from **Refresh** on the **Synchronization** page. An item that is already waiting to sync is not counted again by a later scan.
 
 While a server may link to this one, the tab also charts **Link streams**, under **Content** when content sync is on and in a section of its own when it is off: how many streams this server started for each such server on each of the last 30 days, one line for each server. A film counts once however often its player seeks. See [Links](Links.md).
 

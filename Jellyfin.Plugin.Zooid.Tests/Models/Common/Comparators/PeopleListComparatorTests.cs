@@ -47,7 +47,7 @@ public class PeopleListComparatorTests
 
     /// <summary>
     /// A credit whose role differs is a difference, and the description names the credit.
-    /// True: a changed role syncs and the Sync page says which credit changed.
+    /// True: a changed role syncs and the Synchronization page says which credit changed.
     /// False: a role change would never reach the other server.
     /// </summary>
     [Fact]

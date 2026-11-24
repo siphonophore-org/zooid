@@ -59,6 +59,7 @@
     <JellyfinString Include="Favorite" />
     <JellyfinString Include="Favorites" />
     <JellyfinString Include="File" />
+    <JellyfinString Include="General" />
     <JellyfinString Include="Genres" />
     <JellyfinString Include="HeaderApiKey" />
     <JellyfinString Include="HeaderApiKeys" />

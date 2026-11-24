@@ -463,7 +463,7 @@ Discard one row from either queue by its `Id`. A discarded inbound row is report
 
 ### POST /Zooid/PromoteItems
 
-Turns links into full copies, the **Keep a full local copy** action on the **Sync** page and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
+Turns links into full copies, the **Keep a full local copy** action on the **Synchronization** page and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
 
 ```json
 { "SourceItemIds": ["9c1e0f…", "77ab12…"] }
@@ -477,7 +477,7 @@ Content rows from `GET /Zooid/Items` carry `StorageMode`, which is `Copy`, `Link
 
 ### GET /Zooid/KeptCopies?serverKey={key}&search={text}&skip={n}&take={n}
 
-The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Sync** page, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
+The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Synchronization** page, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
 
 ### POST /Zooid/KeptCopies/Unkeep
 
@@ -534,7 +534,7 @@ Removes every sync row and queued hint that came from one server entry, by the e
 
 ### POST /Zooid/Tasks/{taskKey}/Run
 
-Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on the **Sync** page do. Answers `404` for any other key.
+Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on the **Synchronization** page do. Answers `404` for any other key.
 
 | Sync type | Refresh | Sync |
 | :--- | :--- | :--- |
@@ -546,7 +546,7 @@ Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync**
 
 ### POST /Zooid/Reset/{table}
 
-Empties one sync table, as the resets under **Settings > Troubleshooting** do. `table` is `Content`, `History`, `Metadata`, `People`, `Playlists`, or `Users`. `Playlists` forgets which playlists are copies of another server's, which the next playlist sync works out again from the copies themselves. `All` deletes the whole sync database and creates it again. Tracking is forgotten and media is never touched. Answers `404` for any other name.
+Empties one sync table, as the resets on the **Troubleshooting** page do. `table` is `Content`, `History`, `Metadata`, `People`, `Playlists`, or `Users`. `Playlists` forgets which playlists are copies of another server's, which the next playlist sync works out again from the copies themselves. `All` deletes the whole sync database and creates it again. Tracking is forgotten and media is never touched. Answers `404` for any other name.
 
 ### Ignoring and Queueing Rows
 

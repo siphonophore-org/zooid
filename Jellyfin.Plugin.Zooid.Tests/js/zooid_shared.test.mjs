@@ -241,7 +241,7 @@ test('createSaveBars clears the unsaved mark only once a save lands', async func
     assert.equal(handle.guard(), false);
 });
 
-test('syncStatus shows a result on the Sync page status line, in the error color for a failure', function () {
+test('syncStatus shows a result on the Synchronization page status line, in the error color for a failure', function () {
     shared.syncStatus('Item deleted.', false);
     var el = view.querySelector('#syncStatus');
     assert.equal(statusText(el), 'Item deleted.');

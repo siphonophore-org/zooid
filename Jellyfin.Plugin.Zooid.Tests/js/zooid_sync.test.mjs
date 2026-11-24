@@ -28,12 +28,12 @@ async function openPage(storage, beforeLoad) {
     return { calls: calls, view: view, page: page };
 }
 
-test('the Sync page sets no Jellyfin tabs', async function () {
+test('the Synchronization page sets no Jellyfin tabs', async function () {
     var opened = await openPage({});
     assert.equal(opened.calls.length, 0);
 });
 
-test('the Sync page registers for viewshow and viewhide', async function () {
+test('the Synchronization page registers for viewshow and viewhide', async function () {
     var opened = await openPage({});
     assert.equal((opened.view.listeners.viewshow || []).length, 1);
     assert.equal((opened.view.listeners.viewhide || []).length, 1);

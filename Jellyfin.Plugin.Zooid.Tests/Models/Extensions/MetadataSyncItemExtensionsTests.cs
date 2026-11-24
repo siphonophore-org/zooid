@@ -67,7 +67,7 @@ public sealed class MetadataSyncItemExtensionsTests
     /// <summary>
     /// No mappings, an empty list, or no match leaves the library names empty and still maps the row.
     /// True: a row whose mapping was removed still lists.
-    /// False: removing a mapping would break the Sync page for its leftover rows.
+    /// False: removing a mapping would break the Synchronization page for its leftover rows.
     /// </summary>
     [Theory]
     [InlineData(0)]
@@ -113,7 +113,7 @@ public sealed class MetadataSyncItemExtensionsTests
     /// <summary>
     /// Without blobs, every category value is left out while the identity stays.
     /// True: a list page stays small.
-    /// False: every page of the Sync page would carry each row's full metadata and images.
+    /// False: every page of the Synchronization page would carry each row's full metadata and images.
     /// </summary>
     [Fact]
     public void ToDto_WithoutBlobs_LeavesEveryCategoryValueOut()

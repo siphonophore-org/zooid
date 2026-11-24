@@ -74,7 +74,7 @@ Two visible tasks run every six hours. Each runs hidden tasks in order. Each ste
 | **Sync Content** (`SyncContentTask`) | `UpdateSyncTablesTask`, then `SyncMissingContentTask` when the refresh succeeded, then `SyncCollectionsTask` |
 | **Sync Information** (`SyncInformationTask`) | Metadata, People, Users, and History, each a refresh then an apply, then `SyncPlaylistsTask` |
 
-**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Zooid/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Sync** page.
+**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Zooid/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Synchronization** page.
 
 The task bases live in `Tasks/Common/`.
 
@@ -244,7 +244,7 @@ Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's too
 | Tool | Page | Calls |
 | :--- | :--- | :--- |
 | **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics` |
-| **Sync** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes and `Tasks/{taskKey}/Run` |
+| **Synchronization** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes and `Tasks/{taskKey}/Run` |
 | **Queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
 | **Storage** | `zooid_storage.html` | `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep` |

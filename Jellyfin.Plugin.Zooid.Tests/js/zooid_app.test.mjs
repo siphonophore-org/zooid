@@ -22,12 +22,12 @@ async function openApp(storage, beforeLoad) {
 
 test('the sidebar lists the dashboard first, then every tool while Storage shows', async function () {
     var view = await openApp({});
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Synchronization', 'Queue', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
 });
 
 test('the sidebar leaves Storage out once the stored answer says it is hidden', async function () {
     var view = await openApp({ 'zooid.storageTab': '0' });
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Statistics', 'Settings', 'Troubleshooting']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Synchronization', 'Queue', 'Servers', 'Statistics', 'Settings', 'Troubleshooting']);
 });
 
 test('the sidebar lists Storage when storage is blocked', async function () {

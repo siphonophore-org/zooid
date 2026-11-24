@@ -45,7 +45,7 @@ public sealed class ConfigurationControllerTests : IDisposable
 
     /// <summary>
     /// Each of the plugin's ten task keys starts its task at once.
-    /// True: the Sync page's run buttons start the task they name, and no other.
+    /// True: the Synchronization page's run buttons start the task they name, and no other.
     /// False: a button would do nothing, or start a different task.
     /// </summary>
     [Theory]

@@ -13,7 +13,7 @@ using Xunit;
 namespace Jellyfin.Plugin.Zooid.Tests.Services.ContentSync.Cleanup;
 
 /// <summary>
-/// Deleting a file from the Sync page. Jellyfin's own file deletion removes the whole containing
+/// Deleting a file from the Synchronization page. Jellyfin's own file deletion removes the whole containing
 /// folder, recursively, for a video that is not in a mixed folder (Video.GetDeletePaths answers
 /// ContainingFolderPath for it), so the plugin deletes the file and its companions itself and asks
 /// Jellyfin only to forget the item.
@@ -140,7 +140,7 @@ public sealed class FileDeletionServiceTests : IDisposable
     /// A movie that had its folder to itself leaves nothing behind: its companions, its own images and
     /// trickplay, the title artwork and nfo, and, with empty folders removed, the folder itself. The
     /// library root stays.
-    /// True: deleting from the Sync page cleans up as fully as Jellyfin's own delete did.
+    /// True: deleting from the Synchronization page cleans up as fully as Jellyfin's own delete did.
     /// False: posters, nfo files, and empty folders pile up under the library.
     /// </summary>
     [Fact]
@@ -479,7 +479,7 @@ public sealed class FileDeletionServiceTests : IDisposable
     /// <summary>
     /// A single file item whose file is already gone has its stale Jellyfin entry removed, without
     /// touching the disk, and is reported as gone rather than deleted.
-    /// True: a file removed by hand no longer lingers in the library after a delete from the Sync page.
+    /// True: a file removed by hand no longer lingers in the library after a delete from the Synchronization page.
     /// False: the delete fails, or reports a deletion it did not make.
     /// </summary>
     [Fact]

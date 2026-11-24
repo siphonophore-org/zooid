@@ -255,10 +255,10 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 
 * Zooid is one page, `zooid`, built by `createZooidApp` with Stolon's tool app. Each sidebar entry is its own registered page and script, wired with `createZooidPage`, and swapped in place. A page sets no Jellyfin tabs.
 * The dashboard is the first entry. Its cards open the tool they sum up with `openTool`.
-* A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading, as the Sync page does for each sync type.
+* A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading when a page needs another.
 * Entry names are short, each with a Material icon.
 * Keep the list in one place, `zooidTools` in the shared module, never copied into each page.
-* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Sync**, **Queue**, **Servers**, **Storage**, **Statistics**, **Settings**, **Troubleshooting**.
+* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Synchronization**, **Queue**, **Servers**, **Storage**, **Statistics**, **Settings**, **Troubleshooting**.
 
 ### Sections
 

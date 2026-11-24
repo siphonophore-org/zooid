@@ -393,7 +393,7 @@ div:not(.zooid-form-row) + .zooid-form-row {
 .zooid-mb-md { margin-bottom: 12px; }
 
 /* zooid-sync-status */
-/* Result line under the Sync page description, spaced from the field below only while it holds a message. */
+/* Result line under the Synchronization page description, spaced from the field below only while it holds a message. */
 /* Example: <div class="stolon-status-text zooid-sync-status" role="status"></div> */
 .zooid-sync-status:not(:empty) { margin-bottom: 12px; }
 

@@ -255,14 +255,22 @@ export default function (view) {
         }).catch(function () { /* the map keeps its fallback */ });
     }
 
-    // The name in the middle of the map. A name too long for the circle is shown as the word for Server, and
-    // the full name stays in the circle's tooltip.
+    // The name in the middle of the map. A name too long for the card is shown as the word for Server, and the
+    // full name stays in the card's tooltip. A map with room takes a longer name than a narrow one.
     var SELF_NAME_CHARS = 12;
+    var SELF_NAME_CHARS_WIDE = 28;
+
+    // How far the map grows past its drawn size to fill the room it has, so a small pool still fills the tab.
+    var POOL_MAX_SCALE = 1.8;
+
+    // The width the map last drew for, so a resize that changes nothing does not draw again.
+    var poolWidth = 0;
 
     function renderPoolMap() {
         askLocalServerName();
         var host = getEl('poolMap');
         if (!host) return;
+        setVisible('poolMapEmpty', !servers.length);
         if (!servers.length) {
             host.innerHTML = '';
             setVisible('poolMap', false);
@@ -277,8 +285,11 @@ export default function (view) {
         });
         var lanes = POOL_LANES.filter(function (lane) { return members[lane.key] && members[lane.key].length; });
 
+        // A hidden map has no width yet, and draws again once its tab opens.
+        var room = host.clientWidth || 0;
+        poolWidth = room;
         var hereName = (localServerName || ZooidShared.t.tr('PoolThisServer')).trim();
-        if (hereName.length > SELF_NAME_CHARS) hereName = ZooidShared.t.tr('TabServer');
+        if (hereName.length > (room >= 480 ? SELF_NAME_CHARS_WIDE : SELF_NAME_CHARS)) hereName = ZooidShared.t.tr('TabServer');
         var cardW = Math.max(92, hereName.length * 7.4 + 32);
         var cardH = 46;
         var parts = ['<defs><marker id="poolArrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>'];
@@ -389,7 +400,10 @@ export default function (view) {
         maxX = half;
         var maxY = Math.max.apply(null, bounds.map(function (b) { return b[1]; })) + 6;
         host.setAttribute('aria-label', ZooidShared.t.format('PoolMapLabel', labels.join(', ')));
-        host.innerHTML = '<svg viewBox="' + minX.toFixed(0) + ' ' + minY.toFixed(0) + ' ' + (maxX - minX).toFixed(0) + ' ' + (maxY - minY).toFixed(0) + '" width="' + Math.round(maxX - minX) + '" xmlns="http://www.w3.org/2000/svg">' + parts.join('') + '</svg>';
+        // The map fills the room it has, up to POOL_MAX_SCALE of its drawn size, and shrinks to fit a narrow one.
+        var drawn = maxX - minX;
+        var width = room ? Math.min(room, drawn * POOL_MAX_SCALE) : drawn;
+        host.innerHTML = '<svg viewBox="' + minX.toFixed(0) + ' ' + minY.toFixed(0) + ' ' + drawn.toFixed(0) + ' ' + (maxY - minY).toFixed(0) + '" width="' + Math.round(width) + '" xmlns="http://www.w3.org/2000/svg">' + parts.join('') + '</svg>';
     }
 
     // Updates each card's dot in place. A full render rebuilds the cards and moves the open editor,
@@ -1691,7 +1705,8 @@ export default function (view) {
             currentConfig = config;
             servers = config.Servers || [];
             Promise.all([fetchLocalLibraries(), fetchLocalUsers()]).then(function() {
-                selectServer(servers.length > 0 ? 0 : -1);
+                // Every server card starts closed, and one opens when it is picked.
+                selectServer(-1);
                 saveBars.clean();
                 refreshServerHealth();
                 checkPoolPlugins();
@@ -1701,10 +1716,42 @@ export default function (view) {
         });
     }
 
+    // bindTabs
+    // Splits the page into a Servers tab, which holds the list and the editor, and a Diagram tab, which holds the map.
+    function bindTabs() {
+        var holder = getEl('serverTabs');
+        if (!holder) return;
+        var tabs = zooidModule.createSubTabs({
+            tabs: [
+                { id: 'servers', label: ZooidShared.t.tr('TabServers') },
+                { id: 'diagram', label: ZooidShared.t.tr('TabDiagram') }
+            ],
+            // The map is drawn to its tab's width, which it has only once the tab shows.
+            onChange: function (id) { if (id === 'diagram') setTimeout(renderPoolMap, 0); }
+        });
+        holder.appendChild(tabs.element);
+        var list = tabs.getPanel('servers');
+        var diagram = tabs.getPanel('diagram');
+        var section = holder.parentNode;
+        Array.prototype.slice.call(section.childNodes).forEach(function (node) {
+            if (node === holder) return;
+            var id = node.nodeType === 1 ? node.id : '';
+            (id === 'poolMap' || id === 'poolMapEmpty' ? diagram : list).appendChild(node);
+        });
+        // The map draws again when its width changes, such as when the window or the sidebar is resized.
+        var map = getEl('poolMap');
+        if (map && typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(function () {
+                if (servers.length && Math.abs((map.clientWidth || 0) - poolWidth) > 8) renderPoolMap();
+            }).observe(map);
+        }
+    }
+
     // bindPage
     // Wires the page's buttons and controls. Stolon calls it once, the first time the page shows.
     function bindPage() {
         ZooidShared.initCollapsibles();
+        bindTabs();
 
         bindClick('btnTestConnection', testConnection);
         bindClick('btnGenerateToken', generateToken);

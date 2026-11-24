@@ -159,7 +159,6 @@ export default function (view) {
                 for (var v = 0; v < shown.length; v++) shown[v].classList.add('stolon-hidden');
                 var desc = view.querySelector('#syncTypeDescription');
                 if (desc) desc.textContent = '';
-                made.shared.setPageTitle('');
                 this.currentView = null;
                 return;
             }
@@ -244,15 +243,6 @@ export default function (view) {
             if (targetView) {
                 targetView.classList.remove('stolon-hidden');
             }
-
-            var titles = {
-                content: 'LabelContentSync',
-                history: 'LabelHistorySync',
-                metadata: 'LabelMetadataSync',
-                people: 'LabelPeopleSync',
-                users: 'TitleUsersSync'
-            };
-            made.shared.setPageTitle(titles[viewName] ? made.shared.t.tr(titles[viewName]) : viewName);
 
             var descEl = view.querySelector('#syncTypeDescription');
             if (descEl) {

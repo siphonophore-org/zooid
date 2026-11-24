@@ -20,11 +20,12 @@
                         <!-- Usage -->
                         <!-- Shows how much of the link cache's room is used, while the cache is on. -->
 
-                        <div id="storageUsageSection" class="stolon-collapsible-section stolon-fixed stolon-hidden">
-                            <div class="stolon-collapsible-header">
+                        <div id="storageUsageSection" class="stolon-collapsible-section stolon-hidden">
+                            <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageUsageContent">
                                 <span class="stolon-collapsible-title" data-str="HeaderUsage">Usage</span>
-                            </div>
-                            <div class="stolon-collapsible-content">
+                                <span class="stolon-collapsible-icon">&#9660;</span>
+                            </button>
+                            <div id="storageUsageContent" class="stolon-collapsible-content stolon-collapsed">
                                 <div id="storageUsageMeter"></div>
                             </div>
                         </div>
@@ -40,11 +41,12 @@
                         <!-- Files -->
                         <!-- Shows how many of the picked server's synced files are copies, links, and cached links. -->
 
-                        <div id="storageFilesSection" class="stolon-collapsible-section stolon-fixed stolon-hidden">
-                            <div class="stolon-collapsible-header">
+                        <div id="storageFilesSection" class="stolon-collapsible-section stolon-hidden">
+                            <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageFilesContent">
                                 <span class="stolon-collapsible-title" data-str="HeaderFiles">Files</span>
-                            </div>
-                            <div class="stolon-collapsible-content">
+                                <span class="stolon-collapsible-icon">&#9660;</span>
+                            </button>
+                            <div id="storageFilesContent" class="stolon-collapsible-content stolon-collapsed">
                                 <div id="storageFilesChart"></div>
                             </div>
                         </div>

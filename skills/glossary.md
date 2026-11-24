@@ -62,7 +62,7 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | Sync Information | The scheduled task for metadata, people, users, history, and playlists | | Info task |
 | Scan | A scheduled pass that compares everything with every source | Refresh | Poll, crawl |
 | Full scan | A scan that also checks each synced file on disk | | Deep scan |
-| Sync table | The table of tracked items for one sync type on the **Sync** page | `ISyncTableManager` | Grid, list |
+| Sync table | The table of tracked items for one sync type on the **Synchronization** page | `ISyncTableManager` | Grid, list |
 | Precedence | Who speaks for an item held on several servers, **Newest** or **Ranked** | `SyncPrecedence` | Priority, winner |
 | Newest | The server that changed an item last speaks for it | `SyncPrecedence.Newest` | Latest |
 | Ranked | The highest ranked server that holds an item speaks for it | `SyncPrecedence.Rank` | Priority |
