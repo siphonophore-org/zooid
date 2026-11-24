@@ -55,7 +55,7 @@ test('the last scans draw a sparkline of what each found, once there are two', a
     var mod = await dashboard();
     var runs = [{ Added: 1, Updated: 2, Removed: 0 }, { Added: 0, Updated: 0, Removed: 5 }];
     assert.deepEqual(mod.syncTypeCard(strings, CONTENT, true, { Synced: 1 }, runs).sparkline, [3, 5]);
-    assert.equal(mod.syncTypeCard(strings, CONTENT, true, { Synced: 1 }, runs.slice(0, 1)).sparkline, undefined);
+    assert.deepEqual(mod.syncTypeCard(strings, CONTENT, true, { Synced: 1 }, runs.slice(0, 1)).sparkline, [0, 0]);
 });
 
 test('the servers card counts the servers turned on, and says when there are none', async function () {
@@ -74,5 +74,17 @@ test('the queue card opens the queue and turns red while received changes keep f
     assert.equal(card.statusColor, 'red');
     assert.equal(card.tool, 'queue');
     assert.equal(mod.queueCard(strings, { Pending: 4 }).statusColor, 'orange');
-    assert.equal(mod.queueCard(strings, {}).statusColor, 'green');
+    assert.equal(mod.queueCard(strings, {}).statusColor, 'gray');
+    assert.equal(mod.queueCard(strings, {}).status, 'PriorityIdle');
+});
+
+test('every card keeps a chart, a flat gray one when there is nothing to draw, so a row of cards lines up', async function () {
+    var mod = await dashboard();
+    var off = mod.syncTypeCard(strings, CONTENT, false, null, null);
+    assert.deepEqual(off.sparkline, [0, 0]);
+    assert.equal(off.sparklineColor, 'gray');
+    assert.equal(off.value, '\u2014');
+    assert.deepEqual(mod.serversCard(strings, { Servers: [{ IsEnabled: true }] }).sparkline, [0, 0]);
+    assert.equal(mod.serversCard(strings, { Servers: [{ IsEnabled: true }] }).status, 'OptionEnabled');
+    assert.deepEqual(mod.queueCard(strings, {}).sparkline, [0, 0]);
 });

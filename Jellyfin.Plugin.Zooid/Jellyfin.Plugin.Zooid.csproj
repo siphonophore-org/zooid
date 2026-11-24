@@ -109,6 +109,7 @@
     <JellyfinString Include="OptionReleaseDate" Case="sentence" />
     <JellyfinString Include="Overview" />
     <JellyfinString Include="People" />
+    <JellyfinString Include="PriorityIdle" />
     <JellyfinString Include="TabDashboard" />
     <JellyfinString Include="Person" />
     <JellyfinString Include="Played" />

@@ -15,6 +15,11 @@ var SYNC_TYPES = [
     { enable: 'EnableUserSync', route: 'UserStatus', view: 'users', stats: 'User', title: 'HeaderUsers', icon: 'group' }
 ];
 
+// EMPTY_CHART
+// The flat gray line a card shows when it has nothing to chart, so every card keeps the same shape and the cards in
+// a row line up.
+var EMPTY_CHART = { sparkline: [0, 0], sparklineColor: 'gray' };
+
 // syncTypeCard
 // Sums up one sync type. A type that is off says so and opens Settings. Failed rows win over pending ones.
 //
@@ -28,13 +33,13 @@ var SYNC_TYPES = [
 // Output
 // [object]: The status card's options, with tool and param for the tool it opens.
 export function syncTypeCard(t, type, on, status, runs) {
-    var card = { icon: type.icon, title: t.tr(type.title) };
+    var card = Object.assign({ icon: type.icon, title: t.tr(type.title) }, EMPTY_CHART);
     if (!on) {
-        return Object.assign(card, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardTypeOff'), tool: 'settings' });
+        return Object.assign(card, { value: '\u2014', status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardTypeOff'), tool: 'settings' });
     }
     card.tool = 'sync';
     card.param = type.view;
-    if (!status) return Object.assign(card, { status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
+    if (!status) return Object.assign(card, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
     var waiting = (status.Pending || 0) + (status.Queued || 0);
     var failed = status.Errored || 0;
     card.value = status.Synced || 0;
@@ -45,6 +50,7 @@ export function syncTypeCard(t, type, on, status, runs) {
     else Object.assign(card, { status: t.tr('StatusSynced'), statusColor: 'green' });
     if (runs && runs.length > 1) {
         card.sparkline = runs.map(function (run) { return (run.Added || 0) + (run.Updated || 0) + (run.Removed || 0); });
+        delete card.sparklineColor;
     }
     return card;
 }
@@ -61,10 +67,10 @@ export function syncTypeCard(t, type, on, status, runs) {
 export function serversCard(t, config) {
     var servers = (config && config.Servers) || [];
     var on = servers.filter(function (server) { return server.IsEnabled; }).length;
-    var card = { icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' };
+    var card = Object.assign({ icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' }, EMPTY_CHART);
     if (!servers.length) return Object.assign(card, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardNoServers') });
     return Object.assign(card, {
-        status: on ? t.tr('StatusSynced') : t.tr('Off'),
+        status: on ? t.tr('OptionEnabled') : t.tr('Off'),
         statusColor: on ? 'green' : 'gray',
         detail: t.format('DashboardServersLine', on, servers.length)
     });
@@ -80,14 +86,14 @@ export function serversCard(t, config) {
 // Output
 // [object]: The status card's options, with tool and param for the tool it opens.
 export function queueCard(t, hints) {
-    var card = { icon: 'swap_horiz', title: t.tr('ButtonQueue'), tool: 'queue' };
-    if (!hints) return Object.assign(card, { status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
+    var card = Object.assign({ icon: 'swap_horiz', title: t.tr('ButtonQueue'), tool: 'queue' }, EMPTY_CHART);
+    if (!hints) return Object.assign(card, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
     var failing = hints.InboundFailingCount || 0;
     card.value = hints.Pending || 0;
     card.detail = t.format('DashboardQueueLine', hints.InboundCount || 0, failing);
     if (failing > 0) return Object.assign(card, { status: t.tr('LabelFailed'), statusColor: 'red' });
     if (card.value > 0) return Object.assign(card, { status: t.tr('StatusPending'), statusColor: 'orange' });
-    return Object.assign(card, { status: t.tr('StatusSynced'), statusColor: 'green' });
+    return Object.assign(card, { status: t.tr('PriorityIdle'), statusColor: 'gray' });
 }
 
 export default function (view) {
