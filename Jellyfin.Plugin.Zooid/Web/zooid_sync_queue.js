@@ -252,7 +252,6 @@ export function createQueueModule(ctx) {
                     '</div>';
             }).join('');
             view.querySelector('#queuePeers').classList.toggle('stolon-hidden', peers.length === 0);
-            view.querySelector('#queueNoPeers').classList.toggle('stolon-hidden', peers.length > 0);
 
             var unmatchedEl = view.querySelector('#queueUnmatched');
             var unmatched = data.Unmatched || 0;

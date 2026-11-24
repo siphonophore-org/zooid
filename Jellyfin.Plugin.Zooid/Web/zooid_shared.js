@@ -52,35 +52,62 @@ export var TRANSLATIONS_URL = 'Zooid/Translations';
 // The strings once a page has loaded them, so the sidebar names follow the viewer's language.
 var tabStrings = null;
 
-// STORAGE_TAB_KEY
-// The browser storage key that holds whether the Storage page shows. Each page controller reads it
-// inline before this module loads, so the sidebar is built without waiting for the config.
-export var STORAGE_TAB_KEY = 'zooid.storageTab';
+// TOOL_FLAG_KEYS
+// The browser storage keys that hold whether a tool that can be hidden shows, by tool. Storage shows while
+// content, history, or metadata sync is on, Sync while any sync type is on, and Statistics while any sync type
+// is on or a server may link here. The sidebar is built before any config is read, so the last answer is kept.
+export var TOOL_FLAG_KEYS = { storage: 'zooid.storageTab', sync: 'zooid.syncTab', statistics: 'zooid.statisticsTab' };
 
-// readStorageTabFlag
-// Reads the stored answer for whether the Storage page shows.
+// STORAGE_TAB_KEY
+// The browser storage key that holds whether the Storage page shows.
+export var STORAGE_TAB_KEY = TOOL_FLAG_KEYS.storage;
+
+// readToolFlag
+// Reads the stored answer for whether a tool shows.
+//
+// Inputs
+// tool [string]: The tool's key in TOOL_FLAG_KEYS.
 //
 // Output
 // [string]: '1' or '0', or null when nothing is stored or storage is blocked.
-function readStorageTabFlag() {
+function readToolFlag(tool) {
     try {
-        return window.localStorage.getItem(STORAGE_TAB_KEY);
+        return window.localStorage.getItem(TOOL_FLAG_KEYS[tool]);
     } catch (e) {
         return null;
     }
 }
 
-// writeStorageTabFlag
-// Stores whether the Storage page shows. A blocked storage leaves the page at its default of shown.
+// writeToolFlag
+// Stores whether a tool shows. A blocked storage leaves the tool at its default of shown.
 //
 // Inputs
-// value [string]: '1' to show the page or '0' to hide it.
-function writeStorageTabFlag(value) {
+// tool [string]: The tool's key in TOOL_FLAG_KEYS.
+// value [string]: '1' to show the tool or '0' to hide it.
+function writeToolFlag(tool, value) {
     try {
-        window.localStorage.setItem(STORAGE_TAB_KEY, value);
+        window.localStorage.setItem(TOOL_FLAG_KEYS[tool], value);
     } catch (e) {
-        // Storage blocked: the page keeps its default of shown.
+        // Storage blocked: the tool keeps its default of shown.
     }
+}
+
+// toolFlags
+// Works out which tools that can be hidden show for a config.
+//
+// Inputs
+// config [object]: The plugin configuration.
+//
+// Output
+// [object]: '1' or '0' for each tool in TOOL_FLAG_KEYS.
+export function toolFlags(config) {
+    var anyType = !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync || config.EnablePeopleSync || config.EnableUserSync);
+    var linking = (config.Servers || []).some(function (server) { return server && server.OffersLinks; });
+    return {
+        storage: config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync ? '1' : '0',
+        sync: anyType ? '1' : '0',
+        statistics: anyType || linking ? '1' : '0'
+    };
 }
 
 // tabName
@@ -97,8 +124,8 @@ function tabName(key, english) {
 }
 
 // zooidTools
-// Lists Zooid's tools in the order the sidebar shows them, the dashboard first. Storage is listed unless the last
-// config read said no sync type uses it.
+// Lists Zooid's tools in the order the sidebar shows them, the dashboard first. A tool in TOOL_FLAG_KEYS is left
+// out while the last config read said it has nothing to show.
 //
 // Output
 // [object[]]: Each tool's key, name, icon, and the registered page it shows.
@@ -106,11 +133,11 @@ export function zooidTools() {
     var tools = [
         { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
         { key: 'sync', name: tabName('TabSync', 'Sync'), icon: 'sync', page: 'zooid_sync' },
-        { key: 'queue', name: tabName('HeaderChangeQueue', 'Change queue'), icon: 'swap_horiz', page: 'zooid_queue' },
-        { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' }
-    ];
-    if (readStorageTabFlag() !== '0') tools.push({ key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' });
-    tools.push({ key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' });
+        { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
+        { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
+        { key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' },
+        { key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' }
+    ].filter(function (tool) { return !TOOL_FLAG_KEYS[tool.key] || readToolFlag(tool.key) !== '0'; });
     tools.push({ key: 'settings', name: tabName('Settings', 'Settings'), icon: 'settings', page: 'zooid_settings' });
     return tools;
 }
@@ -260,33 +287,33 @@ export function createZooidShared(view, bag) {
         return t;
     });
 
-    // Set by a page to read the sidebar again when the Storage page appears or disappears.
+    // Set by a page to read the sidebar again when a tool appears or disappears.
     shared.onTabsChanged = null;
 
     // rememberContentSync
-    // Records whether the Storage page shows, and tells the page when that changed the sidebar. The page
-    // holds the library filter, which content, history, and metadata sync all apply.
+    // Records which tools that can be hidden show, and tells the page when that changed the sidebar.
     //
     // Inputs
     // config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
     shared.rememberContentSync = function (config) {
         if (!config || typeof config !== 'object' || !('EnableContentSync' in config)) return;
-        var value = config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync ? '1' : '0';
-        var before = readStorageTabFlag();
-        if (before === value) return;
-        writeStorageTabFlag(value);
-        // A missing flag already showed the page, so only a change of what shows reads the sidebar again.
-        var shownBefore = before !== '0';
-        if (shownBefore !== (value === '1') && typeof shared.onTabsChanged === 'function') {
-            shared.onTabsChanged();
-        }
+        var flags = toolFlags(config);
+        var changed = false;
+        Object.keys(flags).forEach(function (tool) {
+            var before = readToolFlag(tool);
+            if (before === flags[tool]) return;
+            writeToolFlag(tool, flags[tool]);
+            // A missing flag already showed the tool, so only a change of what shows reads the sidebar again.
+            if ((before !== '0') !== (flags[tool] === '1')) changed = true;
+        });
+        if (changed && typeof shared.onTabsChanged === 'function') shared.onTabsChanged();
     };
 
     var baseGetConfig = shared.getConfig;
     var baseSaveConfig = shared.saveConfig;
 
     // getConfig
-    // Reads the plugin configuration and remembers whether the Storage page shows.
+    // Reads the plugin configuration and remembers which tools show.
     //
     // Output
     // [Promise]: Resolves with the configuration.

@@ -22,12 +22,12 @@ async function openApp(storage, beforeLoad) {
 
 test('the sidebar lists the dashboard first, then every tool while Storage shows', async function () {
     var view = await openApp({});
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Change queue', 'Servers', 'Storage', 'Statistics', 'Settings']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Storage', 'Statistics', 'Settings']);
 });
 
 test('the sidebar leaves Storage out once the stored answer says it is hidden', async function () {
     var view = await openApp({ 'zooid.storageTab': '0' });
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Change queue', 'Servers', 'Statistics', 'Settings']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Statistics', 'Settings']);
 });
 
 test('the sidebar lists Storage when storage is blocked', async function () {
@@ -47,4 +47,18 @@ test('every tool shows its own registered page', async function () {
 test('the sidebar has its fold button', async function () {
     var view = await openApp({});
     assert.ok(view.querySelector('.stolon-tool-shell-fold'));
+});
+
+test('Sync and Statistics leave the sidebar once the stored answers say they have nothing to show', async function () {
+    var view = await openApp({ 'zooid.syncTab': '0', 'zooid.statisticsTab': '0', 'zooid.storageTab': '0' });
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Servers', 'Settings']);
+});
+
+test('toolFlags shows Sync for any sync type, Storage for the library ones, and Statistics for links too', async function () {
+    installPage({});
+    var shared = await loadScript('zooid_shared.js');
+    assert.deepEqual(shared.toolFlags({}), { storage: '0', sync: '0', statistics: '0' });
+    assert.deepEqual(shared.toolFlags({ EnableUserSync: true }), { storage: '0', sync: '1', statistics: '1' });
+    assert.deepEqual(shared.toolFlags({ EnableHistorySync: true }), { storage: '1', sync: '1', statistics: '1' });
+    assert.deepEqual(shared.toolFlags({ Servers: [{ OffersLinks: true }] }), { storage: '0', sync: '0', statistics: '1' });
 });

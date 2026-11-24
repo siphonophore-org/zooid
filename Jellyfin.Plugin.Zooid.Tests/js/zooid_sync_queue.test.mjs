@@ -12,7 +12,7 @@ globalThis.setInterval = function () { return 1; };
 globalThis.clearInterval = function () {};
 
 var QUEUE_IDS = ['queuePendingCount', 'queueSentCount', 'queueFailedCount', 'queueFailedActions', 'queueInboundCount',
-    'queueGatheringCount', 'queuePeerRow', 'queuePeers', 'queueNoPeers', 'queueUnmatched', 'queueFilters', 'queueList', 'queueEmpty'];
+    'queueGatheringCount', 'queuePeerRow', 'queuePeers', 'queueUnmatched', 'queueFilters', 'queueList', 'queueEmpty'];
 
 var env;
 var queue;
@@ -266,7 +266,6 @@ test('render fills the counts and shows the unmatched warning', function () {
     assert.equal(env.view.querySelector('#queueFailedActions').classList.contains('stolon-hidden'), false);
     assert.equal(env.view.querySelector('#queueUnmatched').classList.contains('stolon-hidden'), false);
     assert.match(env.view.querySelector('#queueUnmatchedText').textContent, /^2 local changes matched no library or user mapping/);
-    assert.equal(env.view.querySelector('#queueNoPeers').classList.contains('stolon-hidden'), false);
     assert.equal(env.view.querySelector('#queuePeers').classList.contains('stolon-hidden'), true);
 });
 
@@ -280,7 +279,6 @@ test('render adds a filter button for each server and a server card for each', f
     var cards = env.view.querySelector('#queuePeerRow').innerHTML;
     assert.match(cards, /Sends watch history/);
     assert.match(cards, /Sends nothing: every module is off there/);
-    assert.equal(env.view.querySelector('#queueNoPeers').classList.contains('stolon-hidden'), true);
 });
 
 test('a server that is paused shows when it resumes, in the paused color', function () {

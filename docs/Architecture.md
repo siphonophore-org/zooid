@@ -134,7 +134,7 @@ Every later request carries the secret in `X-Zooid-Pairing`. `PeerController.Sen
 | `PeerController.Links` | `/Zooid/Peer` | Streams, stream checks, playback reports, remote control, link details, images, removals, copies |
 | `PeerPairController` | `/Zooid/Peer/Pair` | Pairing |
 | `LinkController` | `/Zooid/Link` | The address a `.strm` holds, for this server only |
-| `HintsController` | `/Zooid/Hints` | The **Change queue**, **Check link**, and stamp lookups |
+| `HintsController` | `/Zooid/Hints` | The **Queue** page, **Check link**, and stamp lookups |
 | `ServersController` | `/Zooid/Servers` | Removing a server's rows |
 | `ConfigurationController` | `/Sync` | Everything else the pages call |
 
@@ -245,7 +245,7 @@ Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's too
 | :--- | :--- | :--- |
 | **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics` |
 | **Sync** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes and `Tasks/{taskKey}/Run` |
-| **Change queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
+| **Queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
 | **Storage** | `zooid_storage.html` | `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep` |
 | **Statistics** | `zooid_statistics.html` | `Statistics` |

@@ -11,7 +11,7 @@ Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recyc
 | Users | User mapping | No, scheduled only | [Users](Users.md) |
 | Playlists | Owner mapping, items by file path | Yes, including deletions | [Playlists](Playlists.md) |
 
-Content, History, Metadata, People, and Users each have a table on the **Sync** page, and each row opens to show what was found and what happens next. Playlists have no table. Their live changes show on the **Change queue** page.
+Content, History, Metadata, People, and Users each have a table on the **Sync** page, and each row opens to show what was found and what happens next. Playlists have no table. Their live changes show on the **Queue** page.
 
 ## Several Servers
 

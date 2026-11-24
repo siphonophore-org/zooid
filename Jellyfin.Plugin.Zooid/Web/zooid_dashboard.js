@@ -80,7 +80,7 @@ export function serversCard(t, config) {
 // Output
 // [object]: The status card's options, with tool and param for the tool it opens.
 export function queueCard(t, hints) {
-    var card = { icon: 'swap_horiz', title: t.tr('HeaderChangeQueue'), tool: 'queue' };
+    var card = { icon: 'swap_horiz', title: t.tr('ButtonQueue'), tool: 'queue' };
     if (!hints) return Object.assign(card, { status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
     var failing = hints.InboundFailingCount || 0;
     card.value = hints.Pending || 0;

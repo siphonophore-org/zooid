@@ -93,7 +93,7 @@ The agreed name for every concept in this plugin. The UI, the docs, messages, an
 | :--- | :--- | :--- | :--- |
 | Live changes | Changes servers announce to each other as they happen | Hints | Real time sync, push sync |
 | Hint | A message that says what changed, never the value | `OutboundHint`, `InboundHint` | Event, notification, update |
-| Change queue | The **Change queue** page of hints waiting, sent, and failed | | Hint queue, outbox |
+| Change queue | The **Queue** page of hints waiting, sent, and failed | | Hint queue, outbox |
 | Send changes after | How long an item must go untouched before its hint goes out | | Debounce, delay |
 | Gathering | A change waiting out **Send changes after** | | Collecting, buffering |
 | Sent | A hint the peer accepted, waiting for it to finish | `OutboundState.Sent` | Delivered |

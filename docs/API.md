@@ -1,6 +1,6 @@
 # Zooid API
 
-Zooid adds a small HTTP API to Jellyfin. Two servers that both run the plugin talk to each other through the **Peer** routes, and the dashboard's **Servers** page and **Change queue** page use the **Hints** and **Servers** routes. The dashboard routes sit behind Jellyfin's own `RequiresElevation` policy. The `Peer` routes accept any signed in caller that the receiver's **Whitelist** allows. That is an administrator from a server on its **Servers** page, or a user listed there calling from one of their locations. The plugin adds no login of its own. A standard user's token is refused with `403` on the dashboard routes, and no token gets `401` everywhere. See **[Permissions](Permissions.md)**.
+Zooid adds a small HTTP API to Jellyfin. Two servers that both run the plugin talk to each other through the **Peer** routes, and the dashboard's **Servers** page and **Queue** page use the **Hints** and **Servers** routes. The dashboard routes sit behind Jellyfin's own `RequiresElevation` policy. The `Peer` routes accept any signed in caller that the receiver's **Whitelist** allows. That is an administrator from a server on its **Servers** page, or a user listed there calling from one of their locations. The plugin adds no login of its own. A standard user's token is refused with `403` on the dashboard routes, and no token gets `401` everywhere. See **[Permissions](Permissions.md)**.
 
 Requests and responses are JSON. Property names are Pascal case, enums travel as their names, and dates are UTC in ISO 8601. The server reads property names without regard to case.
 
@@ -71,7 +71,7 @@ Every request below that carries a `SenderServerId` must also carry the header `
 
 ### POST /Zooid/Peer/Queue
 
-Offer a batch of change hints. A hint says what changed and where, never the value. The receiver pulls the live state from the sender afterwards. The sender must be configured on the receiver as a Pull or Sync server and paired, and every hint's `OriginServerId` must equal `SenderServerId`, since hints are never forwarded. At most 500 hints per request. A hint whose `VersionTimestamp` lies more than five minutes ahead of the receiver's clock is declined with the reason, and one less far ahead is read as now. `ItemType` is the item's Jellyfin type, for the Change queue page's poster shape.
+Offer a batch of change hints. A hint says what changed and where, never the value. The receiver pulls the live state from the sender afterwards. The sender must be configured on the receiver as a Pull or Sync server and paired, and every hint's `OriginServerId` must equal `SenderServerId`, since hints are never forwarded. At most 500 hints per request. A hint whose `VersionTimestamp` lies more than five minutes ahead of the receiver's clock is declined with the reason, and one less far ahead is read as now. `ItemType` is the item's Jellyfin type, for the Queue page's poster shape.
 
 ```json
 {
@@ -451,11 +451,11 @@ The version an object carries on this server, which is the server that last edit
 
 ### POST /Zooid/Hints/Failed/Retry and DELETE /Zooid/Hints/Failed
 
-Every failed row at once, the **Retry failed** and **Dismiss failed** buttons on the **Change queue** page. A failed row is an outbound row in the `Failed` state, or an inbound row whose apply has failed at least once and waits to be tried again. Retry clears each row's attempts, then delivers the outbound rows and applies the inbound rows now, and answers `{ "Retried": 1200, "Outbound": 1150, "Inbound": 50 }`. Delete discards them, and answers `{ "Removed": 1200, "Outbound": 1150, "Inbound": 50 }`. A discarded inbound row is reported to its sender as finished, so it is not sent again. The scheduled tasks still carry the changes either way.
+Every failed row at once, the **Retry failed** and **Dismiss failed** buttons on the **Queue** page. A failed row is an outbound row in the `Failed` state, or an inbound row whose apply has failed at least once and waits to be tried again. Retry clears each row's attempts, then delivers the outbound rows and applies the inbound rows now, and answers `{ "Retried": 1200, "Outbound": 1150, "Inbound": 50 }`. Delete discards them, and answers `{ "Removed": 1200, "Outbound": 1150, "Inbound": 50 }`. A discarded inbound row is reported to its sender as finished, so it is not sent again. The scheduled tasks still carry the changes either way.
 
 ### DELETE /Zooid/Hints/Unmatched
 
-Clears the count of local changes that no server entry wanted, the **Dismiss** button beside that count on the **Change queue** page.
+Clears the count of local changes that no server entry wanted, the **Dismiss** button beside that count on the **Queue** page.
 
 ### DELETE /Zooid/Hints/Outbound/{id} and DELETE /Zooid/Hints/Inbound/{id}
 
@@ -575,7 +575,7 @@ Whether Zooid can run here. Every page asks, and shows `Message` at its top when
 The strings every page shows, in one language, with the words kept as written. It holds the Jellyfin strings the plugin declares, Stolon's own, and the plugin's own, with a missing string falling back to US English. The strings are not secret, so this route allows anonymous callers.
 
 ```json
-{ "language": "de", "strings": { "HeaderChangeQueue": "…" }, "casing": ["Jellyfin", "Zooid"] }
+{ "language": "de", "strings": { "ButtonQueue": "…" }, "casing": ["Jellyfin", "Zooid"] }
 ```
 
 The text other dashboard routes return reads in the page's language. It comes from the `language` query value, then the `X-Jellyfin-Plugin-Language` header the pages send, then `Accept-Language`.

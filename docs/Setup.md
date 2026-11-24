@@ -1,6 +1,16 @@
 # Setup
 
-The plugin has five tabs. **Sync** shows each sync type's table and the change queue. **Servers** holds the one time setup of the servers this one syncs with. **Storage**, shown while content, history, or metadata sync is on, holds how each mapped library keeps its files and which items it syncs. **Statistics** charts what the last scans found. **Settings** holds the options.
+Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar folds to its icons with the button at its top. A tool with nothing to show is left out of the sidebar.
+
+| Tool | What it holds | Shows while |
+| :--- | :--- | :--- |
+| **Dashboard** | A card for the servers, the queue, and each sync type. A card opens its tool | Always |
+| **Sync** | Each sync type's table | A sync type is on |
+| **Queue** | The changes sent between servers as they happen | Always |
+| **Servers** | The one time setup of the servers this one syncs with | Always |
+| **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
+| **Statistics** | What the last scans found, and the link streams served | A sync type is on, or a server may link here |
+| **Settings** | The options | Always |
 
 ## Servers
 
@@ -60,7 +70,7 @@ A standard user's key works in every direction. It is limited to what that user 
 
 ![Storage](screenshots/settings/Storage.png)
 
-The **Storage** page shows while content, history, or metadata sync is on. Pick a server, and each of its enabled library mappings has a card. With content sync off, only the filter and history settings show:
+Pick a server, and each of its enabled library mappings has a card. With content sync off, only the filter and history settings show:
 
 | Setting | What it holds |
 | :--- | :--- |

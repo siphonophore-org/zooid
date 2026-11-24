@@ -214,9 +214,9 @@ The kit crops out the Jellyfin header.
 * Place two related shots side by side in a table whose header row holds the captions.
 
 ```markdown
-| Change queue | Change queue on a phone |
+| Queue | Queue on a phone |
 | :---: | :---: |
-| ![Change queue](screenshots/Queue.png) | ![Change queue on a phone](screenshots/Queue%20Phone.png) |
+| ![Queue](screenshots/Queue.png) | ![Queue on a phone](screenshots/Queue%20Phone.png) |
 ```
 
 ### When to Retake
