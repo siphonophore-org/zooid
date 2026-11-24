@@ -1,7 +1,5 @@
 <img src="https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/banner.svg" alt="Zooid: Part of the Siphonophore project" width="100%">
 
-# Zooid
-
 A Jellyfin plugin that keeps several Jellyfin servers in step. It syncs **Content**, **History**, **Metadata**, **People**, **Users**, and **Playlists** across servers, on a schedule and, between servers that both run the plugin, as changes happen.
 
 ## Documentation
