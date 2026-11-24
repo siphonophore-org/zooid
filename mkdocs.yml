@@ -8,8 +8,8 @@ docs_dir: docs
 
 theme:
   name: material
-  logo: assets/icon.png
-  favicon: assets/icon.png
+  logo: https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/logo.svg
+  favicon: https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/logo.svg
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
