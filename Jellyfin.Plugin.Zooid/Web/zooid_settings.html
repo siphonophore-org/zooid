@@ -22,7 +22,8 @@
                             <span class="stolon-collapsible-icon">&#9660;</span>
                         </button>
                         <div id="bandwidthConfigContent" class="stolon-collapsible-content stolon-collapsed">
-                            <div class="fieldDescription zooid-mb-md" data-str="HelpSetsHowFastFiles">Sets how fast files move to this server and to each server allowed to link.</div>
+                            <div class="fieldDescription" data-str="HelpSetsHowFastFiles">Sets how fast files move to this server and to each server allowed to link.</div>
+                            <div class="fieldDescription zooid-mb-md" data-str="HelpSetStreamSpeedsAbove">Set stream speeds above your files' bitrate, or playback buffers. 0 is no limit, and a user mapping can set a lower one.</div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
@@ -36,9 +37,8 @@
                                 <div class="zooid-form-row zooid-form-head"><span></span><span data-str="Normal">Normal</span><span class="zooid-schedule-cell" data-str="ColumnScheduled">Scheduled</span></div>
                                 <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="DownloadManager">Downloads</span><span class="zooid-form-hint" data-str="HintSharedDownloadHere">Shared by every download to here</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtMaxDownloadSpeed" min="0" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMbps">Mbps</span></span><span class="zooid-form-cell zooid-schedule-cell"><input is="emby-input" type="number" id="txtScheduledDownloadSpeed" min="0" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMbps">Mbps</span></span></div>
                                 <div id="streamSpeedRows"></div>
-                                <div class="zooid-form-row zooid-schedule-row"><span class="zooid-form-label"><span data-str="LabelHours">Hours</span><span class="zooid-form-hint" data-str="HintUsesServersClock">Uses the server's clock. 22 to 6 runs overnight. Equal hours run all day.</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtScheduledStartHour" min="0" max="23" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitHourTo">to</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtScheduledEndHour" min="0" max="24" class="zooid-form-input" /></span></div>
+                                <div class="zooid-form-row zooid-schedule-row"><span class="zooid-form-label"><span data-str="LabelHours">Hours</span><span class="zooid-form-hint" data-str="HintUsesServersClock">Uses the server's clock. 22:00 to 06:00 runs overnight. Equal times run all day.</span></span><span class="zooid-form-cell zooid-hours-cell" id="scheduleHours"></span></div>
                             </div>
-                            <div class="fieldDescription zooid-mb-md" data-str="HelpSetStreamSpeedsAbove">Set stream speeds above your files' bitrate, or playback buffers. 0 is no limit, and a user mapping can set a lower one.</div>
                         </div>
                     </div>
 

@@ -350,10 +350,30 @@ div:not(.zooid-form-row) + .zooid-form-row {
 }
 
 /* zooid-bandwidth */
-/* Bandwidth table with a row per direction, a normal and a scheduled speed. The scheduled column hides while scheduling is off. */
+/* Bandwidth table with a row per direction, a normal and a scheduled speed. While scheduling is off there is nothing to compare,
+   so the table gives way to plain fields: each row's name, its speed and unit, then its hint, as the page's other fields read. */
 /* Example: <div class="zooid-form-table zooid-form-table3 zooid-bandwidth zooid-no-schedule"></div> */
 .zooid-bandwidth .zooid-form-row { grid-template-columns: 1fr 11em 11em; }
-.zooid-bandwidth.zooid-no-schedule .zooid-schedule-cell { visibility: hidden; }
+.zooid-bandwidth.zooid-no-schedule { border: 0; border-radius: 0; }
+.zooid-bandwidth.zooid-no-schedule .zooid-form-row.zooid-form-head,
+.zooid-bandwidth.zooid-no-schedule .zooid-schedule-cell { display: none; }
+.zooid-bandwidth.zooid-no-schedule .zooid-form-row:not(.zooid-form-head) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "label" "cell" "hint";
+    gap: 0;
+    padding: 0;
+    margin-bottom: var(--stolon-gap-wide);
+    border-top: 0;
+}
+.zooid-bandwidth.zooid-no-schedule .zooid-form-label { display: contents; }
+.zooid-bandwidth.zooid-no-schedule .zooid-form-label > :first-child { grid-area: label; margin-bottom: 0.4em; }
+.zooid-bandwidth.zooid-no-schedule .zooid-form-hint { grid-area: hint; margin-top: 0.5em; font-size: 0.9em; }
+.zooid-bandwidth.zooid-no-schedule .zooid-form-cell { grid-area: cell; }
+/* The scheduled hours, Stolon's Time Range Field across both speed columns */
+/* Example: <span class="zooid-form-cell zooid-hours-cell"><div class="stolon-time-range"></div></span> */
+.zooid-bandwidth .zooid-hours-cell { grid-column: span 2; }
+.zooid-bandwidth .zooid-hours-cell > .stolon-time-range { flex: 1; }
 @media (max-width: 640px) {
     .zooid-bandwidth .zooid-form-row { grid-template-columns: minmax(0, 1fr) 6.5em 6.5em; }
 }

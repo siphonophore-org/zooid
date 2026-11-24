@@ -193,11 +193,31 @@ export default function (view) {
         });
     }
 
+    // scheduleHours
+    // Builds the scheduled hours, once, as Stolon's Time Range Field in whole hours. A window may run past
+    // midnight, and equal times run all day.
+    //
+    // Output
+    // [object]: The field's handle, or null when the page has no place for it.
+    var hoursField = null;
+    function scheduleHours() {
+        if (hoursField) return hoursField;
+        var host = getEl('scheduleHours');
+        if (!host) return null;
+        hoursField = zooidModule.createTimeRangeField({
+            step: 60,
+            allowOvernight: true,
+            onChange: function () { host.dispatchEvent(new Event('change', { bubbles: true })); }
+        });
+        host.appendChild(hoursField.element);
+        return hoursField;
+    }
+
     function loadBandwidthSettings(config) {
         setValue('txtMaxDownloadSpeed', config.MaxDownloadSpeed || 0);
         setChecked('chkEnableBandwidthScheduling', config.EnableBandwidthScheduling || false);
-        setValue('txtScheduledStartHour', config.ScheduledStartHour || 0);
-        setValue('txtScheduledEndHour', config.ScheduledEndHour == null ? 6 : config.ScheduledEndHour);
+        var hours = scheduleHours();
+        if (hours) hours.setValue({ start: zooidModule.fromHours(config.ScheduledStartHour || 0), end: zooidModule.fromHours(config.ScheduledEndHour == null ? 6 : config.ScheduledEndHour) });
         setValue('txtScheduledDownloadSpeed', config.ScheduledDownloadSpeed || 0);
 
         // One row per server allowed to link, in Mbps like a video's bitrate.
@@ -238,8 +258,10 @@ export default function (view) {
             config.MaxDownloadSpeed = getIntValue('txtMaxDownloadSpeed', 0);
             config.DownloadSpeedUnit = 'Mbps';
             config.EnableBandwidthScheduling = getChecked('chkEnableBandwidthScheduling');
-            config.ScheduledStartHour = getIntValue('txtScheduledStartHour', 0);
-            config.ScheduledEndHour = getIntValue('txtScheduledEndHour', 6);
+            var hours = scheduleHours();
+            var span = hours ? hours.getValue() : { start: '00:00', end: '06:00' };
+            config.ScheduledStartHour = Math.floor(zooidModule.toHours(span.start) || 0);
+            config.ScheduledEndHour = Math.floor(zooidModule.toHours(span.end) || 0);
             config.ScheduledDownloadSpeed = getIntValue('txtScheduledDownloadSpeed', 0);
             config.ScheduledDownloadSpeedUnit = 'Mbps';
             (config.Servers || []).forEach(function (server) {
