@@ -1734,7 +1734,7 @@ export default function (view) {
         var diagram = tabs.getPanel('diagram');
         var section = holder.parentNode;
         Array.prototype.slice.call(section.childNodes).forEach(function (node) {
-            if (node === holder) return;
+            if (node === holder || (node.nodeType === 1 && node.getAttribute('data-str') === 'HelpServersIntro')) return;
             var id = node.nodeType === 1 ? node.id : '';
             (id === 'poolMap' || id === 'poolMapEmpty' ? diagram : list).appendChild(node);
         });
