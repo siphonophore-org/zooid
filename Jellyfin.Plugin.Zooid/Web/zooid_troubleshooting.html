@@ -1,0 +1,104 @@
+<!-- zooid_troubleshooting.html -->
+<!-- The Troubleshooting tool: resets that forget Zooid's tracking, one table at a time or all at once. -->
+
+<div id="ZooidTroubleshootingPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-button"
+     data-controller="__plugin/zooid_troubleshooting.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                    <div class="fieldDescription zooid-mb-md" data-str="HelpResetsForgetTrackingOnly">Resets forget tracking only. Media is untouched.</div>
+
+                    <!-- Database -->
+
+                    <div class="stolon-collapsible-section stolon-fixed">
+                        <div class="stolon-collapsible-header">
+                            <span class="stolon-collapsible-title" data-str="LabelDatabase">Database</span>
+                        </div>
+                        <div class="stolon-collapsible-content">
+                            <div class="fieldDescription zooid-mb-md" data-str="HelpResetsCannotUndone">Resets cannot be undone.</div>
+                            <div id="resetStatus" class="stolon-status-text zooid-mb-md" role="status"></div>
+
+                            <!-- Individual table resets -->
+                            <h3 class="stolon-subsection-title" data-str="HeaderResetIndividualTables">Reset individual tables</h3>
+                            <div class="stolon-reset-group">
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelContentSync">Content sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsContentTracking">Forgets content tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetContentTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelHistorySync">History sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsHistoryTracking">Forgets history tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetHistoryTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelMetadataSync">Metadata sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsMetadataTracking">Forgets metadata tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetMetadataTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelPeopleSync">People sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsPeopleTracking">Forgets people tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetPeopleTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelPlaylistSync">Playlist sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsPlaylistTracking">Forgets playlist tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetPlaylistTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                                <div class="stolon-reset-row">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelUserSync">User sync</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsUserTracking">Forgets user tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetUserTable" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="Reset">Reset</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Full database reset -->
+                            <h3 class="stolon-subsection-title" data-str="HeaderResetEntireDatabase">Reset entire database</h3>
+                            <div class="stolon-reset-group">
+                                <div class="stolon-reset-row stolon-reset-row-nuclear">
+                                    <div class="stolon-reset-info">
+                                        <div data-str="LabelFullDatabaseReset">Full database reset</div>
+                                        <div class="fieldDescription" data-str="HelpForgetsAllTracking">Forgets all tracking.</div>
+                                    </div>
+                                    <button is="emby-button" type="button" id="btnResetEntireDatabase" class="raised stolon-button stolon-destructive stolon-small">
+                                        <span data-str="ButtonResetAll">Reset all</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

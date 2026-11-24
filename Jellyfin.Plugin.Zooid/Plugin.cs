@@ -304,6 +304,18 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
 
         yield return new PluginPageInfo
         {
+            Name = "zooid_troubleshooting",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_troubleshooting.html"
+        };
+
+        yield return new PluginPageInfo
+        {
+            Name = "zooid_troubleshooting.js",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_troubleshooting.js"
+        };
+
+        yield return new PluginPageInfo
+        {
             Name = "zooid_queue",
             EmbeddedResourcePath = $"{ns}.Web.zooid_queue.html"
         };

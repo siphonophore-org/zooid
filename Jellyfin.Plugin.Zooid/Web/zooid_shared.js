@@ -139,6 +139,7 @@ export function zooidTools() {
         { key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' }
     ].filter(function (tool) { return !TOOL_FLAG_KEYS[tool.key] || readToolFlag(tool.key) !== '0'; });
     tools.push({ key: 'settings', name: tabName('Settings', 'Settings'), icon: 'settings', page: 'zooid_settings' });
+    tools.push({ key: 'troubleshooting', name: tabName('HeaderTroubleshooting', 'Troubleshooting'), icon: 'bug_report', page: 'zooid_troubleshooting' });
     return tools;
 }
 

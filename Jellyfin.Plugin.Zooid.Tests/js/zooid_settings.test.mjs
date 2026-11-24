@@ -1,6 +1,6 @@
 // zooid_settings.test.mjs
 // Tests for zooid_settings.js: that a load failure and every result show on a status line
-// and never in an alert, that a reset and a cache delete ask first, and that a saved section posts its fields.
+// and never in an alert, that a cache delete asks first, and that a saved section posts its fields.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,8 +10,8 @@ globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
 globalThis.setInterval = function () { return 1; };
 
-var IDS = ['settingsStatus', 'resetStatus', 'bandwidthConfigContent', 'streamSpeedRows', 'linkTakeRows', 'linkCacheStatus', 'bandwidthTable', 'watchedFilterUsersList', 'contentSyncSettingsContent', 'callerGrants', 'callerAccessContent'];
-var BUTTONS = ['btnResetEntireDatabase', 'btnResetContentTable', 'btnClearLinkCache'];
+var IDS = ['settingsStatus', 'bandwidthConfigContent', 'streamSpeedRows', 'linkTakeRows', 'linkCacheStatus', 'bandwidthTable', 'watchedFilterUsersList', 'contentSyncSettingsContent', 'callerGrants', 'callerAccessContent'];
+var BUTTONS = ['btnClearLinkCache'];
 
 // openPage
 // Loads the Settings controller over a view that holds the elements it uses, and shows the page.
@@ -56,56 +56,6 @@ test('a config that cannot be loaded shows an error on the page status and never
     var opened = await openPage({ fail: true });
     var status = opened.view.querySelector('#settingsStatus');
     assert.equal(statusText(status), 'Could not load the settings. Reload the page.');
-    assert.ok(status.classList.contains('stolon-status-bad'));
-});
-
-test('resetting the whole database asks first and sends nothing when the question is cancelled', async function () {
-    var opened = await openPage();
-    opened.view.querySelector('#btnResetEntireDatabase').click();
-    await settle(20);
-    var dialog = dialogText(opened.page.dom);
-    assert.equal(dialog.title, 'Reset database');
-    assert.match(dialog.body, /Reset the entire sync database\?/);
-    assert.match(dialog.body, /It cannot be undone\./);
-    assert.equal(clickDialogButton(opened.page.dom, 'Cancel'), true);
-    await settle(20);
-    assert.equal(posts(opened).length, 0);
-    assert.equal(statusText(opened.view.querySelector('#resetStatus')), '');
-});
-
-test('resetting the whole database posts the reset and reports it on the reset status', async function () {
-    var opened = await openPage();
-    opened.view.querySelector('#btnResetEntireDatabase').click();
-    await settle(20);
-    assert.equal(clickDialogButton(opened.page.dom, 'Reset'), true);
-    await settle(20);
-    assert.equal(posts(opened)[0].url, 'Zooid/Reset/All');
-    var status = opened.view.querySelector('#resetStatus');
-    assert.equal(statusText(status), 'Database reset.');
-    assert.ok(status.classList.contains('stolon-status-ok'));
-});
-
-test('resetting one table names it in the question and in the result', async function () {
-    var opened = await openPage();
-    opened.view.querySelector('#btnResetContentTable').click();
-    await settle(20);
-    assert.equal(dialogText(opened.page.dom).title, 'Reset table');
-    assert.match(dialogText(opened.page.dom).body, /Reset the content sync table\?/);
-    clickDialogButton(opened.page.dom, 'Reset');
-    await settle(20);
-    assert.equal(posts(opened)[0].url, 'Zooid/Reset/Content');
-    assert.equal(statusText(opened.view.querySelector('#resetStatus')), 'Content sync table reset.');
-});
-
-test('a reset that fails shows an error on the reset status', async function () {
-    var opened = await openPage();
-    opened.view.querySelector('#btnResetEntireDatabase').click();
-    await settle(20);
-    globalThis.ApiClient.fetch = function () { return Promise.reject(new Error('refused')); };
-    clickDialogButton(opened.page.dom, 'Reset');
-    await settle(20);
-    var status = opened.view.querySelector('#resetStatus');
-    assert.equal(statusText(status), 'Could not reset the database.');
     assert.ok(status.classList.contains('stolon-status-bad'));
 });
 

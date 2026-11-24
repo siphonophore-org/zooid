@@ -249,7 +249,8 @@ Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's too
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
 | **Storage** | `zooid_storage.html` | `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep` |
 | **Statistics** | `zooid_statistics.html` | `Statistics` |
-| **Settings** | `zooid_settings.html` | `GetSourceUsers`, `LinkCache`, `LinkCache/Clear`, `Reset/{table}` |
+| **Settings** | `zooid_settings.html` | `GetSourceUsers`, `LinkCache`, `LinkCache/Clear` |
+| **Troubleshooting** | `zooid_troubleshooting.html` | `Reset/{table}` |
 
 ## Rules That Hold Everywhere
 

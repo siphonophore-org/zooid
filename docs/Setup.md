@@ -11,6 +11,7 @@ Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar fo
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
 | **Statistics** | What the last scans found, and the link streams served | A sync type is on, or a server may link here |
 | **Settings** | The options | Always |
+| **Troubleshooting** | Resets that forget Zooid's tracking. Media is untouched | Always |
 
 ## Servers
 

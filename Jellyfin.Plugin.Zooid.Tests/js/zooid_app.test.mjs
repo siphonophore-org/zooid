@@ -22,26 +22,26 @@ async function openApp(storage, beforeLoad) {
 
 test('the sidebar lists the dashboard first, then every tool while Storage shows', async function () {
     var view = await openApp({});
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Storage', 'Statistics', 'Settings']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
 });
 
 test('the sidebar leaves Storage out once the stored answer says it is hidden', async function () {
     var view = await openApp({ 'zooid.storageTab': '0' });
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Statistics', 'Settings']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Sync', 'Queue', 'Servers', 'Statistics', 'Settings', 'Troubleshooting']);
 });
 
 test('the sidebar lists Storage when storage is blocked', async function () {
     var view = await openApp({}, function () {
         globalThis.localStorage = { getItem: function () { throw new Error('blocked'); }, setItem: function () {} };
     });
-    assert.equal(sidebar(view).names.length, 7);
+    assert.equal(sidebar(view).names.length, 8);
 });
 
 test('every tool shows its own registered page', async function () {
     installPage({});
     var shared = await loadScript('zooid_shared.js');
     assert.deepEqual(shared.zooidTools().map(function (tool) { return tool.page; }),
-        ['zooid_dashboard', 'zooid_sync', 'zooid_queue', 'zooid_servers', 'zooid_storage', 'zooid_statistics', 'zooid_settings']);
+        ['zooid_dashboard', 'zooid_sync', 'zooid_queue', 'zooid_servers', 'zooid_storage', 'zooid_statistics', 'zooid_settings', 'zooid_troubleshooting']);
 });
 
 test('the sidebar has its fold button', async function () {
@@ -51,7 +51,7 @@ test('the sidebar has its fold button', async function () {
 
 test('Sync and Statistics leave the sidebar once the stored answers say they have nothing to show', async function () {
     var view = await openApp({ 'zooid.syncTab': '0', 'zooid.statisticsTab': '0', 'zooid.storageTab': '0' });
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Servers', 'Settings']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Servers', 'Settings', 'Troubleshooting']);
 });
 
 test('toolFlags shows Sync for any sync type, Storage for the library ones, and Statistics for links too', async function () {
