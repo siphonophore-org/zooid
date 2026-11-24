@@ -1,0 +1,108 @@
+name: '🔀 Sync Branches'
+
+# main holds releases and patch fixes. unstable holds feature work until it is tested.
+#
+# sync     Runs on every push to main. Merges main into unstable, so unstable always has every
+#          patch and version bump. A merge that conflicts opens a pull request from
+#          sync/main-into-unstable instead, to resolve by hand.
+# promote  Started by hand from the Actions tab for a feature release. Fast-forwards main to unstable,
+#          then starts the release draft, build, and test runs on main.
+#
+# A push made with a workflow's own token starts no other workflow. The release draft run commits its
+# version bump to main that way, so sync also runs when it finishes. Both jobs here start the runs a
+# push would have started themselves.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - '📝 Create/Update Release Draft'
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'sync merges main into unstable. promote moves main to unstable for a feature release.'
+        type: choice
+        options:
+          - sync
+          - promote
+        default: sync
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: sync-branches
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event_name == 'push' || github.event_name == 'workflow_run' || inputs.action == 'sync'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: unstable
+          fetch-depth: 0
+
+      - name: Merge main into unstable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name 'GitHub Action'
+          git config user.email 'action@github.com'
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "unstable already has every commit on main."
+            exit 0
+          fi
+          if git merge --no-ff --no-edit -m "Merge main into unstable" origin/main; then
+            git push origin HEAD:unstable
+            gh workflow run test.yaml --ref unstable || true
+            exit 0
+          fi
+          git merge --abort
+          BRANCH=sync/main-into-unstable
+          git push --force origin origin/main:refs/heads/${BRANCH}
+          if [ -z "$(gh pr list --head "${BRANCH}" --base unstable --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base unstable --head "${BRANCH}" \
+              --title "Merge main into unstable" \
+              --body "main and unstable conflict. Resolve the conflicts in this pull request and merge it. Delete the branch once it is merged."
+          fi
+          echo "::warning::main and unstable conflict. A pull request from ${BRANCH} holds the merge."
+
+  promote:
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'promote'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Move main to unstable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin main unstable
+          if ! git merge-base --is-ancestor origin/main origin/unstable; then
+            echo "::error::unstable is missing commits from main. Run this workflow with sync first, and merge its pull request if it opens one."
+            exit 1
+          fi
+          if [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/unstable)" ]; then
+            echo "main is already at unstable."
+            exit 0
+          fi
+          git push origin origin/unstable:refs/heads/main
+          for WORKFLOW in changelog.yaml build.yaml test.yaml; do
+            gh workflow run "${WORKFLOW}" --ref main || true
+          done
+          echo "main is at $(git rev-parse --short origin/unstable)."

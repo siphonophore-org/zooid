@@ -1,0 +1,111 @@
+#pragma warning disable CA2100 // SQL is internal and table names come from a fixed list.
+using System;
+using System.Collections.Generic;
+using Jellyfin.Plugin.Zooid.Services.Database;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Queue;
+
+/// <summary>Runs bulk upkeep statements over the sync tables for the maintenance service.</summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class MaintenanceStore : QueueStoreBase
+{
+    /// <summary>The tables given fresh retries. Content keeps its own rules, since its applies download and delete files.</summary>
+    private static readonly string[] RetriedTables = { "HistorySyncItems", "UserSyncItems", "PeopleSyncItems", "MetadataSyncItems" };
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MaintenanceStore"/> class.
+    /// </summary>
+    /// <param name="databaseProvider">Opens the database the sync tables are in.</param>
+    /// <param name="logger">Writes database failures.</param>
+    public MaintenanceStore(ISyncDatabaseProvider databaseProvider, ILogger<MaintenanceStore> logger)
+        : base(databaseProvider, logger)
+    {
+    }
+
+    private static readonly (string Table, string Label)[] WatchedTables =
+    {
+        ("SyncItems", "file"), ("HistorySyncItems", "watch history"), ("MetadataSyncItems", "metadata"), ("PeopleSyncItems", "person"), ("UserSyncItems", "user")
+    };
+
+    /// <summary>
+    /// Notes every row that is failing, keeps when each first failed, and forgets rows that are no longer queued or errored.
+    /// Rows that first failed before the cutoff are returned and marked reported, so each is raised once.
+    /// </summary>
+    /// <param name="now">The time to record for a row seen failing for the first time.</param>
+    /// <param name="failingSince">Rows that first failed before this are due to be reported.</param>
+    /// <returns>What to report, by kind. Empty when nothing is due.</returns>
+    public IReadOnlyList<FailingRows> TrackFailures(DateTime now, DateTime failingSince)
+    {
+        return Write(conn =>
+        {
+            var due = new List<FailingRows>();
+            using var transaction = conn.BeginTransaction();
+            foreach (var (table, label) in WatchedTables)
+            {
+                using (var note = conn.CreateCommand())
+                {
+                    note.Transaction = transaction;
+                    note.CommandText = $@"
+                        INSERT OR IGNORE INTO SyncAttention (TableName, RowId, FirstFailed, Reason, Reported)
+                            SELECT '{table}', Id, @now, Reason, 0 FROM {table} WHERE Status = 3 AND COALESCE(RetryCount, 0) < 1000000;
+                        UPDATE SyncAttention SET Reason = (SELECT Reason FROM {table} WHERE {table}.Id = SyncAttention.RowId)
+                            WHERE TableName = '{table}' AND RowId IN (SELECT Id FROM {table} WHERE Status = 3 AND Reason IS NOT NULL);
+                        DELETE FROM SyncAttention WHERE TableName = '{table}' AND RowId NOT IN (SELECT Id FROM {table} WHERE Status IN (1, 3));";
+                    Add(note, "@now", Stamp(now));
+                    note.ExecuteNonQuery();
+                }
+
+                using var read = conn.CreateCommand();
+                read.Transaction = transaction;
+                read.CommandText = "SELECT COUNT(*), MAX(Reason) FROM SyncAttention WHERE TableName = @table AND Reported = 0 AND FirstFailed < @since";
+                Add(read, "@table", table);
+                Add(read, "@since", Stamp(failingSince));
+                using (var reader = read.ExecuteReader())
+                {
+                    if (reader.Read() && reader.GetInt32(0) > 0)
+                    {
+                        due.Add(new FailingRows(label, reader.GetInt32(0), reader.IsDBNull(1) ? null : reader.GetString(1)));
+                    }
+                }
+
+                using var mark = conn.CreateCommand();
+                mark.Transaction = transaction;
+                mark.CommandText = "UPDATE SyncAttention SET Reported = 1 WHERE TableName = @table AND Reported = 0 AND FirstFailed < @since";
+                Add(mark, "@table", table);
+                Add(mark, "@since", Stamp(failingSince));
+                mark.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+            return (IReadOnlyList<FailingRows>)due;
+        });
+    }
+
+    /// <summary>
+    /// Gives errored rows older than the cutoff a fresh set of retries.
+    /// A peer that restarted burns every retry in minutes, and nothing else would try the row again.
+    /// </summary>
+    /// <param name="erroredBefore">Rows that errored before this are queued again.</param>
+    /// <returns>How many rows were queued again.</returns>
+    public int RequeueErrored(DateTime erroredBefore)
+    {
+        return Write(conn =>
+        {
+            var requeued = 0;
+            using var transaction = conn.BeginTransaction();
+            foreach (var table in RetriedTables)
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = $"UPDATE {table} SET Status = 1, RetryCount = 0 WHERE Status = 3 AND StatusDate < @before";
+                Add(cmd, "@before", Stamp(erroredBefore));
+                requeued += cmd.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+            return requeued;
+        });
+    }
+}

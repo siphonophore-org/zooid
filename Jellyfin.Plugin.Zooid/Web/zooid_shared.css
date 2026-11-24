@@ -1,0 +1,810 @@
+/* zooid_shared.css */
+/* The layout the Sync, Servers, Storage, and Settings pages add to Stolon. Every class carries the zooid- prefix. */
+
+/* zooid-hidden-button */
+/* Keeps a hidden Stolon button hidden. Stolon forces a fill button to display, which outranks its own hidden class. */
+/* Example: <button class="raised stolon-button stolon-primary stolon-fill stolon-hidden"><span>Retry errors</span></button> */
+.pluginConfigurationPage .stolon-button.stolon-hidden,
+.stolon-dialog .stolon-button.stolon-hidden { display: none !important; }
+
+/* zooid-modal-relative */
+/* Makes a dialog the anchor for its absolutely placed close button. */
+/* Example: <div class="stolon-dialog-content zooid-modal-relative"></div> */
+.zooid-modal-relative { position: relative; }
+
+/* zooid-health-dashboard */
+/* Dark rounded panel holding a row of labeled figures for the last run. */
+/* Example: <div class="zooid-health-dashboard"><div class="zooid-health-row"><div class="zooid-health-card"><span class="zooid-health-label">Last sync</span><span class="zooid-health-value">Never</span></div></div></div> */
+.zooid-health-dashboard {
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+.zooid-health-row {
+    display: flex;
+    gap: 16px;
+}
+.zooid-health-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.zooid-health-label {
+    font-size: 0.85em;
+    opacity: 0.7;
+}
+.zooid-health-value {
+    font-size: 1.1em;
+    font-weight: 500;
+}
+.zooid-health-value.zooid-warning { color: var(--stolon-orange-fg); }
+.zooid-health-value.zooid-success { color: var(--stolon-green-fg); }
+
+/* zooid-compare-table */
+/* Four column table that sets a property's source, local, and merged values side by side. */
+/* Example: <table class="zooid-compare-table"><tr><td class="zooid-compare-table-property">Played</td></tr></table> */
+.zooid-compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+.zooid-compare-table th,
+.zooid-compare-table td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.zooid-compare-table th {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.zooid-compare-table th.zooid-compare-table-property {
+    text-align: left;
+    width: 25%;
+}
+.zooid-compare-table th.zooid-compare-table-server {
+    width: 22%;
+}
+.zooid-compare-table th.zooid-compare-table-merged {
+    width: 22%;
+    color: var(--stolon-accent);
+}
+.zooid-compare-table td.zooid-compare-table-property {
+    text-align: left;
+    font-weight: 500;
+    opacity: 0.8;
+}
+.zooid-compare-table td.zooid-compare-table-value {
+    font-weight: 500;
+    word-break: break-word;
+    max-width: 200px;
+}
+.zooid-compare-table td.zooid-compare-table-merged {
+    background: rgba(0, 164, 220, 0.08);
+    color: var(--stolon-accent);
+    font-weight: 600;
+}
+.zooid-compare-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* zooid-details-cell */
+/* Table column that wraps its change badges onto several rows, and is hidden on a phone. */
+/* Example: columns: [{ key: 'details', className: 'zooid-details-cell' }] */
+.stolon-table-cell.zooid-details-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* zooid-bulk-icon-btn */
+/* Compact icon button in a table's bulk action bar. */
+/* Example: <button class="raised zooid-bulk-icon-btn"><span class="material-icons">block</span></button> */
+.zooid-bulk-icon-btn {
+    padding: 4px 8px !important;
+    min-width: 36px !important;
+    line-height: 1 !important;
+}
+.zooid-bulk-icon-btn .material-icons {
+    font-size: 20px;
+}
+
+/* zooid-item-info */
+/* Name, path, and error preview stacked beside a row's thumbnail, each cut to one line. */
+/* Example: <div class="zooid-item-info"><div class="zooid-item-name">Film.mkv</div><div class="zooid-item-path">Movies</div></div> */
+.stolon-table-cell .zooid-item-info {
+    flex: 1;
+    min-width: 0;
+}
+.stolon-table-cell .zooid-item-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stolon-table-cell .zooid-item-path {
+    font-size: 0.85em;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stolon-table-cell .zooid-item-error {
+    font-size: 0.75em;
+    color: var(--stolon-red-fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+@media (max-width: 600px) {
+    .stolon-table-cell.zooid-details-cell {
+        display: none;
+    }
+    .stolon-table-cell .zooid-item-name {
+        font-size: 0.9em;
+    }
+    .stolon-table-cell .zooid-item-path {
+        font-size: 0.8em;
+    }
+    .stolon-table-cell .zooid-item-error {
+        font-size: 0.7em;
+        max-width: 140px;
+    }
+    .zooid-health-row {
+        flex-wrap: wrap;
+    }
+    .zooid-health-card {
+        min-width: calc(50% - 8px);
+    }
+    .zooid-modal-path-row,
+    .zooid-history-user-row {
+        flex-direction: column;
+    }
+}
+
+/* zooid-filter-pills */
+/* Row of pill buttons that picks one choice, scrolling sideways when it does not fit. */
+/* Example: <div class="zooid-filter-pills"><button class="zooid-filter-pill zooid-on">All</button></div> */
+.zooid-filter-pills { display: flex; gap: 8px; margin: 0 0 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+.zooid-filter-pills::-webkit-scrollbar { display: none; }
+.zooid-filter-pill { flex: 0 0 auto; font: inherit; font-size: .85em; background: var(--stolon-surface); border: 1px solid var(--stolon-border); color: inherit; padding: 6px 12px; border-radius: 14px; cursor: pointer; }
+.zooid-filter-pill.zooid-on { background: var(--stolon-accent); border-color: var(--stolon-accent); color: var(--stolon-on-accent); }
+
+/* zooid-access-grid */
+/* Bordered list of rows, each a title and description beside a badge. */
+/* Example: <div class="zooid-access-grid"><div class="zooid-access-row"><div class="zooid-access-text"><div class="zooid-access-title">Content listing</div><div class="zooid-access-description">Every library.</div></div><span class="stolon-badge stolon-green">Available</span></div></div> */
+.zooid-access-grid {
+    border: 1px solid var(--stolon-border);
+    border-radius: 6px;
+}
+
+.zooid-access-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    padding: 0.75em 1em;
+}
+
+.zooid-access-row + .zooid-access-row {
+    border-top: 1px solid var(--stolon-border);
+}
+
+.zooid-access-text {
+    min-width: 0;
+}
+
+.zooid-access-title {
+    color: var(--stolon-fg);
+}
+
+.zooid-access-description {
+    color: var(--stolon-gray-fg);
+    font-size: 0.9em;
+    margin-top: 0.2em;
+}
+
+.zooid-access-row .stolon-badge {
+    flex-shrink: 0;
+}
+
+/* zooid-role-table */
+/* Bordered grid that shows what a user and an administrator key may do, one badge pair per row. */
+/* Example: <div class="zooid-role-table"><div class="zooid-role-row zooid-role-head"><span>Permission</span><span>User</span><span>Admin</span></div></div> */
+.zooid-role-table {
+    border: 1px solid var(--stolon-border);
+    border-radius: 6px;
+    margin: 0.5em 0 1em;
+}
+
+.zooid-role-row {
+    display: grid;
+    grid-template-columns: 1fr 5.5em 5.5em;
+    align-items: center;
+    gap: 1em;
+    padding: 0.6em 1em;
+}
+
+.zooid-role-row + .zooid-role-row {
+    border-top: 1px solid var(--stolon-border);
+}
+
+.zooid-role-head {
+    color: var(--stolon-gray-fg);
+}
+
+.zooid-role-head > span {
+    font-size: 0.85em;
+}
+
+.zooid-role-row > span:not(:first-child) {
+    justify-self: center;
+    text-align: center;
+}
+
+.zooid-role-label {
+    color: var(--stolon-fg);
+}
+
+.zooid-role-note {
+    border-top: 1px solid var(--stolon-border);
+    padding: 0.6em 1em;
+    color: var(--stolon-gray-fg);
+    font-size: 0.85em;
+}
+
+/* zooid-form-table */
+/* Bordered table of settings, each row a label and hint beside one or two fields. */
+/* Example: <div class="zooid-form-table"><div class="zooid-form-row"><span class="zooid-form-label">Downloads</span><span class="zooid-form-cell"><input is="emby-input" /></span></div></div> */
+.zooid-form-table {
+    border: 1px solid var(--stolon-border);
+    border-radius: 6px;
+}
+
+.zooid-form-row {
+    display: grid;
+    grid-template-columns: 1fr 12em;
+    align-items: center;
+    gap: 1em;
+    padding: 0.6em 1em;
+}
+
+.zooid-form-table3 .zooid-form-row {
+    grid-template-columns: 1fr 8em 8em;
+}
+
+/* Rows added by script sit in a wrapper of their own, so its first row has no row before it. */
+.zooid-form-row + .zooid-form-row,
+.zooid-form-row + div > .zooid-form-row:first-child,
+div:not(.zooid-form-row) + .zooid-form-row {
+    border-top: 1px solid var(--stolon-border);
+}
+
+.zooid-form-label {
+    color: var(--stolon-fg);
+    display: flex;
+    flex-direction: column;
+}
+
+.zooid-form-hint {
+    color: var(--stolon-gray-fg);
+    font-size: 0.85em;
+    margin-top: 0.15em;
+}
+
+.zooid-form-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    min-width: 0;
+}
+
+.zooid-form-none {
+    color: var(--stolon-gray-fg);
+    font-size: 0.85em;
+}
+
+.zooid-form-cell .inputContainer,
+.zooid-form-cell .selectContainer,
+.zooid-form-cell > div {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.zooid-form-input,
+.zooid-form-select {
+    width: 100%;
+    min-width: 0;
+}
+
+.zooid-unit {
+    color: var(--stolon-gray-fg);
+    font-size: 0.85em;
+    white-space: nowrap;
+    min-width: 2em;
+}
+
+.zooid-form-head {
+    color: var(--stolon-gray-fg);
+    font-size: 0.85em;
+}
+
+@media (max-width: 640px) {
+    .zooid-form-row {
+        grid-template-columns: 1fr 9em;
+    }
+
+    .zooid-form-table3 .zooid-form-row {
+        grid-template-columns: 1fr 6em 6em;
+    }
+}
+
+/* zooid-bandwidth */
+/* Bandwidth table with a row per direction, a normal and a scheduled speed. The scheduled column hides while scheduling is off. */
+/* Example: <div class="zooid-form-table zooid-form-table3 zooid-bandwidth zooid-no-schedule"></div> */
+.zooid-bandwidth .zooid-form-row { grid-template-columns: 1fr 11em 11em; }
+.zooid-bandwidth.zooid-no-schedule .zooid-schedule-cell { visibility: hidden; }
+@media (max-width: 640px) {
+    .zooid-bandwidth .zooid-form-row { grid-template-columns: minmax(0, 1fr) 6.5em 6.5em; }
+}
+
+/* zooid-pool-map */
+/* The web of servers on the Servers tab, with this server in the middle. A dot shows a server's state, and a line's color shows its direction. */
+/* Example: <div id="poolMap" class="zooid-pool-map" role="img"><svg><rect class="zooid-pool-pill" /><circle class="zooid-pool-dot zooid-pool-ok" /><path class="zooid-pool-line zooid-pool-pull" /></svg></div> */
+.zooid-pool-map { margin: 0.5em 0 1.25em; }
+.zooid-pool-map svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.zooid-pool-map .zooid-pool-name { font-size: 12px; fill: var(--stolon-fg); }
+.zooid-pool-map .zooid-pool-self { font-size: 12px; font-weight: 600; fill: var(--stolon-fg); text-anchor: middle; }
+.zooid-pool-map .zooid-pool-pill { fill: var(--stolon-surface); stroke: var(--stolon-border); stroke-width: 1; }
+.zooid-pool-map .zooid-pool-card { fill: var(--stolon-surface); stroke: var(--stolon-accent); stroke-width: 1.6; }
+.zooid-pool-map .zooid-pool-line { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.zooid-pool-map .zooid-pool-pull { stroke: var(--stolon-green-fg); }
+.zooid-pool-map .zooid-pool-push { stroke: var(--stolon-blue-fg); }
+.zooid-pool-map .zooid-pool-sync { stroke: var(--stolon-purple-fg); }
+.zooid-pool-map .zooid-pool-ok { fill: var(--stolon-success); }
+.zooid-pool-map .zooid-pool-no-plugin { fill: var(--stolon-warning); }
+.zooid-pool-map .zooid-pool-down { fill: var(--stolon-error); }
+.zooid-pool-map .zooid-pool-disabled { fill: var(--stolon-gray-fg); }
+.zooid-pool-map .zooid-pool-pending { fill: var(--stolon-gray-fg); opacity: 0.5; }
+
+/* zooid-panel */
+/* Bordered sub card, with spacing helpers and muted text so no page sets them inline. */
+/* Example: <div class="zooid-panel zooid-mt-sm"><span class="zooid-muted">None</span></div> */
+.pluginConfigurationPage .zooid-mt-sm { margin-top: 8px; }
+.pluginConfigurationPage .zooid-mt-md { margin-top: 12px; }
+.pluginConfigurationPage .zooid-panel { padding: 14px; border: 1px solid var(--stolon-border); border-radius: 6px; background: rgba(255, 255, 255, 0.04); }
+.pluginConfigurationPage .zooid-muted, .stolon-dialog .zooid-muted { opacity: 0.5; }
+.pluginConfigurationPage .zooid-empty-cell, .stolon-dialog .zooid-empty-cell { text-align: center; opacity: 0.5; }
+.pluginConfigurationPage .zooid-note-cell, .stolon-dialog .zooid-note-cell { opacity: 0.6; font-size: 0.85em; }
+
+/* zooid-mb-md */
+/* Adds the space under a block that sits above other content. */
+/* Example: <div class="fieldDescription zooid-mb-md"></div> */
+.zooid-mb-md { margin-bottom: 12px; }
+
+/* zooid-sync-status */
+/* Result line under the Sync tab description, spaced from the field below only while it holds a message. */
+/* Example: <div class="stolon-status-text zooid-sync-status" role="status"></div> */
+.zooid-sync-status:not(:empty) { margin-bottom: 12px; }
+
+/* zooid-gap-sm */
+/* Sets a small gap between the children of a flex row. */
+/* Example: <div class="flex zooid-gap-sm"></div> */
+.zooid-gap-sm { gap: 8px; }
+
+/* zooid-modal-dialog */
+/* Wide detail dialog and the rows inside it: status line, info grid, paths, and the change summary. */
+/* Example: <div class="stolon-dialog-content zooid-modal-dialog"><div class="zooid-modal-top-row"></div><div class="zooid-modal-info-grid"></div></div> */
+.zooid-modal-dialog { max-width: 900px; width: 95vw; }
+.zooid-modal-top-row {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.zooid-modal-server-mapping {
+    font-size: 0.9em; opacity: 0.8;
+}
+.zooid-modal-info-grid {
+    display: flex; gap: 24px; margin-bottom: 16px;
+    padding: 12px 16px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+}
+.zooid-modal-info-item { flex: 1; min-width: 0; }
+.zooid-modal-info-label {
+    font-size: 0.75em; text-transform: uppercase;
+    letter-spacing: 0.5px; opacity: 0.6; margin-bottom: 4px;
+}
+.zooid-modal-info-value {
+    font-family: var(--stolon-mono);
+    font-size: 1em; font-weight: 500;
+}
+.zooid-modal-changes-summary {
+    display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 16px;
+}
+.zooid-modal-table-container {
+    max-height: 400px; overflow-x: auto; overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px;
+}
+.zooid-modal-table-container table { margin: 0; }
+.zooid-modal-table-container thead {
+    position: sticky; top: 0; background: var(--stolon-surface); z-index: 1;
+}
+.zooid-modal-section-header td {
+    background: rgba(255, 255, 255, 0.08); font-weight: bold;
+    padding: 8px 12px; border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px;
+}
+.zooid-modal-disabled-row td { padding: 8px 12px; }
+.zooid-modal-changed-row { background: var(--stolon-orange-bg); }
+.zooid-modal-changed-row td:first-child { border-left: 3px solid var(--stolon-orange-fg); }
+.zooid-modal-paths-section { margin-bottom: 16px; }
+.zooid-modal-path-row {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 12px 16px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+}
+.zooid-modal-path-block { flex: 1; min-width: 0; }
+.zooid-modal-path-label {
+    font-size: 0.75em; text-transform: uppercase;
+    letter-spacing: 0.5px; opacity: 0.6; margin-bottom: 4px;
+}
+.zooid-modal-path-value {
+    font-family: var(--stolon-mono);
+    font-size: 0.85em; word-break: break-all;
+}
+.zooid-modal-path-note {
+    font-size: 0.8em; color: var(--stolon-purple-fg);
+    margin-top: 6px; font-style: italic;
+}
+.zooid-modal-path-meta { margin-top: 8px; font-size: 0.85em; }
+.zooid-modal-path-meta-label { opacity: 0.6; margin-right: 4px; }
+.zooid-modal-path-meta-value {
+    font-family: var(--stolon-mono);
+}
+
+/* zooid-companion-item */
+/* Row naming one companion file beside a file icon. */
+/* Example: <div class="zooid-companion-item"><span class="zooid-companion-icon material-icons" aria-hidden="true">description</span><span class="zooid-companion-name">Film.srt</span></div> */
+.zooid-companion-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px; font-size: 0.9em;
+}
+.zooid-companion-icon { color: rgba(255, 255, 255, 0.5); }
+.zooid-companion-name {
+    color: rgba(255, 255, 255, 0.85);
+    font-family: var(--stolon-mono);
+    font-size: 0.9em;
+}
+
+/* zooid-history-user-section */
+/* Source and local user side by side in the History detail dialog. */
+/* Example: <div class="zooid-history-user-section"><div class="zooid-history-user-row"><div class="zooid-history-user-block"></div></div></div> */
+.zooid-history-user-section { margin-bottom: 16px; }
+.zooid-history-user-row {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 12px 16px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+}
+.zooid-history-user-block { flex: 1; }
+.zooid-history-user-label {
+    font-size: 0.75em; text-transform: uppercase;
+    letter-spacing: 0.5px; opacity: 0.6; margin-bottom: 4px;
+}
+.zooid-history-user-name { font-weight: 500; margin-bottom: 2px; }
+.zooid-history-user-guid {
+    font-family: var(--stolon-mono);
+    font-size: 0.8em; opacity: 0.5; word-break: break-all;
+}
+
+/* zooid-user-sync-section */
+/* Source and local user side by side in the User detail dialog. */
+/* Example: <div class="zooid-user-sync-section"><div class="zooid-user-sync-block"><div class="zooid-user-sync-label">Source user</div></div></div> */
+.zooid-user-sync-section {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+    padding: 16px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+}
+.zooid-user-sync-block { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.zooid-user-sync-label {
+    font-size: 0.75em; opacity: 0.6;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.zooid-user-sync-name {
+    font-family: var(--stolon-mono);
+    font-size: 1em; font-weight: 500;
+}
+.zooid-user-sync-id {
+    font-family: var(--stolon-mono);
+    font-size: 0.8em; opacity: 0.5;
+}
+
+/* zooid-queue-cards */
+/* Summary cards that double as filters, dimmed while their state is hidden. */
+/* Example: <div class="stolon-cards zooid-queue-cards"><div class="stolon-card stolon-gray zooid-queue-card zooid-on"></div></div> */
+.zooid-queue-cards .zooid-queue-card { cursor: pointer; opacity: .45; transition: opacity .15s; }
+.zooid-queue-cards .zooid-queue-card.zooid-on { opacity: 1; }
+
+/* zooid-queue-peer-card */
+/* Health card for one server, showing its delivery state and what it is sent. */
+/* Example: <div class="zooid-health-card zooid-queue-peer-card"><div class="zooid-queue-peer-reason">Sends files</div></div> */
+.zooid-queue-peer-card .zooid-health-value { font-size: 0.95em; }
+.zooid-queue-peer-card .zooid-health-value.zooid-paused { color: var(--stolon-error); }
+.zooid-queue-peer-card .zooid-queue-peer-reason { font-size: 0.8em; opacity: 0.75; margin-top: 4px; }
+
+/* zooid-queue-list */
+/* Bordered list of change rows, each a thumbnail, a description, and a state chip. */
+/* Example: <div class="zooid-queue-list"><div class="zooid-queue-row"><div class="zooid-queue-thumb-wrap"></div><div class="zooid-queue-info"></div><div class="zooid-queue-right"></div></div></div> */
+.zooid-queue-list { border: 1px solid var(--stolon-border); border-radius: 8px; overflow: hidden; margin-bottom: 1.5em; }
+.zooid-queue-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.06); background: var(--stolon-surface); }
+.zooid-queue-row:last-child { border-bottom: 0; }
+.zooid-queue-row:hover { background: rgba(255,255,255,.04); }
+.zooid-queue-row:has(.zooid-wide) { grid-template-columns: 80px 1fr auto; }
+.zooid-queue-thumb { width: 44px; height: 64px; border-radius: 4px; object-fit: cover; background: rgba(255,255,255,.06); display: block; }
+.zooid-queue-thumb.zooid-round { width: 44px; height: 44px; border-radius: 50%; }
+.zooid-queue-thumb-holder { width: 44px; height: 64px; border-radius: 4px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.3); }
+.zooid-queue-thumb-holder.zooid-round { height: 44px; border-radius: 50%; }
+/* Episodes and home videos carry a landscape primary image, so their frame is wide. */
+.zooid-queue-thumb.zooid-wide, .zooid-queue-thumb-holder.zooid-wide { width: 80px; height: 45px; }
+.zooid-queue-more { padding: 10px 14px; font-size: .85em; color: rgba(255,255,255,.55); text-align: center; }
+.zooid-queue-info { min-width: 0; }
+.zooid-queue-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zooid-queue-title .zooid-queue-episode { color: rgba(255,255,255,.6); font-weight: 400; }
+.zooid-queue-sub { font-size: .85em; line-height: 20px; color: rgba(255,255,255,.55); display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 3px; }
+.zooid-queue-sub > * { white-space: nowrap; }
+.zooid-queue-who { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.75); }
+.zooid-queue-who::after { content: "\00b7"; color: rgba(255,255,255,.35); margin-left: 2px; }
+.zooid-queue-avatar { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,.15); display: inline-block; flex: 0 0 16px; }
+.zooid-queue-avatar.zooid-broken { visibility: hidden; }
+.zooid-queue-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.zooid-queue-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 190px; max-width: 360px; }
+.zooid-queue-chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 14px; font-size: .82em; border: 1px solid; white-space: nowrap; }
+.zooid-queue-chip.zooid-gathering { border-color: var(--stolon-gray-fg); color: var(--stolon-gray-fg); }
+.zooid-queue-chip.zooid-pending { border-color: var(--stolon-orange-fg); color: var(--stolon-orange-fg); }
+.zooid-queue-chip.zooid-sent { border-color: var(--stolon-blue-fg); color: var(--stolon-blue-fg); }
+.zooid-queue-chip.zooid-received { border-color: var(--stolon-purple-fg); color: var(--stolon-purple-fg); }
+.zooid-queue-chip.zooid-failed { border-color: var(--stolon-red-fg); color: var(--stolon-red-fg); }
+.zooid-queue-ring { width: 14px; height: 14px; border-radius: 50%; background: conic-gradient(var(--stolon-gray-fg) var(--p, 0%), var(--stolon-border) 0); flex: 0 0 14px; }
+.zooid-queue-meta { font-size: .8em; color: rgba(255,255,255,.5); }
+.zooid-queue-meta.zooid-error { color: var(--stolon-error); }
+.zooid-queue-discard:hover { color: var(--stolon-error); }
+@media (max-width: 720px) {
+    .zooid-queue-row { grid-template-columns: 44px 1fr; grid-template-areas: "thumb info" "state state"; gap: 10px 12px; padding: 12px; }
+    .zooid-queue-row .zooid-queue-thumb-wrap { grid-area: thumb; }
+    .zooid-queue-thumb, .zooid-queue-thumb-holder { width: 40px; height: 58px; } .zooid-queue-thumb.zooid-round, .zooid-queue-thumb-holder.zooid-round { width: 40px; height: 40px; }
+    .zooid-queue-row .zooid-queue-info { grid-area: info; }
+    .zooid-queue-row .zooid-queue-right { grid-area: state; min-width: 0; max-width: none; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; text-align: left; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); }
+    .zooid-queue-row .zooid-queue-right .zooid-queue-meta { flex: 1 1 auto; text-align: right; }
+    .zooid-queue-row .zooid-queue-right .zooid-queue-meta.zooid-error { flex-basis: 100%; text-align: left; }
+    .zooid-queue-row .zooid-queue-right .zooid-queue-discard { margin-left: auto; }
+    .zooid-queue-title { white-space: normal; }
+    .zooid-queue-title .zooid-queue-episode { display: block; font-size: .9em; }
+    .zooid-queue-title .zooid-queue-episode .zooid-queue-separator { display: none; }
+    .zooid-queue-sub { flex-wrap: wrap; line-height: 18px; } .zooid-queue-sub > * { white-space: normal; }
+    .zooid-queue-thumb.zooid-wide, .zooid-queue-thumb-holder.zooid-wide { width: 72px; height: 40px; }
+}
+
+/* #authChoices */
+/* Two column choice cards for the sign in method, one column on a tablet. */
+/* Example: <div class="stolon-choice-group" id="authChoices"></div> */
+#authChoices { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 768px) { #authChoices { grid-template-columns: 1fr; } }
+#btnCheckPeer, #btnTestConnection { white-space: nowrap; flex: 0 0 auto; }
+
+/* zooid-mapping */
+/* Bordered row of a library or user mapping, a header with Remove and a two column grid of fields. */
+/* Example: <div class="zooid-mapping"><div class="zooid-mapping-header"></div><div class="zooid-mapping-grid"><div class="zooid-mapping-column"></div></div></div> */
+.zooid-mapping {
+    margin-bottom: 2em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--stolon-border);
+}
+.zooid-mapping:last-child {
+    border-bottom: none;
+    margin-bottom: 1em;
+}
+.zooid-mapping-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+}
+.zooid-mapping-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+}
+.zooid-mapping-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* zooid-library-card */
+/* Card for one library mapping on the Storage tab, a route header above its storage settings. */
+/* Example: <div class="zooid-library-card"><div class="zooid-library-card-header"></div></div> */
+#storageServerContainer { margin-bottom: 1.5em; }
+.zooid-library-card {
+    margin-bottom: 1.5em;
+    padding: 1.25em 1.25em 0.75em;
+    border: 1px solid var(--stolon-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+}
+.zooid-library-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85em;
+    margin: -0.25em 0 1.25em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--stolon-border);
+}
+.zooid-library-card-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--stolon-accent);
+    background: var(--stolon-accent-wash);
+}
+.zooid-library-card-route {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+}
+.zooid-library-card-end {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+.zooid-library-card-label {
+    font-size: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.55;
+}
+.zooid-library-card-name {
+    font-size: 1.1em;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.zooid-library-card-arrow {
+    flex: none;
+    font-size: 20px;
+    opacity: 0.45;
+}
+.zooid-storage-mode-badge { flex: none; }
+@media (max-width: 480px) {
+    .zooid-library-card-icon { display: none; }
+}
+#storageLibrariesContainer.zooid-filters-only .zooid-storage-mode-block,
+#storageLibrariesContainer.zooid-filters-only .zooid-link-cache-section,
+#storageLibrariesContainer.zooid-filters-only .zooid-permanent-section,
+#storageLibrariesContainer.zooid-filters-only .zooid-storage-mode-badge { display: none !important; }
+
+/* zooid-kept-bulk-button */
+/* Bulk action button with an icon before its label. */
+/* Example: <button class="raised zooid-kept-bulk-button"><span class="material-icons">link</span><span>Turn back into links</span></button> */
+.zooid-kept-bulk-button { display: inline-flex; align-items: center; gap: 4px; }
+.zooid-kept-bulk-button .material-icons { font-size: 18px; }
+
+/* zooid-filter-section */
+/* Spaced block for a library's filter or its Always keep picks. */
+/* Example: <div class="zooid-filter-section"><h3 class="stolon-subsection-title">Library filter</h3></div> */
+.zooid-filter-section {
+    margin-top: 1em;
+    padding-top: 0.75em;
+}
+
+/* zooid-filter-item */
+/* One pickable item with a thumbnail, its details, and a check box, inside a picker table row. */
+/* Example: <div class="zooid-filter-item zooid-selected"><img class="zooid-filter-item-thumb" /><div class="zooid-filter-item-info"></div></div> */
+.zooid-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(85, 85, 85, 0.15);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.zooid-filter-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.zooid-filter-item.zooid-selected {
+    background: var(--stolon-accent-wash);
+}
+/* In the base paginated table the row already provides padding/border/hover,
+   so flatten the inner item (no nested box) and tint the whole row when selected. */
+.stolon-table-cell .zooid-filter-item { padding: 0; border-bottom: none; }
+.stolon-table-cell .zooid-filter-item:hover,
+.stolon-table-cell .zooid-filter-item.zooid-selected { background: transparent; }
+.zooid-filter-item-thumb {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 60px;
+    border-radius: 3px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.05);
+}
+.zooid-filter-item-thumb-placeholder {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 60px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 18px;
+}
+.zooid-filter-item-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.zooid-filter-item-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.zooid-filter-item-meta {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.zooid-filter-item-overview {
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+.zooid-filter-item-check {
+    flex: 0 0 auto;
+}
+.zooid-filter-items-list {
+    padding: 0;
+    transition: opacity 0.15s;
+}
+
+/* zooid-settings-group */
+/* Group of related settings, divided from the next by a faint line. */
+/* Example: <div class="zooid-settings-group"></div> */
+.zooid-settings-group {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.zooid-settings-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* zooid-health-banner */
+/* Red notice at the top of a page when Zooid cannot run on the database it found. */
+/* Example: <div class="zooid-health-banner stolon-error" role="alert">Install 12.4.13.0 first.</div> */
+.zooid-health-banner {
+    margin: 1em 0 !important;
+    font-size: 1em;
+    line-height: 1.5;
+}

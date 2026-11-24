@@ -1,0 +1,172 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Siphonophore.Stolon;
+using Jellyfin.Plugin.Zooid.Configuration;
+using Jellyfin.Plugin.Zooid.Models.Configuration;
+using Jellyfin.Plugin.Zooid.Services.Clients;
+using Jellyfin.Plugin.Zooid.Services.Configuration;
+using Jellyfin.Plugin.Zooid.Services.Queue;
+using MediaBrowser.Controller;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Providers;
+
+/// <summary>
+/// Lists the sources whose Zooid can answer a metadata lookup, remembering each answer for a while.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class ParentDirectory
+{
+    /// <summary>How long a server that answered is remembered.</summary>
+    public static readonly TimeSpan Remembered = TimeSpan.FromMinutes(5);
+
+    /// <summary>How long a server has to answer.</summary>
+    public static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>How long a server that did not qualify is remembered.</summary>
+    public static readonly TimeSpan FailedRemembered = TimeSpan.FromSeconds(30);
+
+    private readonly IPluginConfigurationManager _configManager;
+    private readonly ISourceServerClientFactory _clientFactory;
+    private readonly IServerApplicationHost _applicationHost;
+    private readonly ILogger<ParentDirectory> _logger;
+    private readonly object _gate = new();
+    private readonly ConcurrentDictionary<string, byte> _failed = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (DateTime At, string Url, Task<bool> Runs)> _known = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ParentDirectory"/> class.
+    /// </summary>
+    /// <param name="configManager">Reads the plugin configuration.</param>
+    /// <param name="clientFactory">Builds the client that asks each source.</param>
+    /// <param name="applicationHost">Names this server.</param>
+    /// <param name="logger">Writes why a source will not be asked.</param>
+    public ParentDirectory(IPluginConfigurationManager configManager, ISourceServerClientFactory clientFactory, IServerApplicationHost applicationHost, ILogger<ParentDirectory> logger)
+    {
+        ArgumentNullException.ThrowIfNull(configManager);
+        ArgumentNullException.ThrowIfNull(clientFactory);
+        ArgumentNullException.ThrowIfNull(applicationHost);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        _configManager = configManager;
+        _clientFactory = clientFactory;
+        _applicationHost = applicationHost;
+        _logger = logger;
+    }
+
+    /// <summary>Lists the sources that run a Zooid able to answer.</summary>
+    /// <param name="cancellationToken">Stops waiting for the sources to answer.</param>
+    /// <returns>The server entries.</returns>
+    public async Task<IReadOnlyList<SourceServer>> ParentsAsync(CancellationToken cancellationToken)
+    {
+        var servers = _configManager.Configuration.GetPullServers();
+        if (servers.Count == 0)
+        {
+            return Array.Empty<SourceServer>();
+        }
+
+        var runs = await Task.WhenAll(servers.Select(RunsZooid)).WaitAsync(cancellationToken).ConfigureAwait(false);
+        return servers.Where((_, i) => runs[i]).ToList();
+    }
+
+    /// <summary>Finds the server entry an address belongs to.</summary>
+    /// <param name="url">The address to match against each Server URL.</param>
+    /// <returns>The entry with the longest matching server URL, or null.</returns>
+    public SourceServer? FindByUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return null;
+        }
+
+        return _configManager.Configuration.GetPullServers()
+            .Where(s => !string.IsNullOrWhiteSpace(s.Url) && url.StartsWith(s.Url.TrimEnd('/') + "/", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(s => s.Url.Length)
+            .FirstOrDefault();
+    }
+
+    /// <summary>Gets the plugin version.</summary>
+    public string Version => _configManager.PluginVersion;
+
+    /// <summary>Forgets every answer, so each server is asked again.</summary>
+    public void Forget()
+    {
+        lock (_gate)
+        {
+            _known.Clear();
+        }
+    }
+
+    /// <summary>Returns the remembered answer for a source, or asks it when the answer is stale.</summary>
+    private Task<bool> RunsZooid(SourceServer server)
+    {
+        var now = DateTime.UtcNow;
+        lock (_gate)
+        {
+            if (_known.TryGetValue(server.Key, out var known)
+                && string.Equals(known.Url, server.Url, StringComparison.OrdinalIgnoreCase)
+                && now - known.At < (_failed.ContainsKey(server.Key) ? FailedRemembered : Remembered))
+            {
+                return known.Runs;
+            }
+
+            _failed.TryRemove(server.Key, out _);
+            var probe = ProbeAsync(server);
+            _known[server.Key] = (now, server.Url, probe);
+            return probe;
+        }
+    }
+
+    /// <summary>Asks a source and marks it failed when it does not qualify.</summary>
+    private async Task<bool> ProbeAsync(SourceServer server)
+    {
+        var runs = await AskAsync(server).ConfigureAwait(false);
+        if (!runs)
+        {
+            _failed[server.Key] = 0;
+        }
+
+        return runs;
+    }
+
+    /// <summary>Asks a source whether it runs a compatible Zooid that is not this server.</summary>
+    private async Task<bool> AskAsync(SourceServer server)
+    {
+        try
+        {
+            using var deadline = new CancellationTokenSource(ProbeTimeout);
+            using var client = _clientFactory.Create(server);
+            var capabilities = await client.GetPeerCapabilitiesAsync(deadline.Token).ConfigureAwait(false);
+            if (capabilities is null)
+            {
+                _logger.LogInformation("Zooid will not ask '{Server}' for metadata: Zooid is not installed there", FormatUtilities.SanitizeForLog(server.DisplayName));
+                return false;
+            }
+
+            if (!HintProtocol.Compatible(capabilities, _configManager.PluginVersion))
+            {
+                _logger.LogInformation("Zooid will not ask '{Server}' for metadata: {Reason}", FormatUtilities.SanitizeForLog(server.DisplayName), FormatUtilities.SanitizeForLog(HintProtocol.ProtocolMismatch(capabilities, _configManager.PluginVersion), 300));
+                return false;
+            }
+
+            if (string.Equals(capabilities.ServerId, _applicationHost.SystemId, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Zooid will not ask '{Server}' for metadata: it reports this server's own id", FormatUtilities.SanitizeForLog(server.DisplayName));
+                return false;
+            }
+
+            return true;
+        }
+        // A faulted probe would be remembered, so every failure counts as unreachable.
+        catch (Exception ex)
+        {
+            _logger.LogInformation(ex, "Zooid will not ask \'{Server}\' for metadata for now, since it could not be reached", FormatUtilities.SanitizeForLog(server.DisplayName));
+            return false;
+        }
+    }
+}

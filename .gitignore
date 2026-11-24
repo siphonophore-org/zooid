@@ -1,0 +1,45 @@
+# Build outputs
+bin/
+obj/
+artifacts/
+dist/
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Rider
+*.sln.iml
+
+# Docs build output
+site/
+
+# Local AI assistant files, never committed
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json

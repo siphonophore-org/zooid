@@ -1,0 +1,49 @@
+# Three Jellyfin servers for Zooid's integration tests. Two sources and one local server, all
+# running the same image, all with the plugin mounted so any of them can take any role. Driven by
+# run.py, which builds the plugin, seeds media, completes the wizards, and runs the scenarios.
+services:
+  source-a:
+    image: ${JELLYFIN_IMAGE:-jellyfin/jellyfin:12.4.20261026-211555}
+    container_name: zooid-it-source-a
+    ports:
+      - "8111:8096"
+    volumes:
+      - ./.state/source-a/config:/config
+      - ./.state/source-a/cache:/cache
+      - ./.state/media/source-a:/media:ro
+      - ./.plugin:/config/plugins/${PLUGIN_FOLDER:-Zooid_0.0.0.0}
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://source-a:8096
+      - JELLYFIN_Serilog__MinimumLevel__Override__Jellyfin.Plugin.Zooid=Debug
+
+  source-b:
+    image: ${JELLYFIN_IMAGE:-jellyfin/jellyfin:12.4.20261026-211555}
+    container_name: zooid-it-source-b
+    ports:
+      - "8112:8096"
+    volumes:
+      - ./.state/source-b/config:/config
+      - ./.state/source-b/cache:/cache
+      - ./.state/media/source-b:/media:ro
+      - ./.plugin:/config/plugins/${PLUGIN_FOLDER:-Zooid_0.0.0.0}
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://source-b:8096
+      - JELLYFIN_Serilog__MinimumLevel__Override__Jellyfin.Plugin.Zooid=Debug
+
+  local:
+    image: ${JELLYFIN_IMAGE:-jellyfin/jellyfin:12.4.20261026-211555}
+    container_name: zooid-it-local
+    ports:
+      - "8113:8096"
+    volumes:
+      - ./.state/local/config:/config
+      - ./.state/local/cache:/cache
+      - ./.state/media/local:/media
+      - ./.plugin:/config/plugins/${PLUGIN_FOLDER:-Zooid_0.0.0.0}
+    # A small disk, so a scenario can fill the free space floor for real. The host volume reports
+    # terabytes free through Docker Desktop, so the floor can never trip on /media.
+    tmpfs:
+      - /media-tiny:size=64m,mode=0777
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://local:8096
+      - JELLYFIN_Serilog__MinimumLevel__Override__Jellyfin.Plugin.Zooid=Debug

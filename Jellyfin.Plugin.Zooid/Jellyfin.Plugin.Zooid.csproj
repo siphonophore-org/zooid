@@ -1,0 +1,130 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.Zooid</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
+    <NoWarn>NU1605;CA1002;CA2227;CA1305;CA2213;CA3003</NoWarn>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="12.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Database.Implementations" Version="12.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Model" Version="12.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Sdk" Version="2026.10.12" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Siphonophore.Stolon" Version="12.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Every file served to the browser -->
+    <None Remove="Web\**\*" />
+    <EmbeddedResource Include="Web\**\*" />
+  </ItemGroup>
+
+  <!-- Jellyfin strings the pages use. Stolon builds them in with Localization/*.json, in every language Jellyfin has. -->
+  <ItemGroup>
+    <JellyfinString Include="All" />
+    <JellyfinString Include="AllowEmbeddedSubtitlesAllowAllOption" Case="sentence" />
+    <JellyfinString Include="AspectRatio" Case="sentence" />
+    <JellyfinString Include="Blacklist" />
+    <JellyfinString Include="ButtonAddServer" Case="sentence" />
+    <JellyfinString Include="ButtonAddUser" Case="sentence" />
+    <JellyfinString Include="ButtonClose" />
+    <JellyfinString Include="ButtonRemove" />
+    <JellyfinString Include="ButtonSignIn" Case="sentence" />
+    <JellyfinString Include="Collections" />
+    <JellyfinString Include="Copy" />
+    <JellyfinString Include="Default" />
+    <JellyfinString Include="Delete" />
+    <JellyfinString Include="Disabled" />
+    <JellyfinString Include="Download" />
+    <JellyfinString Include="DownloadManager" />
+    <JellyfinString Include="Favorite" />
+    <JellyfinString Include="Favorites" />
+    <JellyfinString Include="File" />
+    <JellyfinString Include="Genres" />
+    <JellyfinString Include="HeaderApiKey" />
+    <JellyfinString Include="HeaderApiKeys" />
+    <JellyfinString Include="HeaderDeleteItems" Case="sentence" />
+    <JellyfinString Include="HeaderError" />
+    <JellyfinString Include="HeaderLibraries" />
+    <JellyfinString Include="HeaderStatus" />
+    <JellyfinString Include="HeaderUser" />
+    <JellyfinString Include="HeaderUsers" />
+    <JellyfinString Include="Image" />
+    <JellyfinString Include="Images" />
+    <JellyfinString Include="IndexNumber" Case="sentence" />
+    <JellyfinString Include="ItemCount" />
+    <JellyfinString Include="Items" />
+    <JellyfinString Include="Label3DFormat" />
+    <JellyfinString Include="LabelAvailable" />
+    <JellyfinString Include="LabelBirthDate" />
+    <JellyfinString Include="LabelCountry" />
+    <JellyfinString Include="LabelCustomRating" />
+    <JellyfinString Include="LabelDatabase" />
+    <JellyfinString Include="LabelDeathDate" />
+    <JellyfinString Include="LabelEndDate" />
+    <JellyfinString Include="LabelFailed" />
+    <JellyfinString Include="LabelMetadata" />
+    <JellyfinString Include="LabelName" />
+    <JellyfinString Include="LabelNotInstalled" />
+    <JellyfinString Include="LabelOriginalTitle" />
+    <JellyfinString Include="LabelPassword" />
+    <JellyfinString Include="LabelPlaylist" />
+    <JellyfinString Include="LabelSize" />
+    <JellyfinString Include="LabelSource" />
+    <JellyfinString Include="LabelTagline" />
+    <JellyfinString Include="LabelUser" />
+    <JellyfinString Include="LabelUsername" />
+    <JellyfinString Include="LabelValue" />
+    <JellyfinString Include="LabelYear" />
+    <JellyfinString Include="Live" />
+    <JellyfinString Include="Name" />
+    <JellyfinString Include="Never" />
+    <JellyfinString Include="New" />
+    <JellyfinString Include="No" />
+    <JellyfinString Include="None" />
+    <JellyfinString Include="Normal" />
+    <JellyfinString Include="Off" />
+    <JellyfinString Include="OptionCommunityRating" Case="sentence" />
+    <JellyfinString Include="OptionParentalRating" Case="sentence" />
+    <JellyfinString Include="OptionPlayCount" Case="sentence" />
+    <JellyfinString Include="OptionReleaseDate" Case="sentence" />
+    <JellyfinString Include="Overview" />
+    <JellyfinString Include="People" />
+    <JellyfinString Include="Person" />
+    <JellyfinString Include="Played" />
+    <JellyfinString Include="Playlists" />
+    <JellyfinString Include="Refresh" />
+    <JellyfinString Include="Reset" />
+    <JellyfinString Include="Save" />
+    <JellyfinString Include="Settings" />
+    <JellyfinString Include="StorageType.Fixed" />
+    <JellyfinString Include="Studios" />
+    <JellyfinString Include="TabServer" />
+    <JellyfinString Include="Tags" />
+    <JellyfinString Include="TasksLibraryCategory" Source="server" />
+    <JellyfinString Include="Unknown" />
+    <JellyfinString Include="ValueSeconds" />
+    <JellyfinString Include="Whitelist" />
+    <JellyfinString Include="Yes" />
+  </ItemGroup>
+
+</Project>

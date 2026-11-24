@@ -1,0 +1,37 @@
+name: '🚀 Publish Plugin'
+
+# Tells the Siphonophore repository a release is out, so its stable and unstable manifests list it. The
+# manifests are built from this repository's releases, so nothing is committed here. Sending the event
+# needs a SIPHONOPHORE_DISPATCH_TOKEN secret that can start workflows there. Without one, the manifests
+# pick the release up on their next scheduled rebuild.
+
+on:
+  release:
+    types:
+      - published
+  workflow_call:
+    secrets:
+      SIPHONOPHORE_DISPATCH_TOKEN:
+        required: false
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tell Siphonophore
+        env:
+          GH_TOKEN: ${{ secrets.SIPHONOPHORE_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::notice::No SIPHONOPHORE_DISPATCH_TOKEN is set, so the manifests list this release on their next scheduled rebuild."
+            exit 0
+          fi
+          gh api repos/siphonophore-org/siphonophore/dispatches \
+            -f event_type=plugin-released \
+            -f "client_payload[repo]=${GITHUB_REPOSITORY}"
+          echo "Siphonophore is rebuilding its manifests."

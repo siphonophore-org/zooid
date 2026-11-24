@@ -1,0 +1,110 @@
+using System;
+using Jellyfin.Plugin.Zooid.Models.Queue;
+using Jellyfin.Plugin.Zooid.Services.Queue;
+using Xunit;
+
+namespace Jellyfin.Plugin.Zooid.Tests.Services.Queue;
+
+/// <summary>
+/// The version decider chooses whether to adopt, apply, or keep a value a peer offers.
+/// </summary>
+public class VersionDeciderTests
+{
+    private static ObjectVersion V(string server, int minute) => new()
+    {
+        Kind = HintKind.History,
+        Key = "k",
+        ServerId = server,
+        Timestamp = new DateTime(2026, 10, 3, 12, minute, 0, DateTimeKind.Utc)
+    };
+
+    /// <summary>
+    /// Equal values adopt the incoming version without a write, whatever the versions say.
+    /// True: a copy that already matches raises nothing and ends the loop.
+    /// False: every hint would be written back and re-hinted forever.
+    /// </summary>
+    [Fact]
+    public void Decide_EqualValues_Adopts()
+    {
+        Assert.Equal(VersionDecision.Adopt, VersionDecider.Decide(V("a", 10), V("b", 5), valuesEqual: true));
+    }
+
+    /// <summary>
+    /// An object with no version here takes the incoming edit.
+    /// True: the first hint for an object lands.
+    /// False: nothing would ever sync until a full scan.
+    /// </summary>
+    [Fact]
+    public void Decide_NoLocalVersion_Applies()
+    {
+        Assert.Equal(VersionDecision.Apply, VersionDecider.Decide(null, V("b", 5), valuesEqual: false));
+    }
+
+    /// <summary>
+    /// The newer origin timestamp wins, and an older one is kept out.
+    /// True: the newest human edit always wins across the pool.
+    /// False: a stale copy could overwrite a fresh edit.
+    /// </summary>
+    [Theory]
+    [InlineData(5, 10, VersionDecision.Apply)]
+    [InlineData(10, 5, VersionDecision.Keep)]
+    public void Decide_DifferentTimes_NewerWins(int localMinute, int incomingMinute, VersionDecision expected)
+    {
+        Assert.Equal(expected, VersionDecider.Decide(V("a", localMinute), V("b", incomingMinute), valuesEqual: false));
+    }
+
+    /// <summary>
+    /// A tie breaks on the server id, the same way on both servers.
+    /// True: two servers that edit in the same second converge on one value.
+    /// False: each would keep its own and the pool never settles.
+    /// </summary>
+    [Fact]
+    public void Decide_SameTime_BreaksTiesOnServerId()
+    {
+        Assert.Equal(VersionDecision.Apply, VersionDecider.Decide(V("a", 5), V("b", 5), valuesEqual: false));
+        Assert.Equal(VersionDecision.Keep, VersionDecider.Decide(V("b", 5), V("a", 5), valuesEqual: false));
+    }
+
+    /// <summary>
+    /// The second edit on one server outranks a copy of its first edit that landed elsewhere later.
+    /// True: the specific failure the design guards against cannot happen.
+    /// False: B's copy of A's first edit would fan a stale value across the pool.
+    /// </summary>
+    [Fact]
+    public void Decide_CopyOfOlderEdit_LosesToNewerEdit()
+    {
+        var secondEditOnA = V("a", 2);
+        var copyOfFirstEditHeldByB = V("a", 1);
+        Assert.Equal(VersionDecision.Keep, VersionDecider.Decide(secondEditOnA, copyOfFirstEditHeldByB, valuesEqual: false));
+    }
+
+    /// <summary>
+    /// Both sides holding the same version with different values apply the copy that arrives.
+    /// True: a value that drifted under one version settles instead of bouncing between two servers.
+    /// False: each side keeps its value, republishes, and the pair trades the same hint forever.
+    /// </summary>
+    [Fact]
+    public void Decide_SameVersionDifferentValue_Applies()
+    {
+        Assert.Equal(VersionDecision.Apply, VersionDecider.Decide(V("a", 5), V("a", 5), valuesEqual: false));
+        Assert.True(VersionDecider.SameVersion(V("a", 5), V("a", 5)));
+        Assert.False(VersionDecider.SameVersion(V("a", 5), V("b", 5)));
+        Assert.False(VersionDecider.SameVersion(V("a", 5), V("a", 6)));
+    }
+
+    /// <summary>
+    /// The same edit holding different values is set right only by its author: this server keeps its own, a peer that made the edit wins,
+    /// and a peer passing on a third server's copy does not.
+    /// True: servers holding two copies of one edit never trade them around a ring.
+    /// False: overlapping scans would rotate the copies forever, or a drifted copy would replace the author's.
+    /// </summary>
+    [Fact]
+    public void Decide_SameVersionDifferentValue_OnlyTheAuthorSetsItRight()
+    {
+        Assert.Equal(VersionDecision.Keep, VersionDecider.Decide(V("me", 5), V("me", 5), valuesEqual: false, thisServerId: "me", peerServerId: "b"));
+        Assert.Equal(VersionDecision.Apply, VersionDecider.Decide(V("a", 5), V("a", 5), valuesEqual: false, thisServerId: "me", peerServerId: "a"));
+        Assert.Equal(VersionDecision.Keep, VersionDecider.Decide(V("a", 5), V("a", 5), valuesEqual: false, thisServerId: "me", peerServerId: "b"));
+        Assert.Equal(VersionDecision.Apply, VersionDecider.Decide(V("a", 5), V("a", 5), valuesEqual: false, thisServerId: "me"));
+        Assert.Equal(VersionDecision.Adopt, VersionDecider.Decide(V("a", 5), V("a", 5), valuesEqual: true, thisServerId: "me", peerServerId: "b"));
+    }
+}

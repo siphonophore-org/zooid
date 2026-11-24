@@ -1,0 +1,601 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Jellyfin.Plugin.Zooid.Configuration;
+using Jellyfin.Plugin.Zooid.Models.Common;
+using Jellyfin.Plugin.Zooid.Models.Configuration;
+using Jellyfin.Plugin.Zooid.Models.MetadataSync;
+using Jellyfin.Plugin.Zooid.Services.Database;
+using Jellyfin.Plugin.Zooid.Services.Links;
+using Jellyfin.Plugin.Zooid.Services.MetadataSync;
+using Jellyfin.Plugin.Zooid.Services.Queue;
+using Jellyfin.Plugin.Zooid.Tasks.MetadataSync;
+using Jellyfin.Plugin.Zooid.Tests.Fakes;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Providers;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace Jellyfin.Plugin.Zooid.Tests.Tasks.MetadataSync;
+
+/// <summary>
+/// The metadata apply writes parents before children, applies only the categories that are on, and marks a category synced only after it reads back as the source's.
+/// </summary>
+public sealed class SyncMissingMetadataTaskTests : IDisposable
+{
+    private const string ServerKey = "server-a";
+    private const string CastFromSource = "[{\"Name\":\"Alice Smith\",\"Role\":\"Lead\",\"Type\":\"Actor\"}]";
+
+    private readonly string _tempDir;
+    private readonly SyncDatabase _database;
+    private readonly MetadataSyncTableManager _manager;
+    private readonly FakeConfigManager _config = new();
+    private readonly TaskClientFactory _factory = new();
+    private readonly SourceServer _server;
+    private readonly Dictionary<Guid, BaseItem> _itemsById = new();
+    private readonly InterfaceStub _libraryStub;
+    private readonly ILibraryManager _library;
+    private readonly MetadataSyncTableService _service;
+    private readonly Movie _movie = new() { Id = Guid.NewGuid(), Name = "Film", Studios = new[] { "Pixar" } };
+
+    public SyncMissingMetadataTaskTests()
+    {
+        _tempDir = Path.Combine(Path.GetTempPath(), "zooid-metadata-sync-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_tempDir);
+        _database = new SyncDatabase(NullLogger<SyncDatabase>.Instance, _tempDir);
+        _manager = new MetadataSyncTableManager(new FixedProvider(_database), NullLogger<MetadataSyncTableManager>.Instance);
+        (_library, _libraryStub) = InterfaceStub.Create<ILibraryManager>();
+        _libraryStub.Answer(nameof(ILibraryManager.GetItemById), args => _itemsById.GetValueOrDefault((Guid)args[0]!));
+        _itemsById[_movie.Id] = _movie;
+        _service = new MetadataSyncTableService(NullLogger<MetadataSyncTableService>.Instance, _library, InterfaceStub.Create<ILocalItems>().Proxy, new NoLinks());
+        _server = new SourceServer
+        {
+            Key = ServerKey,
+            Name = "Source A",
+            Url = "http://server-a:8096",
+            ApiKey = "k",
+            LibraryMappings = { new LibraryMapping { SourceLibraryId = "lib-1", LocalRootPath = "/local" } }
+        };
+        _config.Configuration.Servers.Add(_server);
+        _config.Configuration.EnableMetadataSync = true;
+        SetCategories(metadata: true, images: true, people: true, studios: true);
+    }
+
+    public void Dispose()
+    {
+        _database.Dispose();
+        try
+        {
+            Directory.Delete(_tempDir, recursive: true);
+        }
+        catch (IOException)
+        {
+        }
+    }
+
+    private sealed class Probe : SyncMissingMetadataTask
+    {
+        public Probe(SyncMissingMetadataTaskTests test, MediaSegmentStore? segments = null)
+            : base(NullLogger<SyncMissingMetadataTask>.Instance, test._library, InterfaceStub.Create<IProviderManager>().Proxy, test._factory, test._config, test._service, test._manager, null!, segments)
+        {
+        }
+
+        public string MutexKey => ModuleMutexKey;
+
+        public int Parallelism => MaxDegreeOfParallelism;
+
+        public int ParallelismOf(IList<MetadataSyncItem> group) => ParallelismFor(group);
+
+        public bool Enabled() => IsEnabled();
+
+        public IList<MetadataSyncItem> ToApply() => GetItemsToApply();
+
+        public List<IList<MetadataSyncItem>> Groups(IList<MetadataSyncItem> items) => GetApplyGroups(items).ToList();
+
+        public Task Apply(MetadataSyncItem record) => ApplyAsync(record, CancellationToken.None);
+
+        public Task Verify(MetadataSyncItem record) => VerifyAfterApplyAsync(record, CancellationToken.None);
+
+        public List<IReadOnlyList<MetadataSyncItem>> Batches(IList<MetadataSyncItem> group) => SplitIntoBatches(group).ToList();
+
+        public async Task<Dictionary<MetadataSyncItem, Exception>> ApplyBatch(IReadOnlyList<MetadataSyncItem> batch)
+        {
+            var failures = new Dictionary<MetadataSyncItem, Exception>();
+            await ApplyBatchAsync(batch, failures, CancellationToken.None);
+            return failures;
+        }
+
+        public void Completed(PluginConfiguration config, DateTime at) => RecordRunCompleted(config, at);
+    }
+
+    private Probe NewTask() => new(this);
+
+    private void SetCategories(bool metadata, bool images, bool people, bool studios)
+    {
+        var config = _config.Configuration;
+        config.MetadataSyncMetadata = metadata;
+        config.MetadataSyncImages = images;
+        config.MetadataSyncPeople = people;
+        config.MetadataSyncStudios = studios;
+    }
+
+    private MetadataSyncItem Row(string? itemType = "Movie", string? name = "Film", string? sourceItemId = null) => new()
+    {
+        SourceLibraryId = "lib-1",
+        SourceItemId = sourceItemId ?? Guid.NewGuid().ToString("N"),
+        LocalItemId = _movie.Id.ToString("N"),
+        ItemName = name,
+        ItemType = itemType,
+        ServerKey = ServerKey,
+        Status = SyncStatus.Queued
+    };
+
+    private MetadataSyncItem RowWithStudios(string sourceStudios)
+    {
+        var row = Row();
+        row.Studios.UpdateSource(sourceStudios);
+        row.Studios.Local = "[\"Somewhere Else\"]";
+        return row;
+    }
+
+    /// <summary>
+    /// The task runs when Metadata is on, a source and a library mapping exist, and a category it can apply is on.
+    /// True: queued metadata is applied whenever something could be written.
+    /// False: the queue never drains, or the task connects to sources with nothing to write.
+    /// </summary>
+    [Theory]
+    [InlineData("none", true)]
+    [InlineData("sync", false)]
+    [InlineData("server", false)]
+    [InlineData("mapping", false)]
+    [InlineData("categories", false)]
+    public void IsEnabled_NeedsMetadataASourceAMappingAndACategory(string off, bool expected)
+    {
+        _config.Configuration.EnableMetadataSync = off != "sync";
+        _server.IsEnabled = off != "server";
+        _server.LibraryMappings[0].IsEnabled = off != "mapping";
+        if (off == "categories")
+        {
+            SetCategories(false, false, false, false);
+        }
+
+        Assert.Equal(expected, NewTask().Enabled());
+    }
+
+    /// <summary>
+    /// The queued rows come back parents first, by name within a tier, and rows that are not queued are left out.
+    /// True: a series is applied before its seasons, and those before episodes and films.
+    /// False: a child is written first and its parent's apply then overwrites what it inherited.
+    /// </summary>
+    [Fact]
+    public void GetItemsToApply_QueuedRows_AreOrderedParentsFirstThenByName()
+    {
+        _manager.Upsert(Row("Movie", "beta"));
+        _manager.Upsert(Row("Season", "m"));
+        _manager.Upsert(Row("Series", "z"));
+        _manager.Upsert(Row("Episode", "Alpha"));
+        _manager.Upsert(Row("BoxSet", "c"));
+        _manager.Upsert(Row("MusicArtist", "y"));
+        _manager.Upsert(Row(null, "gamma"));
+        var synced = Row("Series", "a");
+        synced.Status = SyncStatus.Synced;
+        _manager.Upsert(synced);
+
+        var names = NewTask().ToApply().Select(r => r.ItemName).ToArray();
+
+        Assert.Equal(new[] { "y", "z", "c", "m", "Alpha", "beta", "gamma" }, names);
+    }
+
+    /// <summary>
+    /// Within a tier, rows that download no image form their own group and are applied one at a time, and rows that download images are applied four at once.
+    /// True: writes to Jellyfin's library database, which takes one writer at a time, do not queue behind each other, and image downloads still run together.
+    /// False: four workers would wait on one database writer and hold up Jellyfin's own writes, or image downloads would run one at a time.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void GetApplyGroups_RowsWithAndWithoutImages_AreSplitAndPacedApart(bool imagesOn)
+    {
+        _config.Configuration.MetadataSyncImages = imagesOn;
+        var plain = Row("Movie", "plain");
+        var pictured = Row("Movie", "pictured");
+        pictured.Images.UpdateSource("{\"Primary\":[{\"ImageType\":\"Primary\",\"ImageIndex\":0,\"Size\":9,\"Tag\":\"t\"}]}");
+        var task = NewTask();
+
+        var groups = task.Groups(new List<MetadataSyncItem> { pictured, plain });
+
+        if (imagesOn)
+        {
+            Assert.Equal(new[] { "plain", "pictured" }, groups.Select(g => Assert.Single(g).ItemName));
+            Assert.Equal(new[] { 1, 4 }, groups.Select(task.ParallelismOf));
+        }
+        else
+        {
+            Assert.Equal(2, Assert.Single(groups).Count);
+            Assert.Equal(1, task.ParallelismOf(groups[0]));
+        }
+    }
+
+    /// <summary>
+    /// Rows with no image to download are split into batches of at most fifty, a row whose item is already in the batch starts a new one, and a row with images stands alone.
+    /// True: items are saved in large batches, and each row in a batch reads back only its own values.
+    /// False: a batch would hold one item twice and the first row would read back the second row's values, or an image download would wait on a whole batch.
+    /// </summary>
+    [Fact]
+    public void SplitIntoBatches_CapsSizeAndKeepsEachItemOncePerBatch()
+    {
+        var task = NewTask();
+        var many = Enumerable.Range(0, 120).Select(i => { var r = Row(name: $"F{i}"); r.LocalItemId = Guid.NewGuid().ToString("N"); return r; }).ToList();
+        var a = Row(name: "a");
+        var b = Row(name: "b");
+        b.LocalItemId = Guid.NewGuid().ToString("N");
+        var again = Row(name: "a again");
+        var pictured = Row(name: "pictured");
+        pictured.LocalItemId = Guid.NewGuid().ToString("N");
+        pictured.Images.UpdateSource("{\"Primary\":[{\"ImageType\":\"Primary\",\"ImageIndex\":0,\"Size\":9,\"Tag\":\"t\"}]}");
+
+        var sizes = task.Batches(many).Select(x => x.Count);
+        var split = task.Batches(new List<MetadataSyncItem> { a, b, again, pictured }).Select(x => x.Select(r => r.ItemName).ToArray()).ToList();
+
+        Assert.Equal(new[] { 50, 50, 20 }, sizes);
+        Assert.Equal(new[] { new[] { "a", "b" }, new[] { "a again" }, new[] { "pictured" } }, split);
+    }
+
+    /// <summary>
+    /// A batch saves the items that share a parent in one call to the library, after writing each one's changes.
+    /// True: a batch of edits costs one library save, and every row's values land.
+    /// False: each item costs its own database transaction, or a change is lost from the save.
+    /// </summary>
+    [Fact]
+    public async Task ApplyBatchAsync_SharedParent_SavesTogetherOnce()
+    {
+        SetCategories(metadata: false, images: false, people: false, studios: true);
+        var (rows, movies) = StudioRows(3);
+        _libraryStub.Answer(nameof(ILibraryManager.GetLocalAlternateVersionIds), _ => Array.Empty<Guid>());
+        _libraryStub.Answer(nameof(ILibraryManager.UpdateItemsAsync), _ => Task.CompletedTask);
+
+        var failures = await NewTask().ApplyBatch(rows);
+
+        Assert.Empty(failures);
+        var save = Assert.Single(_libraryStub.Calls, c => c.Name == nameof(ILibraryManager.UpdateItemsAsync));
+        Assert.Equal(movies, (IReadOnlyList<BaseItem>)save.Args[0]!);
+        Assert.Equal(MediaBrowser.Controller.Library.ItemUpdateType.MetadataEdit, save.Args[2]);
+        Assert.All(movies, m => Assert.Equal(new[] { "Disney" }, m.Studios));
+    }
+
+    /// <summary>
+    /// A batch that cannot be saved is saved one item at a time, and each row carries its own save failure.
+    /// True: a bad item fails only its own row, as when items were saved alone.
+    /// False: one failing item would error every row in its batch, or the failure would be lost.
+    /// </summary>
+    [Fact]
+    public async Task ApplyBatchAsync_BatchSaveThrows_SavesEachAlone()
+    {
+        SetCategories(metadata: false, images: false, people: false, studios: true);
+        var (rows, _) = StudioRows(2);
+        _libraryStub.Answer(nameof(ILibraryManager.GetLocalAlternateVersionIds), _ => Array.Empty<Guid>());
+        _libraryStub.Answer(nameof(ILibraryManager.UpdateItemsAsync), _ => throw new InvalidOperationException("database is locked"));
+
+        var failures = await NewTask().ApplyBatch(rows);
+
+        Assert.Equal(2, failures.Count);
+        Assert.All(failures.Values, ex => Assert.StartsWith("Persist: UpdateToRepositoryAsync threw", ex.Message, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A video with alternate versions is saved alone, so Jellyfin still copies its details onto those versions.
+    /// True: a batch never skips the work a video's own save does.
+    /// False: an alternate version keeps the old overview and genres after a sync.
+    /// </summary>
+    [Fact]
+    public async Task ApplyBatchAsync_VideoWithAlternateVersions_IsSavedAlone()
+    {
+        SetCategories(metadata: false, images: false, people: false, studios: true);
+        var (rows, movies) = StudioRows(3);
+        _libraryStub.Answer(nameof(ILibraryManager.GetLocalAlternateVersionIds), args => ReferenceEquals(args[0], movies[0]) ? new[] { Guid.NewGuid() } : Array.Empty<Guid>());
+        _libraryStub.Answer(nameof(ILibraryManager.UpdateItemsAsync), _ => Task.CompletedTask);
+
+        var failures = await NewTask().ApplyBatch(rows);
+
+        var save = Assert.Single(_libraryStub.Calls, c => c.Name == nameof(ILibraryManager.UpdateItemsAsync));
+        Assert.Equal(movies.Skip(1), (IReadOnlyList<BaseItem>)save.Args[0]!);
+        Assert.StartsWith("Persist: UpdateToRepositoryAsync threw", Assert.Single(failures).Value.Message, StringComparison.Ordinal);
+        Assert.Same(rows[0], Assert.Single(failures).Key);
+    }
+
+    /// <summary>Builds rows that each change the studios of their own film, and the films.</summary>
+    private (List<MetadataSyncItem> Rows, List<BaseItem> Movies) StudioRows(int count)
+    {
+        var rows = new List<MetadataSyncItem>();
+        var movies = new List<BaseItem>();
+        for (var i = 0; i < count; i++)
+        {
+            var movie = new Movie { Id = Guid.NewGuid(), Name = $"Film {i}", Studios = new[] { "Pixar" } };
+            _itemsById[movie.Id] = movie;
+            var row = RowWithStudios("[\"Disney\"]");
+            row.LocalItemId = movie.Id.ToString("N");
+            rows.Add(row);
+            movies.Add(movie);
+        }
+
+        return (rows, movies);
+    }
+
+    /// <summary>
+    /// The rows are grouped into the three tiers, applied in order.
+    /// True: a tier finishes before the next starts, even with four rows applied at once.
+    /// False: a season and its series are applied side by side.
+    /// </summary>
+    [Fact]
+    public void GetApplyGroups_Rows_AreGroupedByTierInOrder()
+    {
+        var rows = new List<MetadataSyncItem>
+        {
+            Row("Movie", "film"),
+            Row("MusicAlbum", "album"),
+            Row("Series", "series"),
+            Row("Season", "season"),
+            Row("MusicArtist", "artist")
+        };
+        var task = NewTask();
+
+        var groups = task.Groups(rows);
+
+        Assert.Equal(3, groups.Count);
+        Assert.Equal(new[] { "series", "artist" }, groups[0].Select(r => r.ItemName).ToArray());
+        Assert.Equal(new[] { "album", "season" }, groups[1].Select(r => r.ItemName).ToArray());
+        Assert.Equal(new[] { "film" }, groups[2].Select(r => r.ItemName).ToArray());
+        Assert.Empty(task.Groups(new List<MetadataSyncItem>()));
+        Assert.Equal(4, task.Parallelism);
+    }
+
+    /// <summary>
+    /// A row with no local item, an id that is not an id, or an item the library no longer has is refused with the reason.
+    /// True: a row whose local item is gone errors with a cause the table shows.
+    /// False: the apply fails with a null reference, or writes to another item.
+    /// </summary>
+    [Theory]
+    [InlineData(null, "Local item not found")]
+    [InlineData("", "Local item not found")]
+    [InlineData("not-an-id", "Invalid item ID")]
+    [InlineData("99999999999999999999999999999999", "Local item not found in library")]
+    public async Task ApplyAsync_UnusableLocalItem_ThrowsTheReason(string? localItemId, string reason)
+    {
+        var row = Row();
+        row.LocalItemId = localItemId;
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => NewTask().Apply(row));
+
+        Assert.Equal(reason, thrown.Message);
+    }
+
+    /// <summary>
+    /// Studios that already match in order and case are not written again.
+    /// True: an unchanged item is not saved, so Jellyfin raises no change for it.
+    /// False: every run saves every queued item and echoes a change to every peer.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_StudiosAlreadyMatch_WritesNothing()
+    {
+        var before = _movie.Studios;
+
+        var thrown = await Record.ExceptionAsync(() => NewTask().Apply(RowWithStudios("[\"Pixar\"]")));
+
+        Assert.Null(thrown);
+        Assert.Same(before, _movie.Studios);
+    }
+
+    /// <summary>
+    /// Studios that differ are written onto the local item, and the only failure the apply may report for them is the save.
+    /// True: the source's studios reach the item, and a save that fails is reported as a save failure.
+    /// False: the studios are never written, or the write itself is reported as failed.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_StudiosDiffer_WritesThemOntoTheItem()
+    {
+        var thrown = await Record.ExceptionAsync(() => NewTask().Apply(RowWithStudios("[\"Disney\",\"Pixar\"]")));
+
+        Assert.Equal(new[] { "Disney", "Pixar" }, _movie.Studios);
+        Assert.True(thrown is null || thrown.Message.StartsWith("Persist: UpdateToRepositoryAsync threw", StringComparison.Ordinal), thrown?.Message);
+    }
+
+    /// <summary>
+    /// A category that is off is not applied, whatever the row holds.
+    /// True: turning Studios off leaves local studios alone.
+    /// False: a category keeps being written after the administrator turned it off.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_CategoryOff_IsNotApplied()
+    {
+        SetCategories(metadata: true, images: true, people: true, studios: false);
+
+        await NewTask().Apply(RowWithStudios("[\"Disney\"]"));
+
+        Assert.Equal(new[] { "Pixar" }, _movie.Studios);
+    }
+
+    /// <summary>
+    /// A cast change for an item that takes no cast fails with the item's type.
+    /// True: the row errors saying why the cast could not be written.
+    /// False: the write is dropped by Jellyfin and the row is queued again on every scan.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_CastForAnItemThatTakesNone_ThrowsNamingTheType()
+    {
+        var person = new Person { Id = Guid.NewGuid(), Name = "Alice Smith" };
+        _itemsById[person.Id] = person;
+        var row = Row();
+        row.LocalItemId = person.Id.ToString("N");
+        row.People.UpdateSource(CastFromSource);
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => NewTask().Apply(row));
+
+        Assert.Equal("People: item type Person does not accept manual people writes", thrown.Message);
+    }
+
+    /// <summary>
+    /// An image change whose server did not connect fails naming the server, and other categories are still applied.
+    /// True: one category failing does not stop the rest, and the reason points at the server.
+    /// False: the images are skipped silently, or the whole row is abandoned at the first failure.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_ImagesWithoutTheirServer_ThrowsAndStillAppliesTheRest()
+    {
+        var row = RowWithStudios("[\"Pixar\"]");
+        row.Images.UpdateSource("{\"Primary\":[{\"ImageType\":\"Primary\",\"ImageIndex\":0,\"ImageTag\":\"tag\"}]}");
+        row.People.UpdateSource(CastFromSource);
+        var person = new Person { Id = Guid.NewGuid(), Name = "Alice Smith", Studios = new[] { "Old Studio" } };
+        _itemsById[person.Id] = person;
+        row.LocalItemId = person.Id.ToString("N");
+        SetCategories(metadata: false, images: true, people: true, studios: true);
+
+        var thrown = await Record.ExceptionAsync(() => NewTask().Apply(row));
+
+        Assert.Equal(new[] { "Pixar" }, person.Studios);
+        Assert.StartsWith(
+            "Images: apply threw, Source server 'Source A' is not available this run; People: item type Person does not accept manual people writes",
+            thrown!.Message,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A row with nothing to apply is not read back.
+    /// True: a row queued for nothing costs no library read and passes.
+    /// False: an unchanged row errors because its local item cannot be found.
+    /// </summary>
+    [Fact]
+    public async Task VerifyAfterApplyAsync_NothingApplied_ReadsNothing()
+    {
+        var row = Row();
+        row.LocalItemId = "not-an-id";
+
+        var thrown = await Record.ExceptionAsync(() => NewTask().Verify(row));
+
+        Assert.Null(thrown);
+        Assert.Empty(_libraryStub.Calls);
+    }
+
+    /// <summary>
+    /// An item that is gone, or an id that is not an id, fails the check.
+    /// True: an item deleted during the apply errors the row.
+    /// False: the check passes against nothing and the row is marked Synced.
+    /// </summary>
+    [Theory]
+    [InlineData("not-an-id", "Invalid item ID")]
+    [InlineData("99999999999999999999999999999999", "Verify: local item disappeared after apply")]
+    public async Task VerifyAfterApplyAsync_LocalItemUnusable_Throws(string localItemId, string reason)
+    {
+        var row = RowWithStudios("[\"Disney\"]");
+        row.LocalItemId = localItemId;
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => NewTask().Verify(row));
+
+        Assert.Equal(reason, thrown.Message);
+    }
+
+    /// <summary>
+    /// Syncing a row writes its media segments into the local segment table, reads them back, and marks them synced, and needs Enable media segment provider on.
+    /// True: Queue applies the pool's segments, and Jellyfin's Media Segment Scan picks them up from the local table.
+    /// False: a queued row would never change the segments here, or would write them with the provider off.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ApplyThenVerify_Segments_WritesTheLocalTableAndMarksThemSynced(bool providerOn)
+    {
+        SetCategories(metadata: false, images: false, people: false, studios: false);
+        _config.Configuration.MetadataSyncSegmentProvider = providerOn;
+        var store = new MediaSegmentStore(new FixedProvider(_database), NullLogger<MediaSegmentStore>.Instance);
+        var task = new Probe(this, store);
+        var localId = _movie.Id.ToString("N");
+        var value = new MediaSegmentsValue(ServerKey, "src-1", "origin-id", 10, 20, new List<Jellyfin.Plugin.Zooid.Models.Peer.PeerSegment> { new() { Type = "Intro", StartTicks = 1, EndTicks = 2 } });
+        var row = new MetadataSyncItem { SourceLibraryId = "lib-1", SourceItemId = "src-1", LocalItemId = localId, ItemName = "Film", ServerKey = ServerKey, StatusDate = DateTime.UtcNow };
+        row.Segments.UpdateSource(value.ToJson());
+
+        Assert.Equal(providerOn, task.Enabled());
+        await task.Apply(row);
+        await task.Verify(row);
+
+        var held = store.Get(localId);
+        Assert.Equal(providerOn, held is not null);
+        Assert.Equal(providerOn ? row.Segments.SourceHash : null, row.Segments.SyncedHash);
+        Assert.Equal(providerOn ? "origin-id" : null, held?.OriginServerId);
+    }
+
+    /// <summary>
+    /// Studios that read back as the source's, in any order or case, are marked synced.
+    /// True: an applied category is recorded and not queued again.
+    /// False: a difference in case alone keeps the row Errored forever.
+    /// </summary>
+    [Fact]
+    public async Task VerifyAfterApplyAsync_StudiosLanded_MarksStudiosSynced()
+    {
+        _movie.Studios = new[] { "pixar", "DISNEY" };
+        var row = RowWithStudios("[\"Disney\",\"Pixar\"]");
+
+        await NewTask().Verify(row);
+
+        Assert.Equal(row.Studios.SourceHash, row.Studios.SyncedHash);
+        Assert.Equal(row.Studios.Source, row.Studios.Synced);
+        Assert.Equal(row.Studios.Source, row.Studios.Local);
+        Assert.Null(row.Metadata.SyncedHash);
+    }
+
+    /// <summary>
+    /// Studios that do not read back as the source's fail the check with both lists, and are not marked synced.
+    /// True: a studio a provider rewrote is caught and shown in the reason.
+    /// False: the row is marked Synced while the item still has the old studios.
+    /// </summary>
+    [Fact]
+    public async Task VerifyAfterApplyAsync_StudiosDidNotLand_ThrowsAndLeavesThemUnsynced()
+    {
+        var row = RowWithStudios("[\"Disney\"]");
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => NewTask().Verify(row));
+
+        Assert.Equal("Studios: studios mismatch: source has 1 (Disney), local has 1 (Pixar)", thrown.Message);
+        Assert.Null(row.Studios.SyncedHash);
+    }
+
+    /// <summary>
+    /// A category that is off is not checked, so a difference in it does not fail the row.
+    /// True: turning a category off stops it erroring rows.
+    /// False: rows stay Errored over a category nobody is syncing.
+    /// </summary>
+    [Fact]
+    public async Task VerifyAfterApplyAsync_CategoryOff_IsNotChecked()
+    {
+        SetCategories(metadata: true, images: true, people: true, studios: false);
+        var row = RowWithStudios("[\"Disney\"]");
+
+        var thrown = await Record.ExceptionAsync(() => NewTask().Verify(row));
+
+        Assert.Null(thrown);
+        Assert.Null(row.Studios.SyncedHash);
+    }
+
+    /// <summary>
+    /// A finished run stamps the Metadata time, under the lock the Metadata scan shares.
+    /// True: the dashboard shows when Metadata last ran, and the scan and the apply never overlap.
+    /// False: another sync type's time moves, or a scan overwrites a row mid apply.
+    /// </summary>
+    [Fact]
+    public void RecordRunCompleted_StampsTheMetadataTimeUnderTheMetadataLock()
+    {
+        var task = NewTask();
+        var config = new PluginConfiguration();
+        var at = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+
+        task.Completed(config, at);
+
+        Assert.Equal(at, config.LastMetadataSyncTime);
+        Assert.Null(config.LastPeopleSyncTime);
+        Assert.Equal("Metadata", task.MutexKey);
+        Assert.Equal("ZooidMissingMetadata", task.Key);
+    }
+}

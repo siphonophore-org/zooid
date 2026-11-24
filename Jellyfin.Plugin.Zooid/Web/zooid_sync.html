@@ -1,0 +1,791 @@
+<!-- zooid_sync.html -->
+<!-- The Sync tab, one view for each sync type and one for the Change queue. -->
+
+<div id="ZooidSyncPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_sync.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="ZooidForm">
+                <div class="verticalSection verticalSection-extrabottompadding">
+
+                    <!-- Sync Header -->
+
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h1 class="sectionTitle" id="syncPageTitle" data-str="LabelContentSync">Content sync</h1>
+                    </div>
+
+                    <!-- Sync type Selector -->
+
+                    <div id="syncTypeDescription" class="fieldDescription zooid-mb-md"></div>
+                    <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                    <div id="syncTypeContainer" class="selectContainer">
+                        <label for="syncTypeDropdown" data-str="LabelSyncType">Sync type</label>
+                        <select is="emby-select" id="syncTypeDropdown" class="emby-select-withcolor emby-select">
+                            <option value="content" data-config-key="EnableContentSync" data-str="SyncTypeContent">Content</option>
+                            <option value="history" data-config-key="EnableHistorySync" data-str="SyncTypeHistory">History</option>
+                            <option value="metadata" data-config-key="EnableMetadataSync" data-str="LabelMetadata">Metadata</option>
+                            <option value="people" data-config-key="EnablePeopleSync" data-str="People">People</option>
+                            <option value="users" data-config-key="EnableUserSync" data-str="HeaderUsers">Users</option>
+                            <option value="queue" data-str="ButtonQueue">Queue</option>
+                        </select>
+                    </div>
+
+                    <!-- Content sync View -->
+
+                    <div id="syncView-content" class="zooid-sync-view">
+
+                        <!-- Status summary cards -->
+                        <div id="syncStatusSummary">
+                            <div class="stolon-cards stolon-compact" id="mainStatusRow">
+                                <div class="stolon-card stolon-green" id="statusGroupSynced" title="">
+                                    <span class="stolon-card-count" id="syncedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                                </div>
+                                <div class="stolon-card stolon-purple" id="statusGroupPending" title="">
+                                    <span class="stolon-card-count" id="pendingCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusPending">Pending</span>
+                                </div>
+                                <div class="stolon-card stolon-orange" id="statusGroupQueued" title="">
+                                    <span class="stolon-card-count" id="queuedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                                </div>
+                                <div class="stolon-card stolon-red" id="statusGroupErrored" title="">
+                                    <span class="stolon-card-count" id="erroredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                                </div>
+                                <div class="stolon-card stolon-gray" id="statusGroupIgnored" title="">
+                                    <span class="stolon-card-count" id="ignoredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                                </div>
+                                <div class="stolon-card stolon-blue stolon-hidden" id="statusGroupPendingDownload" title="">
+                                    <span class="stolon-card-count" id="pendingDownloadCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusPendingDownload">Pending download</span>
+                                </div>
+                                <div class="stolon-card stolon-yellow stolon-hidden" id="statusGroupPendingReplacement" title="">
+                                    <span class="stolon-card-count" id="pendingReplacementCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusPendingReplacement">Pending replacement</span>
+                                </div>
+                                <div class="stolon-card stolon-pink stolon-hidden" id="statusGroupPendingDeletion" title="">
+                                    <span class="stolon-card-count" id="pendingDeletionCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusPendingDeletion">Pending deletion</span>
+                                </div>
+                                <div class="stolon-card stolon-teal stolon-hidden" id="statusGroupDeleting" title="">
+                                    <span class="stolon-card-count" id="deletingCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusDeleting">Deleting</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health dashboard -->
+                        <div id="healthDashboard" class="zooid-health-dashboard">
+                            <div class="zooid-health-row">
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                                    <span class="zooid-health-value" id="healthLastSync" data-str="Never">Never</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLibrariesMapped">Libraries mapped</span>
+                                    <span class="zooid-health-value" id="healthLibraryCount">0</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="StatusPending">Pending</span>
+                                    <span class="zooid-health-value" id="healthPendingCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnRefreshItems" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnTriggerSync" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="TabSync">Sync</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnRetryErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                                <span data-str="ButtonRetryErrors">Retry errors</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Table -->
+                        <div id="syncItemsTableContainer">
+                            <!-- The table builds its own markup here. -->
+                        </div>
+
+                        <!-- Content Item Detail Modal -->
+                        <div id="itemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
+                                <button type="button" id="btnModalClose" class="stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose">&times;</button>
+                                <h2 id="modalTitle" class="stolon-modal-title"></h2>
+                                <div id="modalContent" class="stolon-modal-body">
+                                    <div class="zooid-modal-top-row">
+                                        <span id="modalStatusBadge" class="stolon-table-status-badge"></span>
+                                        <span id="modalServerMapping" class="zooid-modal-server-mapping"></span>
+                                    </div>
+                                    <div class="zooid-modal-info-grid">
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                            <div id="modalLastSync" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="TasksLibraryCategory">Library</div>
+                                            <div id="modalLibraryMapping" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="modalErrorSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                        <div id="modalError" class="stolon-error-message"></div>
+                                    </div>
+                                    <div id="modalRetrySection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="LabelRetryCount">Retry count</div>
+                                        <div id="modalRetryCount"></div>
+                                    </div>
+                                    <div class="zooid-modal-paths-section">
+                                        <div class="zooid-modal-path-row">
+                                            <div class="zooid-modal-path-block">
+                                                <div class="zooid-modal-path-label" data-str="LabelSourcePath">Source path</div>
+                                                <div id="modalSourcePath" class="zooid-modal-path-value"></div>
+                                                <div class="zooid-modal-path-meta">
+                                                    <span class="zooid-modal-path-meta-label" data-str="LabelSize">Size</span>
+                                                    <span id="modalSourceSize" class="zooid-modal-path-meta-value"></span>
+                                                </div>
+                                            </div>
+                                            <div class="zooid-modal-path-block">
+                                                <div class="zooid-modal-path-label" data-str="LabelLocalPath">Local path</div>
+                                                <div id="modalLocalPath" class="zooid-modal-path-value"></div>
+                                                <div id="modalLocalPathNote" class="zooid-modal-path-note"></div>
+                                                <div id="modalLocalSizeRow" class="zooid-modal-path-meta">
+                                                    <span class="zooid-modal-path-meta-label" data-str="LabelSize">Size</span>
+                                                    <span id="modalLocalSize" class="zooid-modal-path-meta-value"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="modalCompanionFilesSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderCompanionFiles">Companion files</div>
+                                        <div id="modalCompanionFiles"></div>
+                                    </div>
+                                </div>
+                                <div class="stolon-modal-button-row">
+                                    <button is="emby-button" type="button" id="btnModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonIgnore">Ignore</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnModalMarkSynced" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonMarkSynced">Mark synced</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnModalKeep" class="raised stolon-button stolon-secondary stolon-modal-button stolon-hidden" title="Keep a copy" data-str-title="ButtonKeepCopy">
+                                        <span data-str="Download">Download</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                        <span data-str="ButtonQueue">Queue</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnModalDelete" class="raised stolon-button stolon-destructive stolon-modal-button" title="Delete local file" data-str-title="ButtonDeleteLocalFile">
+                                        <span data-str="Delete">Delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History sync View -->
+
+                    <div id="syncView-history" class="zooid-sync-view stolon-hidden">
+
+                        <!-- Status summary cards -->
+                        <div id="historySyncStatusSummary">
+                            <div class="stolon-cards" id="historyStatusRow">
+                                <div class="stolon-card stolon-green" id="historyStatusGroupSynced" title="">
+                                    <span class="stolon-card-count" id="historySyncedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                                </div>
+                                <div class="stolon-card stolon-orange" id="historyStatusGroupQueued" title="">
+                                    <span class="stolon-card-count" id="historyQueuedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                                </div>
+                                <div class="stolon-card stolon-red" id="historyStatusGroupErrored" title="">
+                                    <span class="stolon-card-count" id="historyErroredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                                </div>
+                                <div class="stolon-card stolon-gray" id="historyStatusGroupIgnored" title="">
+                                    <span class="stolon-card-count" id="historyIgnoredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health dashboard -->
+                        <div id="historyHealthDashboard" class="zooid-health-dashboard">
+                            <div class="zooid-health-row">
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                                    <span class="zooid-health-value" id="historyHealthLastSync" data-str="Never">Never</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelUsersMapped">Users mapped</span>
+                                    <span class="zooid-health-value" id="historyHealthUserCount">0</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLibrariesMapped">Libraries mapped</span>
+                                    <span class="zooid-health-value" id="historyHealthLibraryCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnRefreshHistoryItems" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnTriggerHistorySync" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="TabSync">Sync</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnRetryHistoryErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                                <span data-str="ButtonRetryErrors">Retry errors</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Table -->
+                        <div id="historyItemsTableContainer">
+                            <!-- The table builds its own markup here. -->
+                        </div>
+
+                        <!-- History Item Detail Modal -->
+                        <div id="historyItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
+                                <button type="button" id="btnHistoryModalClose" class="stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose">&times;</button>
+                                <h2 id="historyModalTitle" class="stolon-modal-title"></h2>
+                                <div id="historyModalContent" class="stolon-modal-body">
+                                    <div class="zooid-modal-top-row">
+                                        <span id="historyModalStatusBadge" class="stolon-table-status-badge"></span>
+                                        <span id="historyModalServerMapping" class="zooid-modal-server-mapping"></span>
+                                    </div>
+                                    <div id="historyModalInfoGrid" class="zooid-modal-info-grid">
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                            <div id="historyModalLastSync" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                            <div id="historyModalVersion" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="historyModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                        <div id="historyModalError" class="stolon-error-message"></div>
+                                    </div>
+                                    <div class="zooid-history-user-section">
+                                        <div class="zooid-history-user-row">
+                                            <div class="zooid-history-user-block">
+                                                <div class="zooid-history-user-label" data-str="LabelSourceUser">Source user</div>
+                                                <div id="historyModalSourceUserName" class="zooid-history-user-name"></div>
+                                                <div id="historyModalSourceUserId" class="zooid-history-user-guid"></div>
+                                            </div>
+                                            <div class="zooid-history-user-block">
+                                                <div class="zooid-history-user-label" data-str="LabelLocalUser">Local user</div>
+                                                <div id="historyModalLocalUserName" class="zooid-history-user-name"></div>
+                                                <div id="historyModalLocalUserId" class="zooid-history-user-guid"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="zooid-modal-table-container">
+                                        <table class="zooid-compare-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                                    <th id="historyModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                                    <th id="historyModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                                    <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr id="historyModalRowPlayed">
+                                                    <td class="zooid-compare-table-property" data-str="Played">Played</td>
+                                                    <td id="historyModalSourcePlayed" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalLocalPlayed" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalMergedPlayed" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                                </tr>
+                                                <tr id="historyModalRowFavorite">
+                                                    <td class="zooid-compare-table-property" data-str="Favorite">Favorite</td>
+                                                    <td id="historyModalSourceFavorite" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalLocalFavorite" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalMergedFavorite" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                                </tr>
+                                                <tr id="historyModalRowPlayCount">
+                                                    <td class="zooid-compare-table-property" data-str="OptionPlayCount">Play count</td>
+                                                    <td id="historyModalSourcePlayCount" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalLocalPlayCount" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalMergedPlayCount" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                                </tr>
+                                                <tr id="historyModalRowPosition">
+                                                    <td class="zooid-compare-table-property" data-str="LabelPosition">Position</td>
+                                                    <td id="historyModalSourcePosition" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalLocalPosition" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalMergedPosition" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                                </tr>
+                                                <tr id="historyModalRowLastPlayed">
+                                                    <td class="zooid-compare-table-property" data-str="LabelLastPlayed">Last played</td>
+                                                    <td id="historyModalSourceLastPlayed" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalLocalLastPlayed" class="zooid-compare-table-value">-</td>
+                                                    <td id="historyModalMergedLastPlayed" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="stolon-modal-button-row">
+                                    <button is="emby-button" type="button" id="btnHistoryModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonIgnore">Ignore</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnHistoryModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                        <span data-str="ButtonQueue">Queue</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metadata sync View -->
+
+                    <div id="syncView-metadata" class="zooid-sync-view stolon-hidden">
+
+                        <!-- Status summary cards -->
+                        <div id="metadataSyncStatusSummary">
+                            <div class="stolon-cards" id="metadataStatusRow">
+                                <div class="stolon-card stolon-green" id="metadataStatusGroupSynced" title="">
+                                    <span class="stolon-card-count" id="metadataSyncedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                                </div>
+                                <div class="stolon-card stolon-orange" id="metadataStatusGroupQueued" title="">
+                                    <span class="stolon-card-count" id="metadataQueuedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                                </div>
+                                <div class="stolon-card stolon-red" id="metadataStatusGroupErrored" title="">
+                                    <span class="stolon-card-count" id="metadataErroredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                                </div>
+                                <div class="stolon-card stolon-gray" id="metadataStatusGroupIgnored" title="">
+                                    <span class="stolon-card-count" id="metadataIgnoredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health dashboard -->
+                        <div id="metadataHealthDashboard" class="zooid-health-dashboard">
+                            <div class="zooid-health-row">
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                                    <span class="zooid-health-value" id="metadataHealthLastSync" data-str="Never">Never</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLibrariesMapped">Libraries mapped</span>
+                                    <span class="zooid-health-value" id="metadataHealthLibraryCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnRefreshMetadataItems" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnTriggerMetadataSync" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="TabSync">Sync</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnRetryMetadataErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                                <span data-str="ButtonRetryErrors">Retry errors</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Table -->
+                        <div id="metadataSyncItemsTableContainer">
+                            <!-- The table builds its own markup here. -->
+                        </div>
+
+                        <!-- Metadata Item Detail Modal -->
+                        <div id="metadataSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="metadataSyncModalTitle">
+                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
+                                <button type="button" id="btnMetadataSyncModalClose" class="stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose">&times;</button>
+                                <h2 id="metadataSyncModalTitle" class="stolon-modal-title"></h2>
+                                <div class="stolon-modal-body">
+                                    <div class="zooid-modal-top-row">
+                                        <span id="metadataSyncModalStatusBadge" class="stolon-table-status-badge"></span>
+                                        <span id="metadataSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
+                                    </div>
+                                    <div id="metadataSyncModalInfoGrid" class="zooid-modal-info-grid">
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                            <div id="metadataSyncModalLastSync" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                            <div id="metadataSyncModalVersion" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="TasksLibraryCategory">Library</div>
+                                            <div id="metadataSyncModalLibrary" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="metadataSyncModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                        <div id="metadataSyncModalError" class="stolon-error-message"></div>
+                                    </div>
+                                    <div id="metadataSyncModalChangesSummary" class="zooid-modal-changes-summary"></div>
+                                    <div class="zooid-modal-paths-section">
+                                        <div class="zooid-modal-path-row">
+                                            <div class="zooid-modal-path-block">
+                                                <div class="zooid-modal-path-label" data-str="LabelSourceFile">Source file</div>
+                                                <div id="metadataSyncModalSourcePath" class="zooid-modal-path-value"></div>
+                                            </div>
+                                            <div class="zooid-modal-path-block">
+                                                <div class="zooid-modal-path-label" data-str="LabelLocalFile">Local file</div>
+                                                <div id="metadataSyncModalLocalPath" class="zooid-modal-path-value"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="zooid-modal-table-container">
+                                        <table class="zooid-compare-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                                    <th id="metadataSyncModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                                    <th id="metadataSyncModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                                    <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="metadataSyncModalTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="stolon-modal-button-row">
+                                    <button is="emby-button" type="button" id="btnMetadataSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonIgnore">Ignore</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnMetadataSyncModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                        <span data-str="ButtonQueue">Queue</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User sync View -->
+
+                    <div id="syncView-users" class="zooid-sync-view stolon-hidden">
+
+                        <!-- Status summary cards -->
+                        <div id="userSyncStatusSummary">
+                            <div class="stolon-cards">
+                                <div class="stolon-card stolon-green" id="userStatusGroupSynced" title="">
+                                    <span class="stolon-card-count" id="userSyncedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                                </div>
+                                <div class="stolon-card stolon-orange" id="userStatusGroupQueued" title="">
+                                    <span class="stolon-card-count" id="userQueuedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                                </div>
+                                <div class="stolon-card stolon-red" id="userStatusGroupErrored" title="">
+                                    <span class="stolon-card-count" id="userErroredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                                </div>
+                                <div class="stolon-card stolon-gray" id="userStatusGroupIgnored" title="">
+                                    <span class="stolon-card-count" id="userIgnoredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health dashboard -->
+                        <div id="userHealthDashboard" class="zooid-health-dashboard">
+                            <div class="zooid-health-row">
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                                    <span class="zooid-health-value" id="userHealthLastSync" data-str="Never">Never</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelUsersMapped">Users mapped</span>
+                                    <span class="zooid-health-value" id="userHealthUserCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnRefreshUserItems" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnTriggerUserSync" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="TabSync">Sync</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnRetryUserErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                                <span data-str="ButtonRetryErrors">Retry errors</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Table -->
+                        <div id="userSyncItemsTableContainer">
+                            <!-- The table builds its own markup here. -->
+                        </div>
+
+                        <!-- User Item Detail Modal -->
+                        <div id="userSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="userSyncModalTitle">
+                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
+                                <button type="button" id="btnUserSyncModalClose" class="stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose">&times;</button>
+                                <h2 id="userSyncModalTitle" class="stolon-modal-title"></h2>
+                                <div class="stolon-modal-body">
+                                    <div class="zooid-modal-top-row">
+                                        <span id="userSyncModalStatusBadge" class="stolon-table-status-badge"></span>
+                                        <span id="userSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
+                                    </div>
+                                    <div id="userSyncModalInfoGrid" class="zooid-modal-info-grid stolon-hidden">
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                            <div id="userSyncModalLastSync" class="zooid-modal-info-value"></div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                            <div id="userSyncModalVersion" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="userSyncModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                        <div id="userSyncModalError" class="stolon-error-message"></div>
+                                    </div>
+                                    <div id="userSyncModalChangesSummary" class="zooid-modal-changes-summary"></div>
+                                    <div class="zooid-user-sync-section">
+                                        <div class="zooid-user-sync-block">
+                                            <div class="zooid-user-sync-label" data-str="LabelSourceUser">Source user</div>
+                                            <div id="userSyncModalSourceUser" class="zooid-user-sync-name"></div>
+                                            <div id="userSyncModalSourceUserId" class="zooid-user-sync-id"></div>
+                                        </div>
+                                        <div class="zooid-user-sync-block">
+                                            <div class="zooid-user-sync-label" data-str="LabelLocalUser">Local user</div>
+                                            <div id="userSyncModalLocalUser" class="zooid-user-sync-name"></div>
+                                            <div id="userSyncModalLocalUserId" class="zooid-user-sync-id"></div>
+                                        </div>
+                                    </div>
+                                    <div class="zooid-modal-table-container">
+                                        <table class="zooid-compare-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                                    <th id="userSyncModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                                    <th id="userSyncModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                                    <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="userSyncModalTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="stolon-modal-button-row">
+                                    <button is="emby-button" type="button" id="btnUserSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonIgnore">Ignore</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnUserSyncModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                        <span data-str="ButtonQueue">Queue</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- People sync View -->
+                    <div id="syncView-people" class="zooid-sync-view stolon-hidden">
+
+                        <!-- Status summary cards -->
+                        <div id="peopleSyncStatusSummary">
+                            <div class="stolon-cards">
+                                <div class="stolon-card stolon-green" id="peopleStatusGroupSynced" title="">
+                                    <span class="stolon-card-count" id="peopleSyncedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                                </div>
+                                <div class="stolon-card stolon-orange" id="peopleStatusGroupQueued" title="">
+                                    <span class="stolon-card-count" id="peopleQueuedCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                                </div>
+                                <div class="stolon-card stolon-red" id="peopleStatusGroupErrored" title="">
+                                    <span class="stolon-card-count" id="peopleErroredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                                </div>
+                                <div class="stolon-card stolon-gray" id="peopleStatusGroupIgnored" title="">
+                                    <span class="stolon-card-count" id="peopleIgnoredCount">0</span>
+                                    <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health dashboard -->
+                        <div id="peopleHealthDashboard" class="zooid-health-dashboard">
+                            <div class="zooid-health-row">
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                                    <span class="zooid-health-value" id="peopleHealthLastSync" data-str="Never">Never</span>
+                                </div>
+                                <div class="zooid-health-card">
+                                    <span class="zooid-health-label" data-str="LabelPeopleTracked">People tracked</span>
+                                    <span class="zooid-health-value" id="peopleHealthPersonCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnRefreshPeopleItems" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnTriggerPeopleSync" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="TabSync">Sync</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnRetryPeopleErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                                <span data-str="ButtonRetryErrors">Retry errors</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Table -->
+                        <div id="peopleSyncItemsTableContainer">
+                            <!-- The table builds its own markup here. -->
+                        </div>
+
+                        <!-- People Item Detail Modal -->
+                        <div id="peopleSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="peopleSyncModalTitle">
+                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
+                                <button type="button" id="btnPeopleSyncModalClose" class="stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose">&times;</button>
+                                <h2 id="peopleSyncModalTitle" class="stolon-modal-title"></h2>
+                                <div class="stolon-modal-body">
+                                    <div class="zooid-modal-top-row">
+                                        <span id="peopleSyncModalStatusBadge" class="stolon-table-status-badge"></span>
+                                        <span id="peopleSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
+                                    </div>
+                                    <div id="peopleSyncModalInfoGrid" class="zooid-modal-info-grid">
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                            <div id="peopleSyncModalLastSync" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                        <div class="zooid-modal-info-item">
+                                            <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                            <div id="peopleSyncModalVersion" class="zooid-modal-info-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="peopleSyncModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                        <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                        <div id="peopleSyncModalError" class="stolon-error-message"></div>
+                                    </div>
+                                    <div id="peopleSyncModalChangesSummary" class="zooid-modal-changes-summary"></div>
+
+                                    <!-- Comparison table -->
+                                    <div class="zooid-modal-table-container">
+                                        <table class="zooid-compare-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                                    <th id="peopleSyncModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                                    <th id="peopleSyncModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                                    <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="peopleSyncModalTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="stolon-modal-button-row">
+                                    <button is="emby-button" type="button" id="btnPeopleSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                        <span data-str="ButtonIgnore">Ignore</span>
+                                    </button>
+                                    <button is="emby-button" type="button" id="btnPeopleSyncModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                        <span data-str="ButtonQueue">Queue</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Change queue View -->
+
+                    <div id="syncView-queue" class="zooid-sync-view stolon-hidden">
+
+                        <!-- Summary cards, which double as filters -->
+                        <div class="stolon-cards stolon-compact zooid-queue-cards">
+                            <div class="stolon-card stolon-gray zooid-queue-card zooid-on" data-state="Gathering" title="Local changes waiting out Send changes after." data-str-title="HelpHintsGathering">
+                                <span class="stolon-card-count" id="queueGatheringCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusGathering">Gathering</span>
+                            </div>
+                            <div class="stolon-card stolon-orange zooid-queue-card zooid-on" data-state="Pending" title="Hints waiting to be sent to a server." data-str-title="HelpHintsWaiting">
+                                <span class="stolon-card-count" id="queuePendingCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusPending">Pending</span>
+                            </div>
+                            <div class="stolon-card stolon-blue zooid-queue-card zooid-on" data-state="Sent" title="Hints a server accepted and is still working on." data-str-title="HelpHintsAccepted">
+                                <span class="stolon-card-count" id="queueSentCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusSent">Sent</span>
+                            </div>
+                            <div class="stolon-card stolon-purple zooid-queue-card zooid-on" data-state="Received" title="Hints received from servers and not yet applied." data-str-title="HelpHintsReceived">
+                                <span class="stolon-card-count" id="queueInboundCount">0</span>
+                                <span class="stolon-card-label" data-str="StatusReceived">Received</span>
+                            </div>
+                            <div class="stolon-card stolon-red zooid-queue-card zooid-on" data-state="Failed" title="Hints a server refused as malformed." data-str-title="HelpHintsMalformed">
+                                <span class="stolon-card-count" id="queueFailedCount">0</span>
+                                <span class="stolon-card-label" data-str="LabelFailed">Failed</span>
+                            </div>
+                        </div>
+
+                        <!-- Servers -->
+                        <div id="queuePeers" class="zooid-health-dashboard">
+                            <div class="zooid-health-row" id="queuePeerRow"></div>
+                        </div>
+                        <div id="queueNoPeers" class="stolon-info stolon-hidden" data-str="QueueNoPeers">No server is set to Push or Sync, so this server sends no hints. Hints it receives from other servers still appear below.</div>
+                        <div id="queueUnmatched" class="stolon-warn stolon-hidden"><span id="queueUnmatchedText"></span> <button is="emby-button" type="button" id="btnQueueUnmatchedDismiss" class="raised stolon-button stolon-small"><span data-str="ButtonDismiss">Dismiss</span></button></div>
+
+                        <!-- Action buttons -->
+                        <div class="stolon-button-row">
+                            <button is="emby-button" type="button" id="btnQueueRefresh" class="raised stolon-button stolon-secondary stolon-fill">
+                                <span data-str="Refresh">Refresh</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnQueueRun" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="ButtonRunNow">Run now</span>
+                            </button>
+                        </div>
+                        <div id="queueFailedActions" class="stolon-button-row stolon-hidden">
+                            <button is="emby-button" type="button" id="btnQueueRetryFailed" class="raised stolon-button stolon-primary stolon-fill">
+                                <span data-str="ButtonRetryFailed">Retry failed</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnQueueDismissFailed" class="raised stolon-button stolon-destructive stolon-fill">
+                                <span data-str="ButtonDismissFailed">Dismiss failed</span>
+                            </button>
+                        </div>
+
+                        <div class="stolon-divider stolon-divider-plain"></div>
+
+                        <!-- Direction and server filters -->
+                        <div class="zooid-filter-pills" id="queueFilters">
+                            <button type="button" class="zooid-filter-pill zooid-on" data-dir="all" data-str="All">All</button>
+                            <button type="button" class="zooid-filter-pill" data-dir="out" data-str="FilterOutbound">Outbound</button>
+                            <button type="button" class="zooid-filter-pill" data-dir="in" data-str="FilterInbound">Inbound</button>
+                        </div>
+
+                        <!-- One list, a change is one row for its whole life -->
+                        <div id="queueEmpty" class="stolon-empty-section stolon-hidden" data-str="EmptyQueue">Nothing is moving between servers right now.</div>
+                        <div id="queueList" class="zooid-queue-list"></div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

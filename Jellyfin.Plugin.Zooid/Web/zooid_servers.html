@@ -1,0 +1,307 @@
+<!-- zooid_servers.html -->
+<!-- The Servers tab, the map of servers and an editor with a step for each part of one server's setup. -->
+
+<div id="ZooidServersPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_servers.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="ZooidServersForm">
+                <div class="verticalSection verticalSection-extrabottompadding">
+
+                    <!-- Servers Header -->
+
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h1 class="sectionTitle" data-str="TabServers">Servers</h1>
+                    </div>
+                    <div id="poolMap" class="zooid-pool-map stolon-hidden" role="img"></div>
+                    <div class="fieldDescription zooid-mb-md" data-str="HelpServerRank">Ranks servers from the top down. Drag a server to move it.</div>
+
+                    <!-- Servers -->
+
+                    <div class="stolon-section">
+                        <div id="serversConfigContent" class="stolon-section-content">
+
+                            <!-- Server list, in rank order -->
+                            <div id="serverList" class="stolon-card-list"></div>
+                            <div id="serverEmpty" class="stolon-empty-section stolon-hidden" data-str="EmptyServers">No servers yet. Add one below.</div>
+                            <div class="stolon-card-list-actions">
+                                <button is="emby-button" type="button" id="btnAddServer" class="raised stolon-button stolon-primary">
+                                    <span class="material-icons" aria-hidden="true">add</span>
+                                    <span data-str="ButtonAddServer">Add server</span>
+                                </button>
+                                <span id="serverListStatus" class="stolon-status-text" role="status"></span>
+                            </div>
+
+                            <!-- The editor lives inside whichever card is open. It parks here while the list re-renders. -->
+                            <div id="serverEditorHolder" class="stolon-hidden">
+                            <div id="serverEditor">
+
+                                <!-- Step 1: Connection -->
+                                <div class="stolon-collapsible-section stolon-numbered">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepConnection">
+                                        <span class="stolon-collapsible-title" data-str="HeaderConnection">Connection</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepConnection" class="stolon-collapsible-content stolon-collapsed">
+
+                                        <div class="inputContainer">
+                                            <label for="txtServerName" data-str="LabelName">Name</label>
+                                            <input is="emby-input" type="text" id="txtServerName" placeholder="Default" data-str-placeholder="Default" />
+                                            <div class="fieldDescription" data-str="HelpServerName">Names the server in tables and logs. Empty uses the server's own name.</div>
+                                        </div>
+
+                                        <div class="checkboxContainer checkboxContainer-withDescription">
+                                            <label class="emby-checkbox-label">
+                                                <input type="checkbox" is="emby-checkbox" id="chkServerEnabled" />
+                                                <span class="checkboxLabel" data-str="OptionEnabled">Enabled</span>
+                                            </label>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpServerEnabled">Keeps the settings and skips this server while off.</div>
+                                        </div>
+
+                                        <div class="inputContainer">
+                                            <label for="txtSourceServerUrl" data-str="LabelServerUrl">Server URL</label>
+                                            <input is="emby-input" type="text" id="txtSourceServerUrl" />
+                                            <div class="fieldDescription" data-str="HelpServerUrl">Sets the URL this server uses to reach that one, such as http://server:8096.</div>
+                                        </div>
+
+                                        <div class="inputContainer">
+                                            <label for="txtSourceServerExternalUrl" data-str="LabelExternalUrl">External URL</label>
+                                            <input is="emby-input" type="text" id="txtSourceServerExternalUrl" placeholder="Default" data-str-placeholder="Default" />
+                                            <div class="fieldDescription" data-str="HelpExternalUrl">Sets the URL a browser uses for that server, when it differs. Empty uses the Server URL.</div>
+                                        </div>
+
+                                        <div class="checkboxContainer checkboxContainer-withDescription">
+                                            <label class="emby-checkbox-label">
+                                                <input type="checkbox" is="emby-checkbox" id="chkAllowPrivateNetwork" checked />
+                                                <span class="checkboxLabel" data-str="LabelAllowPrivateNetwork">Allow private network address</span>
+                                            </label>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpAllowPrivateNetwork">Lets the Server URL be a loopback or LAN address.</div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Authentication -->
+                                <div class="stolon-collapsible-section stolon-numbered">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepAuthentication">
+                                        <span class="stolon-collapsible-title" data-str="HeaderAuthentication">Authentication</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepAuthentication" class="stolon-collapsible-content stolon-collapsed">
+
+                                        <div id="serverInfoContainer" class="stolon-record-card stolon-hidden zooid-mb-md">
+                                            <div class="stolon-record-row">
+                                                <span class="stolon-record-label" data-str="TabServer">Server</span>
+                                                <span id="txtSourceServerName" class="stolon-mono"></span>
+                                            </div>
+                                            <div class="stolon-record-row">
+                                                <span class="stolon-record-label" data-str="LabelServerId">ID</span>
+                                                <span id="txtSourceServerId" class="stolon-mono"></span>
+                                            </div>
+                                            <div id="authenticatedUserRow" class="stolon-record-row stolon-hidden">
+                                                <span class="stolon-record-label" data-str="LabelUser">User</span>
+                                                <span id="txtAuthenticatedUser" class="stolon-mono"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="stolon-choice-group" id="authChoices" role="radiogroup" aria-label="Authentication" data-str-label="HeaderAuthentication">
+                                            <label class="stolon-choice" data-auth="key">
+                                                <input type="radio" name="serverAuth" value="key" />
+                                                <span class="stolon-choice-name" data-str="HeaderApiKey">API Key</span>
+                                                <span class="stolon-choice-text" data-str="HelpAuthApiKey">From that server's Dashboard under API Keys.</span>
+                                            </label>
+                                            <label class="stolon-choice" data-auth="user">
+                                                <input type="radio" name="serverAuth" value="user" />
+                                                <span class="stolon-choice-name" data-str="ButtonSignIn">Sign in</span>
+                                                <span class="stolon-choice-text" data-str="HelpAuthSignIn">Sign in once. Only the token is kept.</span>
+                                            </label>
+                                        </div>
+
+                                        <div id="authKeyPanel">
+                                            <div class="inputContainer">
+                                                <label for="txtSourceServerApiKey" data-str="HeaderApiKey">API Key</label>
+                                                <input is="emby-input" type="password" id="txtSourceServerApiKey" />
+                                                <div class="fieldDescription" data-str="HelpApiKeyStored">Stores the key encrypted and never shows it again.</div>
+                                            </div>
+                                        </div>
+
+                                        <div id="authUserPanel" class="stolon-bulk-edit-bar zooid-panel stolon-hidden">
+                                            <!-- Filled by the page with the signed in user. -->
+                                            <div id="authSignedIn" class="stolon-info stolon-hidden"></div>
+                                            <div class="stolon-edit-line">
+                                                <div class="stolon-field">
+                                                    <label for="txtAuthUsername" data-str="LabelUsername">Username</label>
+                                                    <input is="emby-input" type="text" id="txtAuthUsername" />
+                                                </div>
+                                                <div class="stolon-field">
+                                                    <label for="txtAuthPassword" data-str="LabelPassword">Password</label>
+                                                    <input is="emby-input" type="password" id="txtAuthPassword" />
+                                                </div>
+                                            </div>
+                                            <div class="flex align-items-center zooid-gap-sm">
+                                                <button is="emby-button" type="button" id="btnGenerateToken" class="raised stolon-button stolon-primary stolon-small">
+                                                    <span data-str="ButtonGenerateToken">Generate token</span>
+                                                </button>
+                                                <span id="tokenGeneratorStatus" class="stolon-status-text"></span>
+                                            </div>
+                                        </div>
+
+                                        <div id="savedSecretNote" class="stolon-warn zooid-mb-md stolon-hidden" role="status"></div>
+
+                                        <div class="stolon-collapsible-actions stolon-flush">
+                                            <button is="emby-button" type="button" id="btnTestConnection" class="raised stolon-button stolon-small">
+                                                <span data-str="ButtonTestConnection">Test connection</span>
+                                            </button>
+                                            <span id="connectionStatus" class="stolon-status-text"></span>
+                                        </div>
+
+                                        <div id="accessUnknown" class="stolon-neutral zooid-mt-md stolon-hidden" data-str="HelpTestForAccess">Test the connection to see what this key can do.</div>
+                                        <div id="accessSummary" class="zooid-mt-md stolon-hidden">
+                                            <div id="accessHeadline" class="zooid-mb-md"></div>
+                                            <div id="accessRows" class="zooid-access-grid zooid-mb-md"></div>
+                                            <div class="fieldDescription" data-str="HelpCheckLink">Select Check link to see what that server's own key reads here.</div>
+                                        </div>
+
+                                        <h3 class="stolon-subsection-title" data-str="HeaderDirection">Direction</h3>
+                                        <div class="stolon-choice-group" id="modeChoices" role="radiogroup" aria-label="Direction" data-str-label="HeaderDirection">
+                                            <label class="stolon-choice" data-mode="Pull">
+                                                <input type="radio" name="serverMode" value="Pull" />
+                                                <span class="stolon-choice-name" data-str="ModePull">Pull</span>
+                                                <span class="stolon-choice-text" data-str="HelpModePull">Read from this server on a schedule.</span>
+                                            </label>
+                                            <label class="stolon-choice" data-mode="Push">
+                                                <input type="radio" name="serverMode" value="Push" />
+                                                <span class="stolon-choice-name" data-str="ModePush">Push</span>
+                                                <span class="stolon-choice-text" data-str="HelpModePush">Send changes made here as they happen. Needs Zooid there.</span>
+                                            </label>
+                                            <label class="stolon-choice" data-mode="Sync">
+                                                <input type="radio" name="serverMode" value="Sync" />
+                                                <span class="stolon-choice-name" data-str="TabSync">Sync</span>
+                                                <span class="stolon-choice-text" data-str="HelpModeSync">Pull and Push together. Needs Zooid there set to Sync.</span>
+                                            </label>
+                                        </div>
+                                        <div id="modeLimited" class="stolon-warn zooid-mt-sm stolon-hidden" data-str="WarnModeStandardUser">A standard user must be on that server's whitelist.</div>
+
+                                        <div id="peerCheckArea" class="stolon-hidden">
+                                            <div class="stolon-collapsible-actions stolon-flush zooid-mt-sm">
+                                                <button is="emby-button" type="button" id="btnCheckPeer" class="raised stolon-button stolon-small">
+                                                    <span data-str="ButtonCheckLink">Check link</span>
+                                                </button>
+                                                <span id="peerCheckStatus" class="stolon-status-text"></span>
+                                            </div>
+                                            <div id="peerCheckResult" class="zooid-mt-md stolon-hidden">
+                                                <div id="peerCheckHeadline" class="zooid-mb-md"></div>
+                                                <div id="peerCheckRows" class="zooid-access-grid"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Stream. Only for Push and Sync servers, since a Pull server may never link here. -->
+                                <div class="stolon-collapsible-section stolon-numbered stolon-hidden" id="serverStepStreamSection">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepStream">
+                                        <span class="stolon-collapsible-title" data-str="HeaderLinking">Linking</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepStream" class="stolon-collapsible-content stolon-collapsed">
+                                        <div class="checkboxContainer checkboxContainer-withDescription" id="allowLinkingContainer">
+                                            <label class="emby-checkbox-label">
+                                                <input type="checkbox" is="emby-checkbox" id="chkAllowLinking" />
+                                                <span class="checkboxLabel" data-str="LabelAllowLinking">Allow linking</span>
+                                            </label>
+                                            <div class="fieldDescription checkboxFieldDescription" id="allowLinkingDescription" data-str="HelpAllowLinking">Let that server stream files from here for libraries it maps as Link.</div>
+                                        </div>
+                                        <div id="linkingNeedsPlugin" class="stolon-warn stolon-hidden zooid-mb-md"></div>
+
+                                        <div id="linkLimits" class="stolon-hidden">
+                                            <div class="inputContainer">
+                                                <label for="txtLinkMaxStreams" data-str="LabelLinkStreamsAtOnce">Link streams at once</label>
+                                                <input is="emby-input" type="number" id="txtLinkMaxStreams" min="0" max="1000" />
+                                                <div class="fieldDescription" data-str="HelpLinkMaxStreams">Sets the most streams that server may run at once. 0 is no limit.</div>
+                                            </div>
+                                            <div class="checkboxContainer checkboxContainer-withDescription" id="countOwnSessionsContainer">
+                                                <label class="emby-checkbox-label">
+                                                    <input type="checkbox" is="emby-checkbox" id="chkLinkCountOwnSessions" />
+                                                    <span class="checkboxLabel" data-str="LabelCountOwnPlayback">Count their own playback</span>
+                                                </label>
+                                                <div class="fieldDescription checkboxFieldDescription" data-str="HelpCountOwnPlayback">Counts a user's own playback here toward the limit on their user mapping.</div>
+                                            </div>
+                                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                                <label class="emby-checkbox-label">
+                                                    <input type="checkbox" is="emby-checkbox" id="chkLinkHonorBitrateLimit" />
+                                                    <span class="checkboxLabel" data-str="LabelHonorBitrateLimit">Honor remote bitrate limits</span>
+                                                </label>
+                                                <div class="fieldDescription checkboxFieldDescription" data-str="HelpHonorBitrateLimit">Links are never transcoded here. A version above the user's Maximum remote streaming bitrate is refused, so they get a smaller version when the film has one.</div>
+                                            </div>
+                                            <div class="selectContainer">
+                                                <label for="selLinkFallbackUser" data-str="LabelUnmappedUsers">Unmapped users</label>
+                                                <select is="emby-select" id="selLinkFallbackUser"></select>
+                                                <div class="fieldDescription" data-str="HelpUnmappedUsers">Sets who streams for a user on that server with no user mapping here.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Libraries. -->
+                                <div class="stolon-collapsible-section stolon-numbered" id="serverStepLibrariesSection">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepLibraries">
+                                        <span class="stolon-collapsible-title" data-str="HeaderLibraries">Libraries</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepLibraries" class="stolon-collapsible-content stolon-collapsed">
+                                        <div id="librariesLocked" class="stolon-neutral zooid-mb-md" data-str="HelpLibrariesLocked">Test the connection in step 2 to load libraries.</div>
+                                        <div id="librariesSection" class="stolon-hidden">
+                                            <div class="fieldDescription zooid-mb-md" data-str="HelpLibraryMappings">Map that server's libraries to local ones. Storage, Always keep, and filters are on the Storage tab.</div>
+                                            <div id="libraryMappingsContainer"></div>
+                                            <div class="stolon-collapsible-actions stolon-flush">
+                                                <button is="emby-button" type="button" id="btnAddMapping" class="raised stolon-button stolon-secondary stolon-small">
+                                                    <span data-str="ButtonAddLibraryMapping">Add library mapping</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 5: Users -->
+                                <div class="stolon-collapsible-section stolon-numbered">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepUsers">
+                                        <span class="stolon-collapsible-title" data-str="HeaderUsers">Users</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepUsers" class="stolon-collapsible-content stolon-collapsed">
+                                        <div id="usersLocked" class="stolon-neutral zooid-mb-md" data-str="HelpUsersLocked">Test the connection in step 2 to load users.</div>
+                                        <div id="usersSection" class="stolon-hidden">
+                                            <div class="fieldDescription zooid-mb-md" data-str="HelpUserMappings">Map that server's users to local ones. With Allow linking on, each mapping can also cap the local user's link streams and speed.</div>
+                                            <div id="usersLimited" class="stolon-warn stolon-hidden zooid-mb-md"></div>
+                                            <div id="userMappingsContainer"></div>
+                                            <div class="stolon-collapsible-actions stolon-flush">
+                                                <button is="emby-button" type="button" id="btnAddUserMapping" class="raised stolon-button stolon-secondary stolon-small">
+                                                    <span data-str="ButtonAddUserMapping">Add user mapping</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Editor actions, above the Save Bar the page adds -->
+                                <div class="stolon-button-row">
+                                    <button is="emby-button" type="button" id="btnDeleteServer" class="raised stolon-button stolon-destructive stolon-fill">
+                                        <span data-str="ButtonRemoveServer">Remove server</span>
+                                    </button>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

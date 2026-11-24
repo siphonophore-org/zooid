@@ -1,0 +1,73 @@
+using System;
+using System.IO;
+using System.Linq;
+using Jellyfin.Plugin.Zooid.Models.Configuration;
+using Jellyfin.Plugin.Zooid.Models.ContentSync;
+using Jellyfin.Plugin.Zooid.Utilities;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// The shows and films picked for Always keep on a Link library mapping. Their files are permanent
+/// copies, synced like any copy, and everything else in the mapping stays a link.
+/// </summary>
+public static class AlwaysKeep
+{
+    /// <summary>
+    /// Whether a source file sits under an item picked for Always keep on its Link library mapping, as
+    /// a file in a picked show's folder, the picked film's file, or another version of a picked film.
+    /// </summary>
+    /// <param name="mapping">The library mapping the file comes through.</param>
+    /// <param name="sourcePath">The file's path on the source.</param>
+    /// <returns><c>true</c> when the file is copied rather than linked.</returns>
+    public static bool Covers(LibraryMapping mapping, string? sourcePath)
+    {
+        ArgumentNullException.ThrowIfNull(mapping);
+        return mapping is { StorageMode: StorageMode.Link, PermanentItems.Count: > 0 }
+            && !string.IsNullOrEmpty(sourcePath)
+            && (PathUtilities.IsItemFiltered(sourcePath, mapping.SourceRootPath ?? string.Empty, LibraryFilterMode.Blacklist, mapping.PermanentItems)
+                || mapping.PermanentItems.Any(pick => SameFilm(pick.Path, sourcePath)));
+    }
+
+    /// <summary>
+    /// Whether two files are versions of one film: in the same folder, each named after it, as in
+    /// <c>Film (2020)/Film (2020) - 4K.mkv</c> and <c>Film (2020)/Film (2020) - 1080p.mkv</c>. A film is
+    /// picked by its first version's file, and picking it keeps every version.
+    /// </summary>
+    /// <param name="pickedPath">The path of the item that was picked.</param>
+    /// <param name="path">A link's source path.</param>
+    /// <returns><c>true</c> for two versions of one film.</returns>
+    public static bool SameFilm(string? pickedPath, string? path)
+    {
+        if (string.IsNullOrEmpty(pickedPath) || string.IsNullOrEmpty(path) || !Path.HasExtension(pickedPath))
+        {
+            return false;
+        }
+
+        var picked = pickedPath.Replace('\\', '/');
+        var other = path.Replace('\\', '/');
+        var cut = picked.LastIndexOf('/');
+        if (cut <= 0 || other.LastIndexOf('/') != cut || !other.StartsWith(picked[..(cut + 1)], StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var folder = picked[(picked.LastIndexOf('/', cut - 1) + 1)..cut];
+        return folder.Length > 0
+            && picked[(cut + 1)..].StartsWith(folder, StringComparison.OrdinalIgnoreCase)
+            && other[(cut + 1)..].StartsWith(folder, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// How a source file is stored, as a copy when it is picked for Always keep, otherwise as its
+    /// library mapping says.
+    /// </summary>
+    /// <param name="mapping">The library mapping the file comes through.</param>
+    /// <param name="sourcePath">The file's path on the source.</param>
+    /// <returns>The storage the file follows.</returns>
+    public static StorageMode StorageFor(LibraryMapping mapping, string? sourcePath)
+    {
+        ArgumentNullException.ThrowIfNull(mapping);
+        return Covers(mapping, sourcePath) ? StorageMode.Copy : mapping.StorageMode;
+    }
+}

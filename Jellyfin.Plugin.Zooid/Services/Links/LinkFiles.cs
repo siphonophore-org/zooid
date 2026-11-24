@@ -1,0 +1,176 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using Siphonophore.Stolon;
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Controller;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// Writes and reads this server's .strm links, each one line holding a loopback URL to this server's own
+/// link route, so no source credential is ever on disk. The URL carries a secret derived from a key only
+/// this server holds, so a link cannot be guessed from its id.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class LinkFiles
+{
+    /// <summary>The route the URL in every link points at.</summary>
+    public const string Route = "Zooid/Link";
+
+    private const string KeyFile = "zooid-link.key";
+
+    private readonly IServerApplicationHost _host;
+    private readonly string _keyPath;
+    private readonly object _keyLock = new();
+    private byte[]? _key;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkFiles"/> class.
+    /// </summary>
+    /// <param name="host">Names this server.</param>
+    /// <param name="paths">Gives the data folder the link key is kept in.</param>
+    public LinkFiles(IServerApplicationHost host, IApplicationPaths paths)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        ArgumentNullException.ThrowIfNull(paths);
+        _host = host;
+        _keyPath = Path.Combine(paths.DataPath, KeyFile);
+    }
+
+    /// <summary>The URL a link with <paramref name="linkId"/> holds.</summary>
+    /// <param name="linkId">The id the URL names and the secret is derived from.</param>
+    /// <returns>The loopback URL, with the link's secret.</returns>
+    public string UrlFor(string linkId)
+        => $"{_host.GetLocalApiUrl("127.0.0.1", "http", _host.HttpPort)}/{Route}/{linkId}?k={Secret(linkId)}";
+
+    /// <summary>Whether <paramref name="presented"/> is the secret for <paramref name="linkId"/>.</summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="presented">The secret a request carried, or null.</param>
+    /// <returns><c>true</c> when it matches.</returns>
+    public bool SecretMatches(string linkId, string? presented)
+    {
+        if (string.IsNullOrEmpty(linkId) || string.IsNullOrEmpty(presented))
+        {
+            return false;
+        }
+
+        return SecretCompare.FixedTimeEquals(Secret(linkId), presented, StringComparison.Ordinal);
+    }
+
+    /// <summary>Whether the file at <paramref name="path"/> already holds the current URL for <paramref name="linkId"/>.</summary>
+    /// <param name="path">The .strm's path.</param>
+    /// <param name="linkId">The link's id.</param>
+    /// <returns><c>true</c> when the file holds the current URL.</returns>
+    public bool IsCurrent(string path, string linkId)
+    {
+        try
+        {
+            return File.Exists(path) && string.Equals(ReadUrl(path), UrlFor(linkId), StringComparison.Ordinal);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Writes the link, replacing the file only once the new one is complete. Throws when a different
+    /// file already sits there, so a user's own .strm or another link is never overwritten.
+    /// </summary>
+    /// <param name="path">Where the .strm goes.</param>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="replace"><c>true</c> to replace a file already at the path, which the caller has checked is its own link.</param>
+    public void Write(string path, string linkId, bool replace)
+    {
+        if (File.Exists(path) && !replace)
+        {
+            throw new IOException($"A file already exists at {path}");
+        }
+
+        var folder = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+
+        AtomicFile.WriteAllBytes(path, new UTF8Encoding(false).GetBytes(UrlFor(linkId) + "\n"));
+    }
+
+    /// <summary>The first URL line in a .strm, the same line Jellyfin reads.</summary>
+    /// <param name="path">The .strm's path.</param>
+    /// <returns>The URL, or null when the file has none.</returns>
+    public static string? ReadUrl(string path)
+        => File.ReadLines(path)
+            .Select(line => line.Replace("\t", string.Empty, StringComparison.Ordinal).Trim())
+            .FirstOrDefault(line => line.Length > 0 && !line.StartsWith('#'));
+
+    /// <summary>Whether a .strm's URL points at this plugin's link route, whatever id and secret it holds.</summary>
+    /// <param name="url">The URL, or null.</param>
+    /// <returns><c>true</c> when it points at the route.</returns>
+    public static bool PointsAtLinkRoute(string? url)
+        => url is not null && url.Contains("/" + Route + "/", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether the file at <paramref name="path"/> is a .strm this plugin wrote, whatever id and secret
+    /// it holds. A file that cannot be read is not taken as one.
+    /// </summary>
+    /// <param name="path">The .strm's path.</param>
+    /// <returns><c>true</c> when this plugin wrote it.</returns>
+    public static bool IsOwnLink(string path)
+    {
+        try
+        {
+            return string.Equals(Path.GetExtension(path), ".strm", StringComparison.OrdinalIgnoreCase)
+                && File.Exists(path)
+                && PointsAtLinkRoute(ReadUrl(path));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Derives a link's secret from its id and this server's key.</summary>
+    private string Secret(string linkId)
+    {
+        using var hmac = new HMACSHA256(Key());
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(linkId));
+        return Convert.ToBase64String(hash).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    /// <summary>Reads this server's link key, making and storing one on first use.</summary>
+    private byte[] Key()
+    {
+        if (_key is { } key)
+        {
+            return key;
+        }
+
+        lock (_keyLock)
+        {
+            if (_key is null)
+            {
+                if (File.Exists(_keyPath) && File.ReadAllBytes(_keyPath) is { Length: 32 } stored)
+                {
+                    _key = stored;
+                }
+                else
+                {
+                    var fresh = RandomNumberGenerator.GetBytes(32);
+                    AtomicFile.WriteAllBytes(_keyPath, fresh, ownerOnly: true);
+                    _key = fresh;
+                }
+            }
+
+            return _key;
+        }
+    }
+}

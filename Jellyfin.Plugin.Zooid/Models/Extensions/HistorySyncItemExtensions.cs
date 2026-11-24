@@ -1,0 +1,55 @@
+using System;
+using Jellyfin.Plugin.Zooid.Models.HistorySync;
+
+namespace Jellyfin.Plugin.Zooid.Models.Extensions;
+
+/// <summary>
+/// Mapping helpers for <see cref="HistorySyncItem"/>.
+/// </summary>
+public static class HistorySyncItemExtensions
+{
+    /// <summary>Projects a history sync item to its API DTO.</summary>
+    /// <param name="item">The row to show.</param>
+    /// <param name="sourceServerUrl">The source's URL the browser loads images and links from.</param>
+    /// <returns>The row as the dashboard reads it.</returns>
+    public static HistorySyncItemDto ToDto(this HistorySyncItem item, string? sourceServerUrl)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        return new HistorySyncItemDto
+        {
+            Id = item.Id,
+            SourceUserId = item.SourceUserId,
+            LocalUserId = item.LocalUserId,
+            SourceLibraryId = item.SourceLibraryId,
+            LocalLibraryId = item.LocalLibraryId,
+            SourceItemId = item.SourceItemId,
+            LocalItemId = item.LocalItemId,
+            ItemName = item.ItemName,
+            SourcePath = item.SourcePath,
+            LocalPath = item.LocalPath,
+            SourceIsPlayed = item.SourceIsPlayed,
+            SourcePlayCount = item.SourcePlayCount,
+            SourcePlaybackPositionTicks = item.SourcePlaybackPositionTicks,
+            SourceLastPlayedDate = item.SourceLastPlayedDate,
+            SourceIsFavorite = item.SourceIsFavorite,
+            LocalIsPlayed = item.LocalIsPlayed,
+            LocalPlayCount = item.LocalPlayCount,
+            LocalPlaybackPositionTicks = item.LocalPlaybackPositionTicks,
+            LocalLastPlayedDate = item.LocalLastPlayedDate,
+            LocalIsFavorite = item.LocalIsFavorite,
+            MergedIsPlayed = item.MergedIsPlayed,
+            MergedPlayCount = item.MergedPlayCount,
+            MergedPlaybackPositionTicks = item.MergedPlaybackPositionTicks,
+            MergedLastPlayedDate = item.MergedLastPlayedDate,
+            MergedIsFavorite = item.MergedIsFavorite,
+            SourceServerUrl = sourceServerUrl,
+            ServerKey = item.ServerKey,
+            Status = item.Status.ToString(),
+            StatusDate = item.StatusDate,
+            LastSyncTime = item.LastSyncTime,
+            ErrorMessage = item.Reason,
+            HasChanges = item.HasChanges
+        };
+    }
+}

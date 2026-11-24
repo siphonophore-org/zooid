@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.Zooid.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!--
+      Tests are deliberately less strict than the production project:
+        - Tests use Assert/throw patterns the analyzer flags as smells
+          (CA1707 underscores in test names; CA2007 ConfigureAwait;
+          CA1305 culture-specific formatting in test data; etc.).
+        - We don't want test noise to bury real production issues, so we
+          drop TreatWarningsAsErrors and disable analysis here.
+    -->
+    <AnalysisMode>Default</AnalysisMode>
+    <NoWarn>CA1707;CA2007;CA1305;CA1062;CA1822;CA1861;xUnit1004</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <!-- Native SQLite builds before 2.1.12 carry a high severity advisory (GHSA-2m69-gcr7-jv3q).
+         Microsoft.Data.Sqlite 10.0.11 already pulls 2.1.12; the pin keeps it from ever resolving lower.
+         The plugin itself uses the SQLite that ships with Jellyfin. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.14" />
+
+    <!--
+      Tests touch types from the plugin's Jellyfin dependencies (BaseItemDto
+      from the SDK, etc.). We mirror the main project's package set without
+      PrivateAssets so the types are visible at compile time here.
+    -->
+    <PackageReference Include="Jellyfin.Controller" Version="12.4.0" />
+    <PackageReference Include="Jellyfin.Model" Version="12.4.0" />
+    <PackageReference Include="Jellyfin.Sdk" Version="2026.10.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jellyfin.Plugin.Zooid\Jellyfin.Plugin.Zooid.csproj" />
+  </ItemGroup>
+
+</Project>

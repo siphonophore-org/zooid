@@ -1,0 +1,277 @@
+using System;
+using System.Globalization;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using Jellyfin.Plugin.Zooid.Models.Configuration;
+using Jellyfin.Plugin.Zooid.Models.Peer;
+using Jellyfin.Plugin.Zooid.Services.Clients;
+using Jellyfin.Plugin.Zooid.Services.Configuration;
+using Siphonophore.Stolon;
+using MediaBrowser.Controller;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// Shows playback of a link on this server, the source, as a session under the client name Zooid,
+/// so the dashboard lists it and Jellyfin updates played state for the user it streams as. A stop report
+/// leaves the session idle, and <see cref="SweepAsync"/> stops and removes sessions that get no reports.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class LinkPlaybackSessions
+{
+    private readonly ISessionManager _sessionManager;
+    private readonly ILibraryManager _libraryManager;
+    private readonly IUserManager _userManager;
+    private readonly IPluginConfigurationManager _configManager;
+    private readonly ISourceServerClientFactory _clientFactory;
+    private readonly IServerApplicationHost _applicationHost;
+    private readonly ILogger<LinkSessionController> _controllerLogger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkPlaybackSessions"/> class.
+    /// </summary>
+    /// <param name="sessionManager">Holds the sessions and takes the playback reports.</param>
+    /// <param name="libraryManager">Finds the item a report names.</param>
+    /// <param name="userManager">Finds the user a report streams as.</param>
+    /// <param name="configManager">Reads the plugin configuration.</param>
+    /// <param name="clientFactory">Builds clients for other servers.</param>
+    /// <param name="applicationHost">Names this server.</param>
+    /// <param name="controllerLogger">Writes log entries for the sessions and their controllers.</param>
+    public LinkPlaybackSessions(
+        ISessionManager sessionManager,
+        ILibraryManager libraryManager,
+        IUserManager userManager,
+        IPluginConfigurationManager configManager,
+        ISourceServerClientFactory clientFactory,
+        IServerApplicationHost applicationHost,
+        ILogger<LinkSessionController> controllerLogger)
+    {
+        _clientFactory = clientFactory;
+        _applicationHost = applicationHost;
+        _controllerLogger = controllerLogger;
+        _sessionManager = sessionManager;
+        _libraryManager = libraryManager;
+        _userManager = userManager;
+        _configManager = configManager;
+    }
+
+    /// <summary>The device id a viewer on the calling server shows under here.</summary>
+    /// <param name="peer">The linking server.</param>
+    /// <param name="sessionKey">The viewer's session key on that server.</param>
+    /// <returns>The device id.</returns>
+    public static string DeviceIdFor(SourceServer peer, string sessionKey)
+    {
+        ArgumentNullException.ThrowIfNull(peer);
+        return "zooid-link-" + HashUtilities.Sha256Hex(peer.Key + "|" + sessionKey, 24);
+    }
+
+    /// <summary>Applies one playback report to its session here.</summary>
+    /// <param name="peer">The reporting server's entry here.</param>
+    /// <param name="report">The playback report to apply.</param>
+    /// <param name="remoteEndPoint">The reporting server's address, shown on the session.</param>
+    /// <param name="peerVersion">The reporting server's Zooid version, shown on the session. This server's own shows when it sends none.</param>
+    /// <returns>Null when applied, otherwise why the report is refused.</returns>
+    public async Task<string?> ApplyAsync(SourceServer peer, PeerPlaybackReport report, string remoteEndPoint, string? peerVersion = null)
+    {
+        ArgumentNullException.ThrowIfNull(peer);
+        ArgumentNullException.ThrowIfNull(report);
+        if (!peer.OffersLinks)
+        {
+            return $"linking is not allowed for {peer.DisplayName} here";
+        }
+
+        if (!Guid.TryParse(report.ItemId, out var itemId) || _libraryManager.GetItemById(itemId) is not { } item)
+        {
+            return "no such item here";
+        }
+
+        if (LinkPolicy.UserFor(peer, report.UserId, report.SourceUserId) is not { } userId || _userManager.GetUserById(userId) is not { } user)
+        {
+            return "the user is not mapped to a user here";
+        }
+
+        // A report may only move played state the user could reach here.
+        if (!item.IsVisible(user))
+        {
+            return "the user cannot see that item here";
+        }
+
+        if (string.IsNullOrWhiteSpace(report.SessionKey))
+        {
+            return "the report names no session";
+        }
+
+        var session = await _sessionManager.LogSessionActivity(
+            LinkPolicy.ClientName,
+            Clean(peerVersion) is { Length: > 0 } version ? version : _configManager.PluginVersion,
+            DeviceIdFor(peer, report.SessionKey),
+            DeviceName(peer, report),
+            remoteEndPoint,
+            user).ConfigureAwait(false);
+
+        var (controller, isNew) = session.EnsureController<LinkSessionController>(_ => new LinkSessionController(peer.Key, report.SessionKey, _configManager, _clientFactory, _applicationHost, _controllerLogger)).ToValueTuple();
+        (controller as LinkSessionController)?.Touch();
+        if (isNew)
+        {
+            _sessionManager.ReportCapabilities(null!, session.Id, new ClientCapabilities
+            {
+                PlayableMediaTypes = new[] { Jellyfin.Data.Enums.MediaType.Video, Jellyfin.Data.Enums.MediaType.Audio },
+                SupportedCommands = new[] { GeneralCommandType.DisplayMessage },
+                SupportsMediaControl = true
+            });
+        }
+
+        var mediaSourceId = item.Id.ToString("N", CultureInfo.InvariantCulture);
+        var method = Enum.Parse<PlayMethod>(LinkPlaybackReporter.ReportedMethod(report.PlayMethod));
+        switch (report.Event)
+        {
+            case LinkPlaybackEvent.Start:
+                await _sessionManager.OnPlaybackStart(new PlaybackStartInfo
+                {
+                    ItemId = item.Id,
+                    SessionId = session.Id,
+                    MediaSourceId = mediaSourceId,
+                    PositionTicks = report.PositionTicks,
+                    IsPaused = report.IsPaused,
+                    PlayMethod = method,
+                    PlaySessionId = report.PlaySessionId,
+                    CanSeek = true
+                }).ConfigureAwait(false);
+                break;
+            case LinkPlaybackEvent.Progress:
+                // A report for a viewer whose start was lost begins the playback here.
+                if (session.NowPlayingItem?.Id != item.Id)
+                {
+                    goto case LinkPlaybackEvent.Start;
+                }
+
+                await _sessionManager.OnPlaybackProgress(new PlaybackProgressInfo
+                {
+                    ItemId = item.Id,
+                    SessionId = session.Id,
+                    MediaSourceId = mediaSourceId,
+                    PositionTicks = report.PositionTicks,
+                    IsPaused = report.IsPaused,
+                    PlayMethod = method,
+                    PlaySessionId = report.PlaySessionId,
+                    CanSeek = true
+                }).ConfigureAwait(false);
+                break;
+            case LinkPlaybackEvent.Stop:
+                // Resending a stop that throws would not help, so it counts as applied.
+                try
+                {
+                    await _sessionManager.OnPlaybackStopped(new PlaybackStopInfo
+                    {
+                        ItemId = item.Id,
+                        SessionId = session.Id,
+                        MediaSourceId = mediaSourceId,
+                        PositionTicks = report.PositionTicks,
+                        PlaySessionId = report.PlaySessionId
+                    }).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _controllerLogger.LogWarning(ex, "Jellyfin could not stop the link session {Session}, so the sweep stops it", session.Id);
+                }
+
+                break;
+            default:
+                return "unknown playback event";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Stops playback with no report for <see cref="LinkSessionController.ActiveFor"/>, which keeps played
+    /// state and resume position. Removes a session with no report for
+    /// <see cref="LinkSessionController.RemoveAfter"/>, since Jellyfin never removes one that has no websocket.
+    /// </summary>
+    /// <param name="now">The time to judge staleness by.</param>
+    /// <returns>How many sessions were removed.</returns>
+    public async Task<int> SweepAsync(DateTime now)
+    {
+        var ended = 0;
+        foreach (var session in _sessionManager.Sessions.ToList())
+        {
+            var controllers = session.SessionControllers;
+            if (controllers.Count == 0
+                || !controllers.All(c => c is LinkSessionController link && !link.ActiveAt(now)))
+            {
+                continue;
+            }
+
+            // One session that will not stop must not end the sweep.
+            try
+            {
+                if (session.NowPlayingItem is { } playing)
+                {
+                    await _sessionManager.OnPlaybackStopped(new PlaybackStopInfo
+                    {
+                        ItemId = playing.Id,
+                        SessionId = session.Id,
+                        MediaSourceId = session.PlayState?.MediaSourceId,
+                        PositionTicks = session.PlayState?.PositionTicks is >= 0 and var at ? at : null
+                    }).ConfigureAwait(false);
+                    _controllerLogger.LogInformation("Stopped playback on the link session {Device} for {User}: the server holding the link has not reported on it for {Minutes} minutes", FormatUtilities.SanitizeForLog(session.DeviceName), FormatUtilities.SanitizeForLog(session.UserName), LinkSessionController.ActiveFor.TotalMinutes);
+                }
+            }
+            catch (Exception ex)
+            {
+                _controllerLogger.LogDebug(ex, "Could not stop playback on the stale link session {Session}", session.Id);
+            }
+
+            if (!controllers.All(c => c is LinkSessionController link && link.RemovableAt(now)))
+            {
+                continue;
+            }
+
+            // One session that will not go must not end the sweep.
+            try
+            {
+                await _sessionManager.ReportSessionEnded(session.Id).ConfigureAwait(false);
+                ended++;
+            }
+            catch (Exception ex)
+            {
+                _controllerLogger.LogWarning(ex, "Could not remove the stale link session {Session}", session.Id);
+            }
+        }
+
+        return ended;
+    }
+
+    /// <summary>
+    /// The name a viewer's session shows under here, their client and their user on the linking server,
+    /// as in <c>Jellyfin Web (Joe)</c>. A linking server that sends no user name is named instead.
+    /// </summary>
+    /// <param name="peer">The linking server.</param>
+    /// <param name="report">The playback report that names the client and the user.</param>
+    /// <returns>The device name.</returns>
+    public static string DeviceName(SourceServer peer, PeerPlaybackReport report)
+    {
+        ArgumentNullException.ThrowIfNull(peer);
+        ArgumentNullException.ThrowIfNull(report);
+        var client = Clean(report.ClientName);
+        var user = Clean(report.UserName);
+        return (client.Length, user.Length) switch
+        {
+            ( > 0, > 0) => $"{client} ({user})",
+            (_, > 0) => $"{peer.DisplayName} ({user})",
+            ( > 0, _) => $"{peer.DisplayName} (Zooid, {client})",
+            _ => $"{peer.DisplayName} (Zooid)"
+        };
+    }
+
+    /// <summary>Holds a name from another server to one plain line of 64 characters.</summary>
+    private static string Clean(string? name)
+        => new string((name ?? string.Empty).Where(c => !char.IsControl(c)).Take(64).ToArray()).Trim();
+}

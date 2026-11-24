@@ -1,0 +1,59 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// Once a minute, stops and later removes the link sessions on this server, the source, whose server
+/// stopped reporting on them, so a viewer whose stop report was lost does not stay listed as playing.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class LinkSessionSweeper : BackgroundService
+{
+    /// <summary>How often stale link sessions are looked for.</summary>
+    public static readonly TimeSpan Every = TimeSpan.FromMinutes(1);
+
+    private readonly LinkPlaybackSessions _sessions;
+    private readonly ILogger<LinkSessionSweeper> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkSessionSweeper"/> class.
+    /// </summary>
+    /// <param name="sessions">The link sessions to sweep.</param>
+    /// <param name="logger">Writes log entries.</param>
+    public LinkSessionSweeper(LinkPlaybackSessions sessions, ILogger<LinkSessionSweeper> logger)
+    {
+        ArgumentNullException.ThrowIfNull(sessions);
+        ArgumentNullException.ThrowIfNull(logger);
+        _sessions = sessions;
+        _logger = logger;
+    }
+
+    /// <inheritdoc />
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var timer = new PeriodicTimer(Every);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
+            {
+                // One failed sweep must not end the service.
+                try
+                {
+                    await _sessions.SweepAsync(DateTime.UtcNow).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not sweep stale link sessions");
+                }
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+        }
+    }
+}

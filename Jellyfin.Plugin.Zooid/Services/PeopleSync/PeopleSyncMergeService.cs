@@ -1,0 +1,95 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using Jellyfin.Plugin.Zooid.Models.Common;
+using Jellyfin.Plugin.Zooid.Services.HistorySync;
+using Jellyfin.Plugin.Zooid.Services.MetadataSync;
+using Jellyfin.Plugin.Zooid.Services.UserSync;
+using Jellyfin.Plugin.Zooid.Utilities;
+using Jellyfin.Sdk.Generated.Models;
+using Siphonophore.Stolon;
+using LocalImageType = MediaBrowser.Model.Entities.ImageType;
+using MediaBrowser.Controller.Entities;
+
+namespace Jellyfin.Plugin.Zooid.Services.PeopleSync;
+
+/// <summary>
+/// Builds the comparable source and local form of a person's metadata and images.
+/// </summary>
+public static class PeopleSyncMergeService
+{
+    /// <summary>
+    /// The local image types read into a person's manifest, with Backdrop because a person can hold several.
+    /// </summary>
+    public static readonly IReadOnlyList<LocalImageType> ImageTypes = new[]
+    {
+        LocalImageType.Primary,
+        LocalImageType.Backdrop
+    };
+
+    /// <summary>
+    /// Builds the metadata blob of a source person, with lists sorted and dates as calendar dates so both sides serialize alike.
+    /// Name is left out because it is the match key and Jellyfin recreates a person whose casing is rewritten, and SortName because each server derives it.
+    /// </summary>
+    /// <param name="sourcePerson">The person as the source returned it.</param>
+    /// <returns>The metadata as JSON.</returns>
+    public static string BuildSourceMetadata(BaseItemDto sourcePerson)
+    {
+        ArgumentNullException.ThrowIfNull(sourcePerson);
+
+        var sourceProviderIds = JsonFieldHelpers.CollapseProviderIds(sourcePerson.ProviderIds?.AdditionalData?
+            .Select(kvp => new KeyValuePair<string, string>(kvp.Key, MediaItemUtilities.UnwrapKiotaPrimitive(kvp.Value) ?? string.Empty)));
+
+        var metadata = new Dictionary<string, object?>
+        {
+            ["OriginalTitle"] = sourcePerson.OriginalTitle,
+            ["ForcedSortName"] = sourcePerson.ForcedSortName,
+            ["Overview"] = sourcePerson.Overview,
+            ["PremiereDate"] = JsonComparisonUtility.ToDateOnlyString(sourcePerson.PremiereDate),
+            ["EndDate"] = JsonComparisonUtility.ToDateOnlyString(sourcePerson.EndDate),
+            ["ProductionYear"] = sourcePerson.ProductionYear,
+            ["ProductionLocations"] = StringNormalizationUtility.NormalizeStringArray(sourcePerson.ProductionLocations),
+            ["Tags"] = StringNormalizationUtility.NormalizeStringArray(sourcePerson.Tags),
+            ["ProviderIds"] = sourceProviderIds,
+            ["LockedFields"] = sourcePerson.LockedFields?.Select(f => f.ToString())
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            ["LockData"] = sourcePerson.LockData ?? false
+        };
+
+        return JsonSerializer.Serialize(metadata);
+    }
+
+    /// <summary>
+    /// Builds the metadata blob of a local person, with the same keys and ordering as <see cref="BuildSourceMetadata"/>.
+    /// </summary>
+    /// <param name="localPerson">The local person to read.</param>
+    /// <returns>The metadata as JSON.</returns>
+    public static string BuildLocalMetadata(BaseItem localPerson)
+    {
+        ArgumentNullException.ThrowIfNull(localPerson);
+
+        var localProviderIds = JsonFieldHelpers.CollapseProviderIds(localPerson.ProviderIds);
+
+        var metadata = new Dictionary<string, object?>
+        {
+            ["OriginalTitle"] = localPerson.OriginalTitle,
+            ["ForcedSortName"] = localPerson.ForcedSortName,
+            ["Overview"] = localPerson.Overview,
+            ["PremiereDate"] = JsonComparisonUtility.ToDateOnlyString(localPerson.PremiereDate),
+            ["EndDate"] = JsonComparisonUtility.ToDateOnlyString(localPerson.EndDate),
+            ["ProductionYear"] = localPerson.ProductionYear,
+            ["ProductionLocations"] = StringNormalizationUtility.NormalizeStringArray(localPerson.ProductionLocations),
+            ["Tags"] = StringNormalizationUtility.NormalizeStringArray(localPerson.Tags),
+            ["ProviderIds"] = localProviderIds,
+            ["LockedFields"] = localPerson.LockedFields?.Select(f => f.ToString())
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            ["LockData"] = localPerson.IsLocked
+        };
+
+        return JsonSerializer.Serialize(metadata);
+    }
+}

@@ -1,0 +1,37 @@
+<!-- zooid_statistics.html -->
+<!-- The Statistics tab, what the last scans of each sync type found, and the link streams served each day. -->
+
+<div id="ZooidStatisticsPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+     data-require="emby-button"
+     data-controller="__plugin/zooid_statistics.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <!-- The form holds the page to the width of the other tabs. It has no fields and is never sent. -->
+            <form id="ZooidStatisticsForm">
+                <div class="verticalSection verticalSection-extrabottompadding">
+
+                    <!-- Statistics Header -->
+
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h1 class="sectionTitle" data-str="TabStatistics">Statistics</h1>
+                    </div>
+                    <div id="statisticsIntro" class="fieldDescription zooid-mb-md stolon-hidden" data-str="StatisticsIntro">Shows what the last 10 scans of each sync type found, and the link streams this server started. A sync type that is off is not shown.</div>
+
+                    <div id="statisticsStatus" class="stolon-status-text" role="status"></div>
+                    <div id="statisticsDisabled" class="stolon-neutral zooid-mb-md stolon-hidden" data-str="StatisticsAllOff">Every sync type is off and no server may link to this one, so there is nothing to show. Turn a sync type on under Settings.</div>
+
+                    <!-- Sync Types -->
+                    <!-- One section for each sync type that is on, drawn by the page controller. -->
+
+                    <div id="statisticsSections"></div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

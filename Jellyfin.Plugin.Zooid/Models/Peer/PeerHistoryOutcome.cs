@@ -1,0 +1,22 @@
+namespace Jellyfin.Plugin.Zooid.Models.Peer;
+
+/// <summary>
+/// What the receiving server did with one proposed history write.
+/// </summary>
+public enum PeerHistoryOutcome
+{
+    /// <summary>The proposal was written and verified.</summary>
+    Applied,
+
+    /// <summary>The receiver already held the proposed state, so nothing was written.</summary>
+    Unchanged,
+
+    /// <summary>The receiver's live state did not match what the sender expected. Nothing was written.</summary>
+    Stale,
+
+    /// <summary>The user or item does not exist on the receiver.</summary>
+    NotFound,
+
+    /// <summary>The write or its verification failed. See the reason.</summary>
+    Failed
+}

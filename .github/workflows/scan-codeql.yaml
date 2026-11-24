@@ -1,0 +1,81 @@
+name: '🔬 Run CodeQL'
+
+# Scans the C# and the page scripts for security and quality problems on every change and once a week. Results in
+# code the compiler writes under obj/ are dropped before upload, since that code is not Zooid's to fix.
+
+on:
+  push:
+    branches: [ main, unstable ]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches: [ main, unstable ]
+    paths-ignore:
+      - '**/*.md'
+  schedule:
+    - cron: '24 2 * * 4'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'siphonophore-org/zooid' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: +security-and-quality
+
+      - name: Build
+        if: matrix.language == 'csharp'
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet build Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj -c Release
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        with:
+          category: /language:${{ matrix.language }}
+          upload: false
+          output: sarif-results
+
+      - name: Drop results in generated code
+        run: |
+          for f in sarif-results/*.sarif; do
+            jq '.runs[].results |= map(select(all(.locations[]?; (.physicalLocation.artifactLocation.uri // "") | test("(^|/)obj/") | not)))' "$f" > "$f.tmp"
+            mv "$f.tmp" "$f"
+          done
+
+      - name: Upload results
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        with:
+          sarif_file: sarif-results
+          category: /language:${{ matrix.language }}

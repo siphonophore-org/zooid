@@ -1,0 +1,104 @@
+# Content Syncing
+
+Content syncing mirrors missing or updated media files from a source Jellyfin server onto this server. A library mapping can instead hold them as **links** that stream from the source, set by its **Storage**. See [Links](Links.md). Files are matched by their path under each mapped library's root folder, so both servers must keep the same folder and file structure under that root. A file renamed or given a new container on the source gets a new item id there. When the new file sits in the same folder as the old one and has the same size, or is the same episode, or the same film by a provider id such as its IMDb id and the same version, the row here follows it. A copy is moved to the new name without a download, or replaced under **Changed files** when its bytes changed. A file moved to another folder, or one that cannot be paired, is downloaded again at its new path, and the old copy is handled by **Removed files**. A file replaced by one of the same name in another container, as `Film.mkv` by `Film.mp4`, that cannot be paired is handled the same way but sooner. As soon as the new file is down and the source answers that the old one is gone, the old copy follows **Removed files** on that run instead of waiting for the next full scan. The images and trickplay the two share stay with the new file.
+
+## Settings
+
+Under **Settings > Content**:
+
+* **Enable content sync** turns content syncing on.
+* **Detect updated files** checks each synced file on disk against the source's size on a full scan, and downloads it again when it differs or is missing. A size change on the source is always picked up and follows **Changed files**.
+* **Mirror synced collections** recreates collections whitelisted in a library filter, with their synced items. See [Collection Syncing](#collection-syncing).
+* **Include companion files** also downloads external subtitle files with each media file, and beside each link. Other companions, such as NFO files, local artwork, and external audio tracks, have no download route in the Jellyfin API and are skipped. A link gets an `.nfo` of its own, written from the source's details.
+* **Skip items watched by** skips items every user picked there has watched. Picking no one syncs everything.
+* **Approvals** sets an action for each kind of change. **New files** download automatically (Enabled), wait for approval (Require approval), or are left alone (Disabled), and **Changed files** replace the same three ways. A file already in the library at the path a new item would take is kept as the synced copy when it is the source's size. Any other file there is not this plugin's, so replacing it follows **Changed files**.
+* **Removed files** decides what happens to a local file once its item is gone from the source. **Keep** leaves it. **Delete** deletes it on the next **Sync Content** run that does a full scan (**Full scan every (hours)** under Processing, 24 by default), but still asks first whenever the plugin cannot be sure the file should go. **Delete after approval** holds every deletion as Pending deletion until you approve it. **Ignore** keeps the files and, once everything in a movie or show folder is gone from the source, writes an empty `.ignore` file in that folder so Jellyfin hides it on its next scan. A season is never hidden on its own, so a show that still has episodes on the source stays as it is. A folder that already has a `.ignore` is left alone. A hidden title shows again when it comes back on the source, or when Removed files is set to anything else. Switching away from Delete cancels deletions that were still waiting. A link is not a local file and does not follow this setting. It is always removed once no server offers its file. See [Links](Links.md#when-the-file-is-gone).
+* **Enable recycling bin** moves deleted or replaced files to a recycling bin instead of removing them for good. **Recycling bin path** is its folder.
+* **Keep for (days)** sets how many days files stay in the recycling bin before permanent removal. Only files and trickplay folders the plugin put there expire. They carry the time they were recycled in their name, and anything else in the folder is left alone. A file from deep inside a library gets a shortened name, ending in its own file name and that time, so the move never fails on the filesystem's name length limit.
+* **Remove empty folders** deletes the folders a removal leaves holding nothing but files Zooid wrote. A folder that still holds anything else, such as artwork Jellyfin saved, stays. A title deleted by hand from the **Sync** tab also takes its artwork and `.nfo` files, as Jellyfin's own delete does.
+* **Downloads at once** limits how many files download at once.
+* **Temporary folder** is where files download before they move into place. Blank uses a `zooid` folder in Jellyfin's cache folder.
+* **Minimum free space (GB)** blocks downloads when free space falls below this many gigabytes. Downloads running at the same time hold space for each other, so several large files cannot together fill a disk that each would fit on alone. A file that only fits once another download finishes waits for it.
+* **Take link images from the source** and **Stream direct play of links per user**, both on by default, and the link cache settings are covered in [Links](Links.md#the-link-cache).
+
+Elsewhere:
+
+* **Storage** and **Library filter**, on each library mapping in the **Storage** tab. Storage holds the source's files as full **Copy** files, the default, or as **Link** files that stream from the source. See [Links](Links.md). The filter is covered below. **Files** charts how many of the picked server's synced files are copies, links, and cached links. **Usage** shows how much of the link cache is used, while the cache is on.
+* **Downloads** under **Settings > Bandwidth** caps the total rate of every download to this server, in Mbps, where 0 means no limit. With **Scheduled speed** on, the **Scheduled** rate applies during the set hours, in the server's time. A download already running follows the hours as they begin and end. Downloads into the link cache are held to it too.
+* **Failed item retries** under **Settings > Processing** sets how many times a failed download or item is tried within one run. One that still fails is tried again on the next run, and is raised on the Activity page once it has failed for a day. See [When something goes wrong](#when-something-goes-wrong). A retry picks up where the failed attempt stopped when the source supports it, and starts over if the file changed on the source in between.
+
+A `.strm` on the source is never copied or linked, whether it is one of the source's links or one a user made.
+
+!!! note "Sizes must match exactly"
+    A local file counts as the source's file only when its size is exactly the source's. Servers on different operating systems or file systems can report a size slightly differently, for example after a file's tags are rewritten, which makes the file download again. If a file keeps downloading between two such servers, compare the sizes each server reports for it.
+
+## Collection Syncing
+
+Each library mapping's **Library filter**, on the **Storage** tab, is **Allow all**, or a **Whitelist** or **Blacklist** of files, collections, and playlists. It applies to content, history, and metadata alike.
+
+A source collection can be used as a sync list. On the **Storage** tab, set a library mapping's **Library filter** to **Whitelist**, open the item picker, switch the browse toggle to **Collections**, and select the collection. From then on:
+
+* Everything in the collection syncs through the normal content pipeline. A series in the collection picks up new episodes automatically, because membership is resolved on every scan.
+* Anyone with collection-management permission on the source can add or remove items from the collection in Jellyfin, with no plugin access needed. Removing an item removes it from the whitelist. Its local copy waits for approval to be deleted when **Removed files** is **Delete** or **Delete after approval**, since a membership change is not a removal from the source.
+* A collection can span libraries, such as movies and shows. Each mapping syncs only the members that live under its own source root. Whitelist the same collection under a mapping for each library it draws from.
+* With **Mirror synced collections** on, which is the default, the last step of **Sync Content** recreates the collection on this server with the local copies of its synced members. Mirrored collections are tagged and their membership tracks the source. A collection that disappears from the source stops being updated but is never emptied automatically.
+
+### Playlists
+
+Playlists work the same way as collections. Whitelist a playlist to sync its members, or blacklist one to exclude them. Membership is resolved again on every scan. Playlists differ from collections in two ways:
+
+* Playlists belong to a user on the source. Members are resolved with the account from the server entry's **Sign in**, so that user must be able to see the playlist, either by owning it or by having it shared. An entry set up with a pasted **API Key** has no user. Switch it to **Sign in** to give it one.
+* Playlists are not mirrored locally, since a mirror cannot reproduce their owners. Use a collection when the container should appear on this server too.
+
+### Blacklisting a Collection
+
+In **Blacklist** mode a selected collection excludes its members, so the library syncs everything except what is in the collection. Membership is resolved again on every scan, so adding an item to the collection excludes it on the next run. Items dropped by a blacklist edit wait for approval to be deleted even when **Removed files** is **Delete**, since narrowing the filter is a settings change and not a removal from the source. If the collection cannot be read during a scan, that mapping's discovery is skipped for the run rather than syncing the excluded items.
+
+Filters apply to one mapping each. Blacklisting a collection in one library's mapping has no effect on any other mapping, and an item reachable through another enabled mapping still syncs there.
+
+### Interaction With Skip Items Watched By
+
+**Skip items watched by** works with every filter mode, including collections. Whitelisted collection members that every selected user has played, episodes included, are marked Ignored instead of downloading. A blacklisted collection's exclusions come first, and excluded items are never tracked at all. The setting only prevents future downloads. Items already synced are never removed because someone watched them, and an Ignored row stays Ignored until it is queued again in the sync table.
+
+A collection or any other whitelist entry that no longer exists on the source fails the scan instead of being treated as empty. Remove the dead entry from the whitelist to resume pruning. An intentionally emptied whitelist still reconciles normally.
+
+## Live Changes Between Servers
+
+When a server entry is set to **Push** or **Sync**, a file that appears here is announced to that server as soon as this server's library has picked it up, and that server downloads it through the same code **Sync Content** uses, respecting its own approval mode and library mappings. When several servers offer the same file, the highest ranked one in that server's list provides it. Downloads run in their own lane so a large file never delays a history or metadata change arriving at the same time, and the receiving library is asked to refresh that file's folder once the file is in place. A file that leaves this server's library is announced ten minutes later, so the new file of a rename or a new container reaches the other servers first and moves their copies instead of deleting them. A file back at the same path within those ten minutes is not announced as removed. A server that holds a link to it moves the link to another server that holds the file, or removes the link when none does. A server that holds a copy of it applies **Removed files** at once. A file rewritten in place keeps its id, so it is announced by its new file time. A server that holds a copy replaces it under **Changed files** when its size changed, and a server that holds a link writes the link and its `.nfo` again. A `.strm` is never announced, so a link is never passed on to a third server.
+
+A server also keeps a record of the files that left its library, for 30 days. A server reading it asks for that record on every scan, so a removal is settled on the next scan rather than the next full scan, whether or not the announcement arrived. The full scan remains as the check on both.
+
+## When Something Goes Wrong
+
+Zooid is meant to be set up and left alone. What fails is tried again without anyone asking, and only what cannot fix itself is brought to an administrator.
+
+* **Every failed item is retried on the next run**, for every sync type, once the tries set by **Failed item retries** are used up. A full disk, a source that was down, or a network that dropped clears on its own.
+* **An item that has failed on every run for a day is raised once** on Jellyfin's **Activity** page, as "Items failed for a day", with how many items of each kind are failing. It goes on being retried. Filter the **Sync** tab by Errored to see each one.
+* **A link that is missing or out of date is written again** at the start of every **Sync Content** run. A link holds nothing, so it is never repaired, only replaced.
+* **A file that was already here is this server's own.** A file on this server before it was matched to another server's is tracked, and stays when that server removes its file, whatever **Removed files** is set to. Only files this server downloaded follow **Removed files**.
+* **When both servers already hold a title as different files, the direction decides.** A **Pull** server is a source to mirror. Its file replaces this server's by **Changed files**, and is from then on a downloaded file like any other. A **Sync** server is an equal. Each keeps its own file, the row is settled and says the two differ, and only what each lacks is filled in. Queue the row on the **Sync** tab to take the other server's file by hand. A [Link library](Links.md#versions) keeps this server's own file the same way, whatever the direction.
+* **A copy is kept above all else.** A download interrupted while replacing a file puts the old file, its subtitles, artwork, and `.nfo` back on the next run. A download that does not match the size the source reported never replaces a file that is already here.
+* **A server that does not answer holds only its own files.** Removed files are still cleaned up for the servers that answered. The same goes for a server whose library filter names a collection it no longer has.
+* **A full disk does not stop removals.** Files waiting to be removed are removed before the run gives up for lack of space.
+* **Leftovers are cleared.** A half-copied download left in a library folder by a crash is removed after a day, and removing a server removes the links that pointed at it. Its copies are real files and stay.
+
+## Servers That Sync With Each Other
+
+When servers pass files between each other, each copy remembers the server it first came from, its **origin**. A server that downloads a file records the origin its source names for it, or the source itself when the file is the source's own. The rules below apply to files a library copies. A **Link** library works the other way round. A film is there for as long as any server it reads from holds a real copy, so every holder's offer counts and a link is written to it. See [Links](Links.md).
+
+* A file that first came from this server is this server's to decide about. Another server's copy of it is never downloaded back, so a film removed here stays removed, and the other servers remove their copies under their own **Removed files** setting.
+* A file that first came from another server this one syncs the same folder from is that server's to decide about. A copy of it on a third server is not taken as a file of its own, so once the origin removes the film, its copies on the other servers stop keeping each other in place.
+* Any other offer counts. A file still reaches a server through one in between when that server does not sync from the origin, or when the origin does not answer.
+* Change or replace a file on the server it first came from. A copy changed on another server is that server's local edit, and its next sync puts the origin's file back when **Detect updated files** is on.
+
+A server goes on naming the origin of a copy for a day after removing it, since Jellyfin lists a removed file until it next scans the folder.
+
+An origin is recorded when a file is downloaded. A file that was already on a server when it was matched to another server's has none recorded, and counts as that server's own. A server without Zooid reports no origins, so it is read as if every file on it were its own.
+
+## Deleting From the Sync Tab
+
+Deleting a file from the **Sync** tab removes it from disk, or moves it to the recycling bin, and keeps its row as **Ignored**, so the next run does not download it again. Queue the row to download it again.
+
+## Library Refresh
+
+After a **Sync Content** run that downloaded or removed files, or a hint that downloaded, moved, replaced, linked, or removed a file, Jellyfin is asked to refresh only the folders that changed, the same way its library monitor reports a change it saw. A run that touched many folders, such as a first run that copies a whole library, runs one full library scan instead. So does a run into a library Jellyfin has not scanned since it was empty, since Jellyfin does not record an empty library's folder and would drop the request. A file that arrives through a hint queues a library scan in that case.

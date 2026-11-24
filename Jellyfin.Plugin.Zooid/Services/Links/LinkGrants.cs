@@ -1,0 +1,328 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// Ties a link to the users the source has allowed to play it, since Jellyfin's ffmpeg and its stream
+/// proxy read a link with no token. Only the source's approval at PlaybackInfo makes a grant, which
+/// expires quickly when unused and lasts while playback goes on.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class LinkGrants
+{
+    /// <summary>How long a grant waits for its first use.</summary>
+    public static readonly TimeSpan Unused = TimeSpan.FromMinutes(2);
+
+    /// <summary>How long a grant lasts after its last use.</summary>
+    public static readonly TimeSpan InUse = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// How long a probe grant waits. The probe runs from Jellyfin's refresh queue, which after a large
+    /// sync may reach a link long after it was written.
+    /// </summary>
+    public static readonly TimeSpan ProbeWait = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// The most of a file one probe grant may read. A probe reads a file's headers and index, which is
+    /// a small part of it, so nothing else on this server reads a whole file under the probe's grant.
+    /// </summary>
+    public const long ProbeBudget = 256L * 1024 * 1024;
+
+    private readonly Func<DateTime> _now;
+    private readonly object _lock = new();
+
+    /// <summary>The live grants of each link by user, with the probe's grant under the empty id.</summary>
+    private readonly Dictionary<string, Dictionary<Guid, Entry>> _grants = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkGrants"/> class.
+    /// </summary>
+    public LinkGrants()
+        : this(() => DateTime.UtcNow)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkGrants"/> class.
+    /// </summary>
+    /// <param name="now">Reads the current time, so a test can move it.</param>
+    public LinkGrants(Func<DateTime> now)
+    {
+        ArgumentNullException.ThrowIfNull(now);
+        _now = now;
+    }
+
+    /// <summary>Records that a source allowed a user to play a link, and which server that was.</summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="userId">The user the source allowed.</param>
+    /// <param name="route">The server the playback streams from, or null for the link's own.</param>
+    public void Grant(string linkId, Guid userId, LinkRoute? route = null)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            var users = UsersOf(linkId);
+            var used = users.TryGetValue(userId, out var current) && Live(current) && current.Used;
+            users[userId] = new Entry(false, _now(), used, route, 0, current?.Open ?? 0);
+        }
+    }
+
+    /// <summary>
+    /// The server a user's playback of a link streams from, or null for the link's own server. The
+    /// probe's grant is named by the empty id.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="userId">The user playing.</param>
+    /// <returns>The route, or null.</returns>
+    public LinkRoute? RouteFor(string linkId, Guid userId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            return _grants.TryGetValue(linkId, out var users) && users.TryGetValue(userId, out var current) && Live(current)
+                ? current.Route
+                : null;
+        }
+    }
+
+    /// <summary>
+    /// Moves a live grant to another server, after its own failed partway and another stood in. A
+    /// grant that has lapsed is not brought back.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="userId">The user playing.</param>
+    /// <param name="route">The server that stood in.</param>
+    public void Reroute(string linkId, Guid userId, LinkRoute route)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        ArgumentNullException.ThrowIfNull(route);
+        lock (_lock)
+        {
+            if (_grants.TryGetValue(linkId, out var users) && users.TryGetValue(userId, out var current) && Live(current))
+            {
+                users[userId] = current with { Route = route };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Keeps a user's grant alive while they stream. <c>false</c> when the user holds no live grant, so the
+    /// request was never allowed by the source and must not reach the link.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="userId">The user streaming.</param>
+    /// <returns><c>true</c> when the user holds a live grant.</returns>
+    public bool Refresh(string linkId, Guid userId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            if (!_grants.TryGetValue(linkId, out var users) || !users.TryGetValue(userId, out var current) || !Live(current))
+            {
+                return false;
+            }
+
+            users[userId] = current with { At = _now(), Used = true };
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Whether any user holds a live grant on a link, so somebody the source allowed is playing it now.
+    /// The probe's grant does not count, and nothing is marked as used.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <returns><c>true</c> when a user holds a live grant.</returns>
+    public bool HasViewer(string linkId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            return _grants.TryGetValue(linkId, out var users) && users.Any(p => p.Key != Guid.Empty && !p.Value.Probe && Live(p.Value));
+        }
+    }
+
+    /// <summary>Lets this server's own media probe read a link nobody is playing.</summary>
+    /// <param name="linkId">The link's id.</param>
+    public void GrantProbe(string linkId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            var users = UsersOf(linkId);
+            if (!users.Any(p => p.Key != Guid.Empty && Live(p.Value)))
+            {
+                users[Guid.Empty] = new Entry(true, _now(), false, null, 0);
+            }
+        }
+    }
+
+    /// <summary>The live grant seen most recently for a link, marked as used, or null when nobody may read it now.</summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <returns>The grant, or null.</returns>
+    public LinkGrant? Use(string linkId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            if (!_grants.TryGetValue(linkId, out var users))
+            {
+                return null;
+            }
+
+            foreach (var dead in users.Where(p => !Live(p.Value)).Select(p => p.Key).ToList())
+            {
+                users.Remove(dead);
+            }
+
+            if (users.Count == 0)
+            {
+                _grants.Remove(linkId);
+                return null;
+            }
+
+            var (userId, entry) = users.OrderByDescending(p => p.Value.Probe ? DateTime.MinValue : p.Value.At).First();
+
+            // A probe grant keeps its window from when it was made.
+            if (!entry.Probe)
+            {
+                users[userId] = entry with { At = _now(), Used = true };
+            }
+
+            return new LinkGrant(entry.Probe ? null : userId, entry.Probe, entry.Route);
+        }
+    }
+
+    /// <summary>
+    /// Counts bytes read under a link's probe grant. <c>false</c> once the grant has read as much as a probe
+    /// may, or is gone, which ends the read.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="bytes">The bytes read.</param>
+    /// <returns><c>true</c> while the read may go on.</returns>
+    public bool SpendProbe(string linkId, long bytes)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        lock (_lock)
+        {
+            if (!_grants.TryGetValue(linkId, out var users) || !users.TryGetValue(Guid.Empty, out var current) || !Live(current))
+            {
+                return false;
+            }
+
+            users[Guid.Empty] = current with { Spent = current.Spent + bytes };
+            return true;
+        }
+    }
+
+    /// <summary>Returns the grants of one link, making an empty set when it has none.</summary>
+    private Dictionary<Guid, Entry> UsersOf(string linkId)
+    {
+        if (!_grants.TryGetValue(linkId, out var users))
+        {
+            users = new Dictionary<Guid, Entry>();
+            _grants[linkId] = users;
+        }
+
+        return users;
+    }
+
+    /// <summary>How long after its last request a play still counts as streaming.</summary>
+    public static readonly TimeSpan Playing = TimeSpan.FromSeconds(90);
+
+    /// <summary>
+    /// How many links are streaming now, each by one user, from one server or from all of them. A play
+    /// counts from its first request until <see cref="Playing"/> after its last, and the play being
+    /// chosen for is left out so it never counts against itself.
+    /// </summary>
+    /// <param name="serverKey">The server streamed from, or null for every server.</param>
+    /// <param name="exceptLinkId">The link being chosen for.</param>
+    /// <param name="exceptUserId">The user being chosen for.</param>
+    /// <returns>The number of plays streaming.</returns>
+    public int Streaming(string? serverKey, string? exceptLinkId = null, Guid? exceptUserId = null)
+    {
+        lock (_lock)
+        {
+            var now = _now();
+            var count = 0;
+            foreach (var (linkId, users) in _grants)
+            {
+                foreach (var (userId, entry) in users)
+                {
+                    if (entry.Probe || !entry.Used || entry.Route is null || (entry.Open <= 0 && now - entry.At >= Playing)
+                        || (exceptUserId == userId && string.Equals(linkId, exceptLinkId, StringComparison.OrdinalIgnoreCase))
+                        || (serverKey is not null && !string.Equals(entry.Route.ServerKey, serverKey, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    count++;
+                }
+            }
+
+            return count;
+        }
+    }
+
+    /// <summary>Whether a grant is inside its window and, for a probe, inside its budget.</summary>
+    private bool Live(Entry entry)
+        => _now() - entry.At < (entry.Probe ? ProbeWait : entry.Used ? InUse : Unused)
+            && (!entry.Probe || entry.Spent < ProbeBudget);
+
+    /// <summary>One grant, with when it was last seen, where it streams from, and its open requests.</summary>
+    private sealed record Entry(bool Probe, DateTime At, bool Used, LinkRoute? Route, long Spent, int Open = 0);
+
+    /// <summary>
+    /// Marks a play as streaming while one of its requests is open, since a player that reads a whole
+    /// film in one request is seen no other way. Disposing the hold closes it, and the play then counts
+    /// for <see cref="Playing"/> more.
+    /// </summary>
+    /// <param name="linkId">The link's id.</param>
+    /// <param name="userId">The user playing it.</param>
+    /// <returns>The hold to dispose when the request ends.</returns>
+    public IDisposable Hold(string linkId, Guid userId)
+    {
+        ArgumentNullException.ThrowIfNull(linkId);
+        Adjust(linkId, userId, 1);
+        return new Held(this, linkId, userId);
+    }
+
+    /// <summary>Adds to or takes from a grant's open requests, and marks it used.</summary>
+    private void Adjust(string linkId, Guid userId, int by)
+    {
+        lock (_lock)
+        {
+            if (_grants.TryGetValue(linkId, out var users) && users.TryGetValue(userId, out var current))
+            {
+                users[userId] = current with { Open = Math.Max(0, current.Open + by), At = _now(), Used = true };
+            }
+        }
+    }
+
+    /// <summary>Closes one open request of a play when disposed.</summary>
+    private sealed class Held : IDisposable
+    {
+        private readonly LinkGrants _owner;
+        private readonly string _linkId;
+        private readonly Guid _userId;
+        private int _done;
+
+        public Held(LinkGrants owner, string linkId, Guid userId)
+        {
+            _owner = owner;
+            _linkId = linkId;
+            _userId = userId;
+        }
+
+        public void Dispose()
+        {
+            if (System.Threading.Interlocked.Exchange(ref _done, 1) == 0)
+            {
+                _owner.Adjust(_linkId, _userId, -1);
+            }
+        }
+    }
+}

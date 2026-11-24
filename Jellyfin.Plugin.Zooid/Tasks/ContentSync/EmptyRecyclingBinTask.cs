@@ -1,0 +1,105 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Jellyfin.Plugin.Zooid.Services.Configuration;
+using Jellyfin.Plugin.Zooid.Services.ContentSync.Cleanup;
+using MediaBrowser.Model.Tasks;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Tasks.ContentSync;
+
+/// <summary>
+/// Deletes files that have been in the Recycling bin longer than it keeps them.
+/// </summary>
+public class EmptyRecyclingBinTask : IScheduledTask
+{
+    private readonly ILogger<EmptyRecyclingBinTask> _logger;
+    private readonly IPluginConfigurationManager _configManager;
+
+    /// <summary>Initializes a new instance of the <see cref="EmptyRecyclingBinTask"/> class.</summary>
+    /// <param name="logger">Writes log entries.</param>
+    /// <param name="configManager">Supplies the Recycling bin settings.</param>
+    public EmptyRecyclingBinTask(ILogger<EmptyRecyclingBinTask> logger, IPluginConfigurationManager configManager)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(configManager);
+
+        _logger = logger;
+        _configManager = configManager;
+    }
+
+    /// <inheritdoc />
+    public string Name => "Empty Recycling Bin";
+
+    /// <inheritdoc />
+    public string Key => "ZooidEmptyRecyclingBin";
+
+    /// <inheritdoc />
+    public string Description => "Deletes files kept in the recycling bin longer than Keep for (days).";
+
+    /// <inheritdoc />
+    public string Category => "Zooid";
+
+    /// <inheritdoc />
+    public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+
+        var config = _configManager.Configuration;
+
+        if (!config.EnableContentSync)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!config.EnableRecyclingBin)
+        {
+            _logger.LogDebug("Recycling bin is not enabled, skipping cleanup");
+            return Task.CompletedTask;
+        }
+
+        if (string.IsNullOrEmpty(config.RecyclingBinPath))
+        {
+            _logger.LogWarning("Recycling bin path is not configured");
+            return Task.CompletedTask;
+        }
+
+        if (RecyclingBinService.OverlapsLibraryRoot(config.RecyclingBinPath, config))
+        {
+            _logger.LogError(
+                "Recycling bin path {Path} overlaps a configured library root, cleanup would permanently delete media files. Skipping cleanup until the path is corrected",
+                config.RecyclingBinPath);
+            return Task.CompletedTask;
+        }
+
+        progress.Report(0);
+
+        var deletedCount = RecyclingBinService.CleanupExpiredFiles(
+            config.RecyclingBinPath,
+            config.RecyclingBinRetentionDays,
+            _logger);
+
+        progress.Report(100);
+
+        if (deletedCount == 0)
+        {
+            _logger.LogDebug("No expired files found in recycling bin");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
+    {
+        return new[]
+        {
+            new TaskTriggerInfo
+            {
+                Type = TaskTriggerInfoType.IntervalTrigger,
+                IntervalTicks = TimeSpan.FromDays(1).Ticks
+            }
+        };
+    }
+}

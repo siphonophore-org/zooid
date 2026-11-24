@@ -1,0 +1,93 @@
+name: '🧪 Release Unstable'
+
+# Started by hand from the Actions tab on unstable. Builds the version in build.yaml and publishes it as a
+# pre-release, which only the Siphonophore unstable manifest lists. Running it again for the same version
+# replaces that pre-release's zip. A version already released as stable is refused, so bump build.yaml
+# first.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: release-unstable
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/unstable'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Get Build Info
+        id: build_info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION=$(grep '^version:' build.yaml | sed 's/version: *"\?\([^"]*\)"\?.*/\1/' | tr -d '"')
+          TAG="v${VERSION}"
+          STATE=$(gh release view "${TAG}" --json isPrerelease,isDraft --jq 'if .isPrerelease then "pre" elif .isDraft then "draft" else "stable" end' 2>/dev/null || echo "missing")
+          if [ "$STATE" = "stable" ] || [ "$STATE" = "draft" ]; then
+            echo "::error::${TAG} is already a ${STATE} release. Bump the version in build.yaml on unstable first."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "state=${STATE}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Plugin
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Extract Changelog
+        run: |
+          python3 - > /tmp/changelog.md << 'PYEOF'
+          import yaml
+          with open('build.yaml') as f:
+              changelog = yaml.safe_load(f).get('changelog', '')
+          if isinstance(changelog, dict):
+              for category, items in changelog.items():
+                  print(f"\n## {category.capitalize()}")
+                  for item in items or []:
+                      print(f"- {item}")
+          else:
+              print(str(changelog).strip())
+          PYEOF
+
+      - name: Publish Pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.build_info.outputs.tag }}
+          VERSION: ${{ steps.build_info.outputs.version }}
+          STATE: ${{ steps.build_info.outputs.state }}
+        run: |
+          set -euo pipefail
+          if [ "$STATE" = "pre" ]; then
+            gh release edit "${TAG}" --notes-file /tmp/changelog.md
+            git push --force origin "HEAD:refs/tags/${TAG}"
+          else
+            gh release create "${TAG}" --prerelease --target "${GITHUB_SHA}" --title "${TAG}" --notes-file /tmp/changelog.md
+          fi
+          gh release upload "${TAG}" "dist/zooid-${VERSION}.zip" "dist/zooid-${VERSION}.zip.md5" --clobber
+
+  # A release made with this run's own token starts no other workflow, so the publish run is called here.
+  publish:
+    needs: release
+    uses: ./.github/workflows/publish.yaml
+    secrets:
+      SIPHONOPHORE_DISPATCH_TOKEN: ${{ secrets.SIPHONOPHORE_DISPATCH_TOKEN }}

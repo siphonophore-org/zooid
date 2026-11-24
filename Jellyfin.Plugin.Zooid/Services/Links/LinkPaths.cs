@@ -1,0 +1,156 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Jellyfin.Plugin.Zooid.Utilities;
+using Jellyfin.Sdk.Generated.Models;
+using MediaBrowser.Controller.Entities;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>Paths of links and of the copies they stand in for.</summary>
+public static class LinkPaths
+{
+    /// <summary>The extension of a link, with its dot.</summary>
+    public const string Extension = ".strm";
+
+    /// <summary>
+    /// Whether a source item can be held as a link, which only video can. Jellyfin serves an audio or
+    /// book .strm as a plain file, which would hand a player the link's secret.
+    /// </summary>
+    /// <param name="item">The source item to judge, or null.</param>
+    /// <returns><c>true</c> when it can be a link.</returns>
+    public static bool CanLink(BaseItemDto item)
+        => item?.Type is BaseItemDto_Type.Movie
+            or BaseItemDto_Type.Episode
+            or BaseItemDto_Type.Video
+            or BaseItemDto_Type.MusicVideo
+            or BaseItemDto_Type.Trailer;
+
+    /// <summary>
+    /// The other versions of a source film or episode, such as a 1080p file beside a 4K one, each as
+    /// an item of its own with that version's id, path, and size. A Link library mapping links every
+    /// version so a user the source refuses one can play another, and copies are made of the first only.
+    /// </summary>
+    /// <param name="item">The source item, as Jellyfin lists it.</param>
+    /// <returns>One item per further version held as a file.</returns>
+    public static IEnumerable<BaseItemDto> OtherVersions(BaseItemDto item)
+    {
+        if (item?.MediaSources is not { Count: > 1 } sources || !CanLink(item))
+        {
+            yield break;
+        }
+
+        var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Versions differing only by extension share one .strm, so the first wins.
+        if (LinkPathFor(item.Path) is { } own)
+        {
+            taken.Add(own);
+        }
+
+        foreach (var source in sources)
+        {
+            if (source is null
+                || !Guid.TryParse(source.Id, out var versionId)
+                || versionId == item.Id
+                || string.IsNullOrEmpty(source.Path)
+                || string.Equals(source.Path, item.Path, StringComparison.OrdinalIgnoreCase)
+                || source.IsRemote == true
+                || LinkPathFor(source.Path) is not { } link
+                || !taken.Add(link))
+            {
+                continue;
+            }
+
+            yield return new BaseItemDto
+            {
+                Id = versionId,
+                Name = item.Name,
+                Type = item.Type,
+                Path = source.Path,
+                DateCreated = item.DateCreated,
+                MediaSources = new List<MediaSourceInfo> { source }
+            };
+        }
+    }
+
+    /// <summary>
+    /// Where a link for <paramref name="copiedPath"/> would sit, or null when the path has no extension
+    /// to swap or is already a .strm.
+    /// </summary>
+    /// <param name="copiedPath">The path the copy would have, or null.</param>
+    /// <returns>The link's path, or null.</returns>
+    public static string? LinkPathFor(string? copiedPath)
+    {
+        if (string.IsNullOrEmpty(copiedPath))
+        {
+            return null;
+        }
+
+        var extension = Path.GetExtension(copiedPath);
+        return string.IsNullOrEmpty(extension) || extension.Equals(Extension, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : Path.ChangeExtension(copiedPath, Extension);
+    }
+
+    /// <summary>
+    /// The path a full copy would have where a link row's .strm sits, the .strm path with the source
+    /// file's extension, or null when the row has no local path.
+    /// </summary>
+    /// <param name="row">The row of the link whose copy path is wanted.</param>
+    /// <returns>The copy's path, or null.</returns>
+    public static string? CopiedPathOf(Models.ContentSync.SyncItem row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return string.IsNullOrEmpty(row.LocalPath) ? null : Path.ChangeExtension(row.LocalPath, Path.GetExtension(row.SourcePath));
+    }
+
+    /// <summary>
+    /// The path a table row records for a local item. A link records the path its copy would have, the
+    /// same path a refresh translates from the source, so rows from either agree on which file they cover.
+    /// </summary>
+    /// <param name="localPath">The local item's path.</param>
+    /// <param name="links">Tells which paths are this server's links.</param>
+    /// <returns>The path the row records.</returns>
+    public static string RowPathFor(string localPath, ILinkRegistry links)
+    {
+        ArgumentNullException.ThrowIfNull(links);
+        return links.CopiedPathFor(localPath) ?? localPath;
+    }
+
+    /// <summary>
+    /// Translates a local path back to the source. A link translates as the copy it stands in for, so it
+    /// keeps the source file's real extension and the source matches its own file by path.
+    /// </summary>
+    /// <param name="localPath">The local item's path.</param>
+    /// <param name="localRoot">The local library root.</param>
+    /// <param name="sourceRoot">The source library root.</param>
+    /// <param name="links">Tells which paths are this server's links.</param>
+    /// <returns>The source path.</returns>
+    public static string SourcePathFor(string localPath, string localRoot, string sourceRoot, ILinkRegistry links)
+    {
+        ArgumentNullException.ThrowIfNull(links);
+        return PathUtilities.TranslatePath(RowPathFor(localPath, links), localRoot, sourceRoot);
+    }
+
+    /// <summary>
+    /// Adds each link in <paramref name="index"/> again under the path its copy would have, so a source
+    /// path translated to this server finds it. An alias never replaces a path already in the index, so
+    /// a real file always wins over a link standing in for the same name.
+    /// </summary>
+    /// <param name="index">The index of local items by path.</param>
+    /// <param name="links">Tells which paths are this server's links.</param>
+    public static void AddAliases(Dictionary<string, BaseItem> index, ILinkRegistry links)
+    {
+        ArgumentNullException.ThrowIfNull(index);
+        ArgumentNullException.ThrowIfNull(links);
+        foreach (var (path, item) in index.ToList())
+        {
+            if (links.CopiedPathFor(path) is { } copied)
+            {
+                index.TryAdd(copied, item);
+            }
+        }
+    }
+}

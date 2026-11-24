@@ -1,0 +1,593 @@
+// zooid_shared.js
+// Wraps the Stolon shared bundle for the Zooid pages. It re-exports Stolon's table and dialog builders
+// and adds createZooidShared(view), the helper bag with the Zooid helpers the pages use.
+//
+// Every page loads the plugin's strings once from TRANSLATIONS_URL. The bag's t is the handle, and a page's
+// bind and load run once it has them, so script text and the marked markup are in the viewer's language.
+//
+// The Storage tab shows while content, history, or metadata sync is on. A page cannot wait for the config
+// before it sets its tabs, so the last known answer is kept per browser under STORAGE_TAB_KEY.
+// A missing answer shows the tab. When the answer changes, the page's onTabsChanged callback runs.
+
+// The specifier is relative so it resolves against this module's own URL, and a server hosted under
+// a base URL still loads the bundle.
+import {
+    createShared as baseCreateShared,
+    createPaginatedTable,
+    createSortableCardList,
+    createChoiceGroup,
+    createCheckboxList,
+    createPieChart,
+    createBarChart,
+    createLineChart,
+    createUsageMeter,
+    createRepeater,
+    createSaveBar,
+    generateGuid,
+    bindDialog,
+    confirmDialog,
+    createConfigPage,
+    setTabs,
+    loadTranslations,
+    createTranslations,
+    SECRET_KEPT
+} from './configurationpage?name=zooid_stolon.js';
+
+// Re-exports
+// The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
+export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, SECRET_KEPT };
+
+var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
+
+// TRANSLATIONS_URL
+// The route that gives the pages their strings in the viewer's language.
+export var TRANSLATIONS_URL = 'Zooid/Translations';
+
+// The strings once a page has loaded them, so the tab names follow the viewer's language.
+var tabStrings = null;
+
+// STORAGE_TAB_KEY
+// The browser storage key that holds whether the Storage tab shows. Each page controller reads it
+// inline before this module loads, so a page sets its tabs without waiting for the config.
+export var STORAGE_TAB_KEY = 'zooid.storageTab';
+
+// readStorageTabFlag
+// Reads the stored answer for whether the Storage tab shows.
+//
+// Output
+// [string]: '1' or '0', or null when nothing is stored or storage is blocked.
+function readStorageTabFlag() {
+    try {
+        return window.localStorage.getItem(STORAGE_TAB_KEY);
+    } catch (e) {
+        return null;
+    }
+}
+
+// writeStorageTabFlag
+// Stores whether the Storage tab shows. A blocked storage leaves the tab at its default of shown.
+//
+// Inputs
+// value [string]: '1' to show the tab or '0' to hide it.
+function writeStorageTabFlag(value) {
+    try {
+        window.localStorage.setItem(STORAGE_TAB_KEY, value);
+    } catch (e) {
+        // Storage blocked: the tab keeps its default of shown.
+    }
+}
+
+// tabName
+// Names a tab in the viewer's language, or in English until the strings have loaded.
+//
+// Inputs
+// key [string]: The key of the tab's name.
+// english [string]: The name to show before the strings load.
+//
+// Output
+// [string]: The tab's name.
+function tabName(key, english) {
+    return tabStrings ? tabStrings.tr(key, english) : english;
+}
+
+// zooidTabs
+// Lists the dashboard tabs in order. The Storage tab shows unless the last config read said no sync type uses it.
+//
+// Inputs
+// alwaysStorage [boolean]: Whether to list Storage whatever is stored, as the Storage page does for itself.
+//
+// Output
+// [object[]]: Each tab's href and name.
+export function zooidTabs(alwaysStorage) {
+    var tabs = [
+        { href: 'configurationpage?name=zooid_sync', name: tabName('TabSync', 'Sync') },
+        { href: 'configurationpage?name=zooid_servers', name: tabName('TabServers', 'Servers') }
+    ];
+    if (alwaysStorage || readStorageTabFlag() !== '0') tabs.push({ href: 'configurationpage?name=zooid_storage', name: tabName('TabStorage', 'Storage') });
+    tabs.push({ href: 'configurationpage?name=zooid_statistics', name: tabName('TabStatistics', 'Statistics') });
+    tabs.push({ href: 'configurationpage?name=zooid_settings', name: tabName('Settings', 'Settings') });
+    return tabs;
+}
+
+// createZooidPage
+// Wires a Zooid page through Stolon's page lifecycle, with the Zooid helper bag and the shared tabs.
+// The page's bind and load wait for the strings, and the marked markup is translated before bind runs.
+//
+// Inputs
+// view [HTMLElement]: The page the dashboard passes to the controller.
+// opts [object]: page is the tab's own page name. alwaysStorage lists the Storage tab whatever is stored.
+//   bind, load, and onHide are Stolon's, and each is given the Zooid bag and the page handle.
+//
+// Output
+// [object]: shared is the Zooid helper bag, and page is Stolon's page handle with addCleanup and createPoller.
+export function createZooidPage(view, opts) {
+    var bag = null;
+    var tabs = function () { return zooidTabs(opts.alwaysStorage); };
+    var tabIndex = function () {
+        var href = 'configurationpage?name=' + opts.page;
+        var index = tabs().findIndex(function (tab) { return tab.href === href; });
+        return index < 0 ? 0 : index;
+    };
+    var pass = function (fn) { return fn ? function (shared, page) { fn(bag, page); } : undefined; };
+    var bound = null;
+    var page = createConfigPage(view, {
+        pluginId: PLUGIN_ID,
+        apiPrefix: 'Zooid',
+        tabsKey: 'zooid',
+        get tabIndex() { return tabIndex(); },
+        tabs: tabs,
+        bind: function () {
+            bound = bag.translations.then(function (t) {
+                t.apply(view);
+                if (!view.classList.contains('hide')) setTabs('zooid', tabIndex(), tabs);
+                if (opts.bind) opts.bind(bag, page);
+            });
+        },
+        load: function () {
+            bound.then(function () { if (opts.load) opts.load(bag, page); });
+        },
+        onHide: pass(opts.onHide)
+    });
+    bag = createZooidShared(view, page.shared);
+    // A config load that turns a sync type on or off adds or drops the Storage tab. A hidden page leaves the tabs to the one on screen.
+    bag.onTabsChanged = function () {
+        if (!view.classList.contains('hide')) setTabs('zooid', tabIndex(), tabs);
+    };
+    return { shared: bag, page: page };
+}
+
+// createSaveBars
+// Ends sections with Stolon's Save Bar and asks before the page is left while one has unsaved changes.
+// A field changed inside a section marks its bar unsaved, and a save that lands clears it.
+//
+// Inputs
+// page [object]: Stolon's page handle, from createZooidPage.
+//
+// Output
+// [object]: add(content, opts) appends a Save Bar to content and returns the bar. opts holds savedText,
+//   failedText, and onSave, which returns the save's promise. A promise that resolves with text shows that
+//   text as the saved line. markDirty(bar) marks a bar unsaved from code. clean() clears every bar, for
+//   after the page loads its values.
+export function createSaveBars(page) {
+    var entries = [];
+
+    function entryOf(bar) {
+        return entries.find(function (entry) { return entry.bar === bar; }) || null;
+    }
+
+    function markDirty(bar) {
+        var entry = entryOf(bar);
+        if (!entry) return;
+        entry.dirty = true;
+        bar.setDirty(true);
+    }
+
+    page.guardUnsaved(function () { return entries.some(function (entry) { return entry.dirty; }); });
+
+    return {
+        add: function (content, opts) {
+            if (!content) return null;
+            var bar = createSaveBar({
+                fill: true,
+                savedText: opts.savedText,
+                failedText: opts.failedText,
+                onSave: function () {
+                    return Promise.resolve().then(opts.onSave).then(function (savedLine) {
+                        var entry = entryOf(bar);
+                        if (entry) entry.dirty = false;
+                        // The bar shows its own saved line once this resolves, so a line of the save's own follows it.
+                        if (typeof savedLine === 'string' && savedLine) setTimeout(function () { bar.setState('saved', savedLine); }, 0);
+                    });
+                }
+            });
+            entries.push({ bar: bar, dirty: false });
+            content.appendChild(bar.element);
+            // A table's search and filters only change what it shows, so they leave the section saved.
+            var mark = function (e) {
+                if (bar.element.contains(e.target) || (e.target.closest && e.target.closest('.stolon-table-controls'))) return;
+                markDirty(bar);
+            };
+            content.addEventListener('input', mark);
+            content.addEventListener('change', mark);
+            return bar;
+        },
+        markDirty: markDirty,
+        clean: function () {
+            entries.forEach(function (entry) {
+                entry.dirty = false;
+                entry.bar.setDirty(false);
+            });
+        }
+    };
+}
+
+// createZooidShared
+// Builds the helper bag a Zooid page uses. It is Stolon's bag for the Sync route, plus the config
+// readers, the thumbnail renderers, the save helpers, and the health banner. Loading it also checks the
+// plugin's health and shows its banner when the plugin cannot run.
+//
+// Inputs
+// view [HTMLElement]: The page the helpers work in.
+// bag [object]: Stolon's bag to add the helpers to, such as a page handle's. A new one is built when left out.
+//
+// Output
+// [object]: The helper bag, with every Stolon helper and the Zooid helpers below.
+export function createZooidShared(view, bag) {
+    var shared = bag || baseCreateShared(view, PLUGIN_ID, 'Zooid');
+
+    shared.SECRET_KEPT = SECRET_KEPT;
+
+    // The plugin's strings. t has none until translations resolves, which every page waits for.
+    shared.t = createTranslations({});
+    shared.translations = loadTranslations(TRANSLATIONS_URL).then(function (t) {
+        shared.t = t;
+        tabStrings = t;
+        return t;
+    });
+
+    // Set by a page to set its tabs again when the Storage tab appears or disappears.
+    shared.onTabsChanged = null;
+
+    // rememberContentSync
+    // Records whether the Storage tab shows, and tells the page when that changed the tab list. The tab
+    // holds the library filter, which content, history, and metadata sync all apply.
+    //
+    // Inputs
+    // config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
+    shared.rememberContentSync = function (config) {
+        if (!config || typeof config !== 'object' || !('EnableContentSync' in config)) return;
+        var value = config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync ? '1' : '0';
+        var before = readStorageTabFlag();
+        if (before === value) return;
+        writeStorageTabFlag(value);
+        // A missing flag already showed the tab, so only a change of what shows reruns setTabs.
+        var shownBefore = before !== '0';
+        if (shownBefore !== (value === '1') && typeof shared.onTabsChanged === 'function') {
+            shared.onTabsChanged();
+        }
+    };
+
+    var baseGetConfig = shared.getConfig;
+    var baseSaveConfig = shared.saveConfig;
+
+    // getConfig
+    // Reads the plugin configuration and remembers whether the Storage tab shows.
+    //
+    // Output
+    // [Promise]: Resolves with the configuration.
+    shared.getConfig = function () {
+        return baseGetConfig.apply(shared, arguments).then(function (config) {
+            shared.rememberContentSync(config);
+            return config;
+        });
+    };
+
+    // saveConfig
+    // Saves the plugin configuration and remembers whether the Storage tab shows.
+    //
+    // Inputs
+    // config [object]: The configuration to save.
+    //
+    // Output
+    // [Promise]: Resolves when the save landed.
+    shared.saveConfig = function (config) {
+        return baseSaveConfig.apply(shared, arguments).then(function (result) {
+            shared.rememberContentSync(config);
+            return result;
+        });
+    };
+
+    // This server's name, filled by fetchLocalServerName.
+    shared.localServerName = null;
+
+    // Source images go through the plugin's ImageProxy endpoint so the source API key never reaches the
+    // browser. The image bytes are fetched with ApiClient, which keeps the session token in the
+    // Authorization header and out of the URL, and attached as an object URL once the row is in the DOM.
+    var thumbSeq = 0;
+
+    // scheduleProxyImage
+    // Loads a source image through the proxy into an image element that is already in the DOM, or soon
+    // will be. When the load fails, the image hides and the placeholder after it shows.
+    //
+    // Inputs
+    // imgId [string]: The id of the image element.
+    // id [string]: The item, person, or user to show.
+    // isUser [boolean]: Whether id is a user.
+    // maxHeight [number]: The tallest image to ask for, in pixels. Defaults to 80.
+    // serverKey [string]: The configured server that holds it. A row with none belongs to the first scan server.
+    shared.scheduleProxyImage = function (imgId, id, isUser, maxHeight, serverKey) {
+        var attempts = 0;
+        function tryLoad() {
+            var img = document.getElementById(imgId);
+            if (!img) {
+                // The caller inserts the rendered HTML in the same tick. Up to three deferred
+                // retries, each waiting a little longer, cover slower table renderers.
+                if (++attempts <= 3) setTimeout(tryLoad, 100 * attempts);
+                return;
+            }
+            var params = {
+                itemId: id,
+                user: isUser ? 'true' : 'false',
+                maxHeight: maxHeight || 80
+            };
+            if (serverKey) params.serverKey = serverKey;
+            var url = ApiClient.getUrl('Zooid/ImageProxy', params);
+            ApiClient.fetch({ url: url, type: 'GET' }).then(function (response) {
+                if (!response || !response.ok) throw new Error('image fetch failed');
+                return response.blob();
+            }).then(function (blob) {
+                var objectUrl = URL.createObjectURL(blob);
+                img.addEventListener('load', function () { URL.revokeObjectURL(objectUrl); }, { once: true });
+                img.src = objectUrl;
+            }).catch(function () {
+                img.classList.add('stolon-hidden');
+                if (img.nextElementSibling) img.nextElementSibling.classList.remove('stolon-hidden');
+            });
+        }
+        setTimeout(tryLoad, 0);
+    };
+
+    // proxyImage
+    // Gives a table column the loader for a thumbnail that is read through this server's image proxy.
+    //
+    // Inputs
+    // id [string]: The item, person, or user to show.
+    // isUser [boolean]: Whether id is a user.
+    // serverKey [string]: The configured server that holds it.
+    //
+    // Output
+    // [function]: A loader that resolves to the image, or null when there is no id.
+    shared.proxyImage = function (id, isUser, serverKey) {
+        if (!id) return null;
+        return function () {
+            var params = { itemId: id, user: isUser ? 'true' : 'false', maxHeight: 80 };
+            if (serverKey) params.serverKey = serverKey;
+            return ApiClient.fetch({ url: ApiClient.getUrl('Zooid/ImageProxy', params), type: 'GET' }).then(function (response) {
+                if (!response || !response.ok) throw new Error('image fetch failed');
+                return response.blob();
+            });
+        };
+    };
+
+    // scanServers
+    // Lists the configured servers that scan, in rank order. A server scans when it is on, has a Server
+    // URL and API Key, and pulls. A server with no Mode is a Pull server, matching the server side default.
+    // The mode arrives as the enum name or, from older writers, as its number, so both spellings count.
+    //
+    // Inputs
+    // config [object]: The plugin configuration.
+    //
+    // Output
+    // [object[]]: The servers that scan.
+    shared.scanServers = function (config) {
+        return ((config && config.Servers) || []).filter(function (s) {
+            if (!s || s.IsEnabled === false || !s.Url || !s.ApiKey) return false;
+            var mode = s.Mode === undefined || s.Mode === null || s.Mode === '' ? 'Pull' : s.Mode;
+            return mode === 'Pull' || mode === 'Sync' || mode === 0 || mode === 2;
+        });
+    };
+
+    // allLibraryMappings
+    // Gathers the library mappings of every server that scans.
+    //
+    // Inputs
+    // config [object]: The plugin configuration.
+    //
+    // Output
+    // [object[]]: The mappings, in server rank order.
+    shared.allLibraryMappings = function (config) {
+        var out = [];
+        shared.scanServers(config).forEach(function (s) { out = out.concat(s.LibraryMappings || []); });
+        return out;
+    };
+
+    // allUserMappings
+    // Gathers the user mappings of every server that scans.
+    //
+    // Inputs
+    // config [object]: The plugin configuration.
+    //
+    // Output
+    // [object[]]: The mappings, in server rank order.
+    shared.allUserMappings = function (config) {
+        var out = [];
+        shared.scanServers(config).forEach(function (s) { out = out.concat(s.UserMappings || []); });
+        return out;
+    };
+
+    // serverFor
+    // Finds the configured server a row came from. A row with no key, or a key that no server holds,
+    // belongs to the first scan server.
+    //
+    // Inputs
+    // config [object]: The plugin configuration.
+    // serverKey [string]: The key the row carries.
+    //
+    // Output
+    // [object]: The server, or null when none scans.
+    shared.serverFor = function (config, serverKey) {
+        var servers = (config && config.Servers) || [];
+        if (serverKey) {
+            var match = servers.find(function (s) { return s.Key === serverKey; });
+            if (match) return match;
+        }
+        return shared.scanServers(config)[0] || null;
+    };
+
+    // serverDisplayName
+    // Names a server for a table or a message: its name, else the name it reported, else its Server URL.
+    //
+    // Inputs
+    // server [object]: The configured server.
+    //
+    // Output
+    // [string]: The name, or the word for Source when there is none.
+    shared.serverDisplayName = function (server) {
+        if (!server) return shared.t.tr('LabelSource');
+        return server.Name || server.ServerName || server.Url || shared.t.tr('LabelSource');
+    };
+
+    // serverNameFor
+    // Names the server a row came from.
+    //
+    // Inputs
+    // config [object]: The plugin configuration.
+    // serverKey [string]: The key the row carries.
+    //
+    // Output
+    // [string]: The server's display name.
+    shared.serverNameFor = function (config, serverKey) {
+        return shared.serverDisplayName(shared.serverFor(config, serverKey));
+    };
+
+    // requestFor
+    // Builds the body of a request that names one configured server, for the endpoints that talk to it.
+    // The server resolves a kept key sentinel against the stored entry with the same key.
+    //
+    // Inputs
+    // server [object]: The configured server.
+    // apiKeyOverride [string]: An API Key to send in place of the server's own.
+    //
+    // Output
+    // [object]: The request body.
+    shared.requestFor = function (server, apiKeyOverride) {
+        return {
+            ServerUrl: server.Url,
+            ApiKey: apiKeyOverride || (server.ApiKey ? server.ApiKey : ''),
+            ServerKey: server.Key,
+            AllowPrivateNetwork: server.AllowPrivateNetwork !== false,
+            AuthenticatedUserId: server.AuthenticatedUserId || null
+        };
+    };
+
+    // saveSection
+    // Saves one section of the config through Stolon's saveConfigWith. It reads the config again, applies only
+    // that section's fields, and saves, since posting a page load snapshot whole would overwrite what other
+    // writers changed since, such as the timestamps and failure records the tasks write, or the other
+    // dashboard pages' sections.
+    //
+    // Inputs
+    // mutator [function]: Called with the fresh config, and changes it in place.
+    //
+    // Output
+    // [Promise]: Resolves with the saved config, and rejects when the save failed, so a Save Bar shows the
+    // result. The caller keeps its own copy of the config and updates it only from a save the server kept.
+    shared.saveSection = function (mutator) {
+        var pending = null;
+        return shared.saveConfigWith(function (config) {
+            mutator(config);
+            pending = config;
+        }).then(function () { return pending; });
+    };
+
+    // pageHelpers
+    // Binds the helpers the Servers, Settings, and Storage pages call by bare name to this bag, so a page
+    // takes the ones it uses in one destructuring assignment once the module has loaded.
+    //
+    // Output
+    // [object]: The bound helpers.
+    shared.pageHelpers = function () {
+        return {
+            escapeHtml: shared.escapeHtml.bind(shared),
+            apiRequest: shared.apiRequest.bind(shared),
+            setVisible: shared.setVisible.bind(shared),
+            bindClick: shared.bindClick.bind(shared),
+            getEl: shared.getEl.bind(shared),
+            setChecked: shared.setChecked.bind(shared),
+            getChecked: shared.getChecked.bind(shared),
+            setValue: shared.setValue.bind(shared),
+            getValue: shared.getValue.bind(shared),
+            getIntValue: shared.getIntValue.bind(shared),
+            requestFor: shared.requestFor
+        };
+    };
+
+    // plural
+    // Writes a text with a count in the right form, such as "1 item ignored." or "3 items ignored.".
+    //
+    // Inputs
+    // count [number]: How many there are, filled in as {0}.
+    // one [string]: The key of the text for exactly one.
+    // many [string]: The key of the text for any other count.
+    // ...args [any]: More values, filled in as {1}, {2}.
+    //
+    // Output
+    // [string]: The text in the viewer's language.
+    shared.plural = function (count, one, many) {
+        var args = Array.prototype.slice.call(arguments, 3);
+        return shared.t.format.apply(null, [count === 1 ? one : many, count].concat(args));
+    };
+
+    // syncStatus
+    // Reports a result on the Sync tab's status line.
+    //
+    // Inputs
+    // message [string]: What happened, as one sentence.
+    // isError [boolean]: Whether it went wrong.
+    shared.syncStatus = function (message, isError) {
+        shared.setStatus('syncStatus', message, !!isError, { timeout: 10000 });
+    };
+
+    // fetchLocalServerName
+    // Reads this server's name, once, and keeps it in localServerName.
+    //
+    // Output
+    // [Promise]: Resolves with the name, or the word for Local when it could not be read.
+    shared.fetchLocalServerName = function () {
+        return ApiClient.getPublicSystemInfo().then(function (info) {
+            shared.localServerName = info.ServerName || shared.t.tr('ServerLocal');
+            return shared.localServerName;
+        }).catch(function () {
+            shared.localServerName = shared.t.tr('ServerLocal');
+            return shared.localServerName;
+        });
+    };
+
+    // showHealth
+    // Shows a banner at the top of the page while Zooid is held for a database an older release
+    // wrote, and removes it once the plugin is ready. A page cannot work while it is held, so each one
+    // says so instead of only failing to load its data.
+    //
+    // Output
+    // [Promise]: Resolves once the banner is in step with the health.
+    shared.showHealth = function () {
+        return shared.apiRequest('Health', 'GET').then(function (health) {
+            var host = view.querySelector('.content-primary');
+            var banner = view.querySelector('.zooid-health-banner');
+            if (!health || health.Ready || !host) {
+                if (banner) banner.remove();
+                return;
+            }
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.className = 'zooid-health-banner stolon-error';
+                banner.setAttribute('role', 'alert');
+                host.insertBefore(banner, host.firstChild);
+            }
+            banner.textContent = health.Message || shared.t.tr('ErrorDatabaseHeld');
+        }).catch(function () { });
+    };
+    shared.translations.then(shared.showHealth);
+
+    return shared;
+}

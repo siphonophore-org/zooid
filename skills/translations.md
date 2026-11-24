@@ -1,0 +1,59 @@
+# Translations
+
+How this plugin shows its text in the viewer's language. Stolon builds the strings in and checks them on every build. The full reference is Stolon's [Translations](https://siphonophore-org.github.io/stolon/Translations/) guide.
+
+## Where the Strings Live
+
+| Strings | Where |
+| :--- | :--- |
+| Jellyfin's own | `<JellyfinString Include="Key" />` items in `Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj` |
+| This plugin's own | `Jellyfin.Plugin.Zooid/Localization/en-us.json`, one file per language |
+| The endpoint pages load them from | `GET /Zooid/Translations`, which answers with `StolonTranslations.Serve` and allows anonymous callers |
+| The check that every key a page uses exists | `Jellyfin.Plugin.Zooid.Tests/Localization/TranslationKeyTests.cs` |
+
+## Rules
+
+* Every word a person reads comes from a key. No hard coded English in a page, a script, or a message the server shows.
+* Use a Jellyfin string whenever Jellyfin has the words. Search the web client's `src/strings/en-us.json` and the server's `Localization/Core/en-US.json` before adding a key.
+* Add a local key only when Jellyfin has no string for it. Put it in `en-us.json` with its US English.
+* One string, one key. The build fails on a key said twice or English said twice.
+* Keep placeholders as `{0}`, `{1}`. Never build a sentence from pieces, since word order differs by language.
+* A count takes two keys, one for exactly one and one for any other count, such as `ToastItemsIgnoredOne` and `ToastItemsIgnoredMany`.
+* Name a key in a page literally, as `tr('Key')`, so the key test sees it. A map of keys is fine when a value picks the text.
+* A key is PascalCase and says what the text is, such as `HeaderQueue`, `LabelApiKey`, `ButtonRetry`, `ToastSaved`, `ErrorServerUnreachable`.
+* Log lines and exception text for admins in the log stay in English and need no key.
+
+## Add a String
+
+1. Search Jellyfin's strings for the words.
+2. Found: add `<JellyfinString Include="Key" />` to the csproj.
+3. Not found: add `"Key": "English"` to `Localization/en-us.json`.
+4. Use it.
+    * Markup: `data-str="Key"`, `data-str-title`, `data-str-label`, or `data-str-placeholder`, with the English as the element's own text.
+    * Script: `shared.t.tr('Key')`, `shared.t.format('Key', value)`, or `shared.plural(count, 'KeyOne', 'KeyMany')`. `zooid_shared.js` loads the strings once with `loadTranslations('Zooid/Translations')`, and a page's `bind` and `load` and the Sync tab's modules run only after they arrive.
+    * Tab names: `tabName('Key', 'English')` in `zooid_shared.js`, since the tabs show before the strings load.
+    * C#: `StolonTranslations.Get(TranslationKeys.Key, language)` or `StolonTranslations.Format(...)`. Text a route returns to a page uses `StolonTranslations.RequestLanguage(Request)`, and `StolonTranslations.UseLanguage` puts Stolon's own text, such as an SSRF refusal, in that language. Text for everyone, such as an activity log entry, uses `StolonTranslations.ServerLanguage(config)`.
+5. Build. Fix every `STOL` error and warning.
+6. Run `dotnet test` for the key test, and `node --test`, whose support serves the US English strings to the pages.
+
+## Casing
+
+Every string is in sentence case, mirroring Jellyfin, such as "Allow media playback". See [style.md](style.md#casing).
+
+* Write a local string in sentence case in `en-us.json`. Keep proper nouns as written.
+* Add each product name, service, format, or acronym the plugin writes with special casing to `Localization/casing.json`, a JSON array, such as `"Zooid"`. Leave out Stolon's defaults, such as Jellyfin, TV, ID, API, and URL. The build fails on an empty entry or a word listed twice.
+* Leave a Jellyfin string as Jellyfin writes it. When one reads wrong beside its neighbors, add `Case="sentence"` to its `JellyfinString`, which changes its English only.
+* Case text built at runtime with `ToSentenceCase` or `ToTitleCase` in C#, and `sentenceCase` or `titleCase` on a page. Both keep the words in `casing.json`, and only English changes.
+* A local string whose English becomes another's after recasing is one string. Merge the two keys. One that becomes a Jellyfin string's English gets `STOL006`, so declare the Jellyfin string and use it.
+
+## Add a Language
+
+Add `Localization/<code>.json`, such as `de.json` or `pt-br.json`, with only keys `en-us.json` has. A missing key falls back to the language's base and then to US English. Jellyfin's strings come in every language Jellyfin has, with no file.
+
+## Checklist
+
+* [ ] No English in a page, script, or server message outside `Localization/en-us.json`.
+* [ ] Jellyfin's string used wherever it has the words.
+* [ ] Every string is in sentence case, with special words in `casing.json`.
+* [ ] The build has no `STOL` error or warning.
+* [ ] The pages show the strings, checked once in another language such as `de`.

@@ -1,0 +1,421 @@
+#pragma warning disable CA2100 // SQL is internal and parameterized.
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using Jellyfin.Plugin.Zooid.Models.Queue;
+using Jellyfin.Plugin.Zooid.Services.Database;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Queue;
+
+/// <summary>
+/// Stores the hints peers have sent this server that are not yet applied.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class InboundHintStore : QueueStoreBase
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InboundHintStore"/> class.
+    /// </summary>
+    /// <param name="databaseProvider">Opens the database the hints are stored in.</param>
+    /// <param name="logger">Writes database failures.</param>
+    public InboundHintStore(ISyncDatabaseProvider databaseProvider, ILogger<InboundHintStore> logger)
+        : base(databaseProvider, logger)
+    {
+    }
+
+    /// <summary>
+    /// Stores a received hint, refreshing a row for the same origin, kind, and key with the newer hint id and stamp.
+    /// A hint that arrives while an older one waits is therefore never applied twice.
+    /// </summary>
+    /// <param name="row">The hint to store, which receives its row id.</param>
+    public void Enqueue(InboundHint row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        Write(conn =>
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO InboundHints (
+                    HintId, OriginServerId, Kind, Key, ItemPath, ItemId, ItemType, UserId, UserName,
+                    VersionServerId, VersionTimestamp, Recorded, ReceivedAt, Attempts, NextAttempt, LastError, ParkedPath
+                ) VALUES (
+                    @hint, @origin, @kind, @key, @itemPath, @itemId, @itemType, @userId, @userName,
+                    @versionServer, @versionAt, @recorded, @received, 0, @next, @error, @parked
+                )
+                ON CONFLICT(OriginServerId, Kind, Key) DO UPDATE SET
+                    HintId = @hint,
+                    Recorded = MAX(Recorded, @recorded),
+                    ItemPath = CASE WHEN @versionAt >= VersionTimestamp THEN @itemPath ELSE ItemPath END,
+                    ItemId = CASE WHEN @versionAt >= VersionTimestamp THEN @itemId ELSE ItemId END,
+                    ItemType = CASE WHEN @versionAt >= VersionTimestamp THEN @itemType ELSE ItemType END,
+                    UserId = CASE WHEN @versionAt >= VersionTimestamp THEN @userId ELSE UserId END,
+                    UserName = CASE WHEN @versionAt >= VersionTimestamp THEN @userName ELSE UserName END,
+                    VersionServerId = CASE WHEN @versionAt >= VersionTimestamp THEN @versionServer ELSE VersionServerId END,
+                    VersionTimestamp = CASE WHEN @versionAt >= VersionTimestamp THEN @versionAt ELSE VersionTimestamp END,
+                    ReceivedAt = @received,
+                    Attempts = 0,
+                    NextAttempt = CASE WHEN @versionAt >= VersionTimestamp THEN @next ELSE NextAttempt END,
+                    LastError = CASE WHEN @versionAt >= VersionTimestamp THEN @error ELSE LastError END,
+                    ParkedPath = CASE WHEN @versionAt >= VersionTimestamp THEN @parked ELSE ParkedPath END
+                RETURNING Id";
+            Add(cmd, "@hint", row.HintId);
+            Add(cmd, "@origin", OriginKey(row.OriginServerId));
+            Add(cmd, "@kind", (int)row.Kind);
+            Add(cmd, "@key", row.Key);
+            Add(cmd, "@itemPath", row.ItemPath);
+            Add(cmd, "@itemId", row.ItemId);
+            Add(cmd, "@itemType", WithWaitingParts(conn, row));
+            Add(cmd, "@userId", row.UserId);
+            Add(cmd, "@userName", row.UserName);
+            Add(cmd, "@versionServer", row.VersionServerId);
+            Add(cmd, "@versionAt", Stamp(row.VersionTimestamp));
+            Add(cmd, "@recorded", row.Recorded ? 1 : 0);
+            Add(cmd, "@received", Stamp(row.ReceivedAt));
+            Add(cmd, "@next", Stamp(row.NextAttempt < row.ReceivedAt ? row.ReceivedAt : row.NextAttempt));
+            Add(cmd, "@parked", row.ParkedPath);
+            Add(cmd, "@error", row.ParkedPath is null ? null : row.LastError);
+            row.Id = Convert.ToInt64(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+        });
+    }
+
+    /// <summary>Returns the due rows of one lane, which is content, whose applies download files, or everything else.</summary>
+    /// <param name="utcNow">Rows due at or before this time are returned.</param>
+    /// <param name="limit">The most rows to return.</param>
+    /// <param name="content"><c>true</c> for content rows, <c>false</c> for the rest.</param>
+    /// <returns>The rows.</returns>
+    public IList<InboundHint> GetDue(DateTime utcNow, int limit, bool content) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = content
+            ? "SELECT * FROM InboundHints WHERE NextAttempt <= @now AND Kind = @kind ORDER BY Id LIMIT @limit"
+            : "SELECT * FROM InboundHints WHERE NextAttempt <= @now AND Kind <> @kind ORDER BY Id LIMIT @limit";
+        Add(cmd, "@now", Stamp(utcNow));
+        Add(cmd, "@kind", (int)HintKind.Content);
+        Add(cmd, "@limit", limit);
+        return ReadAll(cmd);
+    });
+
+    /// <summary>Returns every row, oldest first.</summary>
+    /// <returns>The rows.</returns>
+    public IList<InboundHint> GetAll() => GetOldest(int.MaxValue);
+
+    /// <summary>Returns the newest rows, for the dashboard's list, which shows the latest first.</summary>
+    /// <param name="limit">The most rows to return.</param>
+    /// <returns>The rows.</returns>
+    public IList<InboundHint> GetRecent(int limit) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM InboundHints ORDER BY Id DESC LIMIT @limit";
+        Add(cmd, "@limit", limit);
+        return ReadAll(cmd);
+    });
+
+    /// <summary>Returns one row.</summary>
+    /// <param name="id">The id of the row to read.</param>
+    /// <returns>The row, or null when it is gone.</returns>
+    public InboundHint? Get(long id) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM InboundHints WHERE Id = @id";
+        Add(cmd, "@id", id);
+        return ReadAll(cmd).FirstOrDefault();
+    });
+
+    /// <summary>Returns every row whose apply has failed at least once and is waiting to be tried again.</summary>
+    /// <returns>The rows, oldest first.</returns>
+    public IList<InboundHint> GetFailing() => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM InboundHints WHERE Attempts > 0 ORDER BY Id";
+        return ReadAll(cmd);
+    });
+
+    /// <summary>Counts the rows whose apply has failed at least once, for the dashboard.</summary>
+    /// <returns>How many rows.</returns>
+    public int CountFailing() => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM InboundHints WHERE Attempts > 0";
+        return Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+    });
+
+    /// <summary>
+    /// Makes every row whose apply has failed due with its attempts cleared, so each is tried again with its full allowance.
+    /// </summary>
+    /// <param name="utcNow">The time the rows become due.</param>
+    /// <returns>How many rows were made due.</returns>
+    public int RetryFailing(DateTime utcNow) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE InboundHints SET Attempts = 0, NextAttempt = @now WHERE Attempts > 0";
+        Add(cmd, "@now", Stamp(utcNow));
+        return cmd.ExecuteNonQuery();
+    });
+
+    /// <summary>Returns every row from one origin, for the status that origin reads.</summary>
+    /// <param name="originServerId">The origin's server id.</param>
+    /// <returns>The rows.</returns>
+    public IList<InboundHint> GetForOrigin(string originServerId) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM InboundHints WHERE OriginServerId = @origin ORDER BY Id";
+        Add(cmd, "@origin", OriginKey(originServerId));
+        return ReadAll(cmd);
+    });
+
+    /// <summary>Counts the rows held from one origin, parked rows aside, so a full queue can answer busy and not grow.</summary>
+    /// <param name="originServerId">The origin's server id.</param>
+    /// <returns>How many rows.</returns>
+    public int CountForOrigin(string originServerId) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM InboundHints WHERE OriginServerId = @origin AND ParkedPath IS NULL";
+        Add(cmd, "@origin", OriginKey(originServerId));
+        return Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+    });
+
+    /// <summary>Removes the oldest parked rows from one origin beyond the number kept.</summary>
+    /// <param name="originServerId">The origin's server id.</param>
+    /// <param name="keep">How many of the newest parked rows to keep.</param>
+    /// <returns>How many rows were removed.</returns>
+    public int TrimParked(string originServerId, int keep) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            DELETE FROM InboundHints WHERE Id IN (
+                SELECT Id FROM InboundHints WHERE OriginServerId = @origin AND ParkedPath IS NOT NULL
+                ORDER BY ReceivedAt DESC LIMIT -1 OFFSET @keep)";
+        Add(cmd, "@origin", OriginKey(originServerId));
+        Add(cmd, "@keep", keep);
+        return cmd.ExecuteNonQuery();
+    });
+
+    /// <summary>Removes every row from one origin, for when its server entry is removed.</summary>
+    /// <param name="originServerId">The origin's server id.</param>
+    /// <returns>How many rows were removed.</returns>
+    public int DeleteForOrigin(string originServerId) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM InboundHints WHERE OriginServerId = @origin";
+        Add(cmd, "@origin", OriginKey(originServerId));
+        return cmd.ExecuteNonQuery();
+    });
+
+    /// <summary>
+    /// Gives the form a server id is stored and looked up in.
+    /// Server entries match ids in any case, so one peer is one origin however it spells its id.
+    /// </summary>
+    /// <param name="originServerId">The id as received.</param>
+    /// <returns>The id, trimmed and in lower case.</returns>
+    public static string OriginKey(string? originServerId) => (originServerId ?? string.Empty).Trim().ToLowerInvariant();
+
+    /// <summary>Returns the oldest rows, the next to apply, up to the limit.</summary>
+    /// <param name="limit">The most rows to return.</param>
+    /// <returns>The rows, oldest first.</returns>
+    public IList<InboundHint> GetOldest(int limit) => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM InboundHints ORDER BY Id LIMIT @limit";
+        Add(cmd, "@limit", limit);
+        return ReadAll(cmd);
+    });
+
+    /// <summary>
+    /// Removes a row once its work is done, but only while it still carries the stamp the apply worked from.
+    /// The origin reuses one hint id for each object, so only the stamp tells a refreshed row, which stays and is applied again.
+    /// </summary>
+    /// <param name="id">The id of the row to remove.</param>
+    /// <param name="appliedVersion">The time of the stamp the apply worked from.</param>
+    /// <returns><c>true</c> when the row was removed.</returns>
+    public bool Remove(long id, DateTime appliedVersion) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM InboundHints WHERE Id = @id AND VersionTimestamp <= @version";
+        Add(cmd, "@id", id);
+        Add(cmd, "@version", Stamp(appliedVersion));
+        return cmd.ExecuteNonQuery() > 0;
+    });
+
+    /// <summary>Removes a row by id regardless of its hint, for the operator.</summary>
+    /// <param name="id">The id of the row to remove.</param>
+    /// <returns><c>true</c> when a row was removed.</returns>
+    public bool Delete(long id) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM InboundHints WHERE Id = @id";
+        Add(cmd, "@id", id);
+        return cmd.ExecuteNonQuery() > 0;
+    });
+
+    /// <summary>Schedules a row for another attempt after a failed apply, while it still carries the stamp that was tried.</summary>
+    /// <param name="row">The row as tried.</param>
+    /// <param name="nextAttempt">When to try again.</param>
+    /// <param name="error">What went wrong.</param>
+    public void Defer(InboundHint row, DateTime nextAttempt, string error)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        Write(conn =>
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE InboundHints SET Attempts = Attempts + 1, NextAttempt = @next, LastError = @error WHERE Id = @id AND VersionTimestamp = @version";
+            Add(cmd, "@next", Stamp(nextAttempt));
+            Add(cmd, "@error", error);
+            Add(cmd, "@id", row.Id);
+            Add(cmd, "@version", Stamp(row.VersionTimestamp));
+            cmd.ExecuteNonQuery();
+        });
+    }
+
+    /// <summary>
+    /// Puts a row off without counting an attempt, for a row that could not start because the scheduled task was running.
+    /// </summary>
+    /// <param name="row">The row as tried.</param>
+    /// <param name="nextAttempt">When to try again.</param>
+    /// <param name="reason">Why the row could not start.</param>
+    public void Postpone(InboundHint row, DateTime nextAttempt, string reason)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        Write(conn =>
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE InboundHints SET NextAttempt = @next, LastError = @reason WHERE Id = @id AND VersionTimestamp = @version";
+            Add(cmd, "@next", Stamp(nextAttempt));
+            Add(cmd, "@reason", reason);
+            Add(cmd, "@id", row.Id);
+            Add(cmd, "@version", Stamp(row.VersionTimestamp));
+            cmd.ExecuteNonQuery();
+        });
+    }
+
+    /// <summary>
+    /// Sets a row aside until the local object it waits for appears or the time runs out, without counting an attempt.
+    /// </summary>
+    /// <param name="row">The row as tried.</param>
+    /// <param name="parkKey">The key the row waits under.</param>
+    /// <param name="until">When to try the row again regardless.</param>
+    /// <param name="reason">What the row is waiting for.</param>
+    public void Park(InboundHint row, string parkKey, DateTime until, string reason)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentException.ThrowIfNullOrWhiteSpace(parkKey);
+        Write(conn =>
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE InboundHints SET ParkedPath = @parked, NextAttempt = @next, LastError = @reason WHERE Id = @id AND VersionTimestamp = @version";
+            Add(cmd, "@parked", parkKey);
+            Add(cmd, "@next", Stamp(until));
+            Add(cmd, "@reason", reason);
+            Add(cmd, "@id", row.Id);
+            Add(cmd, "@version", Stamp(row.VersionTimestamp));
+            cmd.ExecuteNonQuery();
+        });
+    }
+
+    /// <summary>
+    /// Makes parked rows due when they would otherwise wait past the park window.
+    /// They are applied once more, then parked again with the current window or dropped when it has passed.
+    /// </summary>
+    /// <param name="utcNow">The time the rows become due.</param>
+    /// <param name="window">The current park window.</param>
+    /// <returns>How many rows were made due.</returns>
+    public int ShortenParked(DateTime utcNow, TimeSpan window) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE InboundHints SET NextAttempt = @now WHERE ParkedPath IS NOT NULL AND NextAttempt > @latest";
+        Add(cmd, "@now", Stamp(utcNow));
+        Add(cmd, "@latest", Stamp(utcNow + window));
+        return cmd.ExecuteNonQuery();
+    });
+
+    /// <summary>Makes the rows parked under a key due, since what they waited for appeared.</summary>
+    /// <param name="parkKey">The key the rows wait under.</param>
+    /// <param name="utcNow">The time the rows become due.</param>
+    /// <returns>How many rows were made due.</returns>
+    public int WakeParked(string parkKey, DateTime utcNow) => Write(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE InboundHints SET ParkedPath = NULL, NextAttempt = @now, LastError = NULL WHERE ParkedPath = @parked COLLATE NOCASE";
+        Add(cmd, "@parked", parkKey);
+        Add(cmd, "@now", Stamp(utcNow));
+        return cmd.ExecuteNonQuery();
+    });
+
+    /// <summary>Counts the rows.</summary>
+    /// <returns>The count.</returns>
+    public int Count() => Read(conn =>
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM InboundHints";
+        return Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+    });
+
+    /// <summary>Runs a query and maps every row it returns.</summary>
+    private static List<InboundHint> ReadAll(SqliteCommand cmd)
+    {
+        using var reader = cmd.ExecuteReader();
+        var rows = new List<InboundHint>();
+        while (reader.Read())
+        {
+            rows.Add(Map(reader));
+        }
+
+        return rows;
+    }
+
+    /// <summary>Maps one database row to a hint.</summary>
+    private static InboundHint Map(SqliteDataReader reader) => new()
+    {
+        Id = reader.GetInt64(reader.GetOrdinal("Id")),
+        HintId = reader.GetString(reader.GetOrdinal("HintId")),
+        OriginServerId = reader.GetString(reader.GetOrdinal("OriginServerId")),
+        Kind = (HintKind)reader.GetInt32(reader.GetOrdinal("Kind")),
+        Key = reader.GetString(reader.GetOrdinal("Key")),
+        ItemPath = Text(reader, "ItemPath"),
+        ItemType = Text(reader, "ItemType"),
+        ItemId = Text(reader, "ItemId"),
+        UserId = Text(reader, "UserId"),
+        UserName = Text(reader, "UserName"),
+        VersionServerId = reader.GetString(reader.GetOrdinal("VersionServerId")),
+        VersionTimestamp = Unstamp(reader.GetString(reader.GetOrdinal("VersionTimestamp"))),
+        Recorded = reader.GetInt32(reader.GetOrdinal("Recorded")) != 0,
+        ReceivedAt = Unstamp(reader.GetString(reader.GetOrdinal("ReceivedAt"))),
+        Attempts = reader.GetInt32(reader.GetOrdinal("Attempts")),
+        NextAttempt = Unstamp(reader.GetString(reader.GetOrdinal("NextAttempt"))),
+        LastError = Text(reader, "LastError"),
+        ParkedPath = Text(reader, "ParkedPath")
+    };
+
+    /// <summary>
+    /// Adds the parts of a history hint still waiting for the same object to the hint that replaces it, so the earlier change is still taken.
+    /// </summary>
+    private static string? WithWaitingParts(SqliteConnection conn, InboundHint row)
+    {
+        if (row.Kind != HintKind.History)
+        {
+            return row.ItemType;
+        }
+
+        var type = HintProtocol.SplitHistoryItemType(row.ItemType, out var parts);
+        if (parts == HistoryParts.None)
+        {
+            return row.ItemType;
+        }
+
+        using var probe = conn.CreateCommand();
+        probe.CommandText = "SELECT ItemType FROM InboundHints WHERE OriginServerId = @owner AND Kind = @kind AND Key = @key";
+        Add(probe, "@owner", OriginKey(row.OriginServerId));
+        Add(probe, "@kind", (int)row.Kind);
+        Add(probe, "@key", row.Key);
+        if (probe.ExecuteScalar() is string waiting)
+        {
+            HintProtocol.SplitHistoryItemType(waiting, out var earlier);
+            parts |= earlier;
+        }
+
+        return HintProtocol.HistoryItemType(type, parts);
+    }
+}

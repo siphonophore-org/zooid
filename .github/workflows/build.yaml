@@ -1,0 +1,50 @@
+name: '🏗️ Build Plugin'
+
+# Builds the plugin zip on every change to main and unstable, and on pull requests to them. Stolon comes from the
+# organization's GitHub Packages feed, which the run's own token reads.
+
+on:
+  push:
+    branches:
+      - main
+      - unstable
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches:
+      - main
+      - unstable
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Upload the plugin zip
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: build-artifact
+          path: dist/*
+          retention-days: 30

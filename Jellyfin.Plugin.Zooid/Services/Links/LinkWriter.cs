@@ -1,0 +1,199 @@
+using System;
+using System.IO;
+using Jellyfin.Plugin.Zooid.Configuration;
+using Jellyfin.Plugin.Zooid.Models.ContentSync;
+using Jellyfin.Plugin.Zooid.Services.ContentSync.Downloads;
+using Jellyfin.Plugin.Zooid.Services.ContentSync.Tables;
+using Siphonophore.Stolon;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.Zooid.Services.Links;
+
+/// <summary>
+/// Writes the .strm for a queued link row, which downloads nothing, so the copy path's disk, validation,
+/// and temporary folder steps do not apply. A file that is not this row's link is never overwritten.
+/// </summary>
+[PluginService(ServiceLifetime.Singleton)]
+public sealed class LinkWriter
+{
+    private readonly LinkFiles _files;
+    private readonly ILinkRegistry _links;
+    private readonly ILogger<LinkWriter> _logger;
+    private bool _floorRaised;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkWriter"/> class.
+    /// </summary>
+    /// <param name="files">Reads and writes the link files.</param>
+    /// <param name="links">The link registry to refresh after a link is written or removed.</param>
+    /// <param name="logger">Writes log entries.</param>
+    public LinkWriter(LinkFiles files, ILinkRegistry links, ILogger<LinkWriter> logger)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(links);
+        ArgumentNullException.ThrowIfNull(logger);
+        _files = files;
+        _links = links;
+        _logger = logger;
+    }
+
+    /// <summary>Whether the row's .strm is on disk and points at this link as this server answers it now.</summary>
+    /// <param name="row">The row whose .strm is checked.</param>
+    /// <returns><c>true</c> when nothing needs writing.</returns>
+    public bool IsCurrent(SyncItem row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        try
+        {
+            return !string.IsNullOrEmpty(row.LocalPath) && File.Exists(row.LocalPath) && _files.IsCurrent(row.LocalPath, row.SourceItemId);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Writes the link, or throws with a reason the Sync tab shows when the path is taken.
+    /// </summary>
+    /// <param name="row">The row of the link to write.</param>
+    /// <param name="table">The content sync table, which finds path collisions.</param>
+    /// <param name="config">The configuration whose mapped libraries bound where a link may be written.</param>
+    /// <param name="replacing">A permanent copy this link takes over from, which may stay beside it until the link is in place.</param>
+    public void Write(SyncItem row, ContentSyncTableManager table, PluginConfiguration config, string? replacing = null)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(config);
+        var path = row.LocalPath;
+        if (string.IsNullOrEmpty(path) || !path.EndsWith(LinkPaths.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"The link has no .strm path (source: {row.SourcePath})");
+        }
+
+        // A link is only ever written inside a mapped library, as a copy is.
+        if (!FileValidationService.IsPathWithinLibrary(Path.GetFullPath(path), config))
+        {
+            throw new InvalidOperationException($"{path} is outside every mapped library, so no link is written there");
+        }
+
+        // A real copy at the same name always wins over a link.
+        if (LinkPaths.CopiedPathOf(row) is { } copied && File.Exists(copied)
+            && !string.Equals(replacing, copied, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"A full copy is already at {copied}, so no link is written beside it");
+        }
+
+        if (table.CheckPathCollision(path, row.SourceItemId))
+        {
+            throw new InvalidOperationException($"Another source file would link to {path}. Two source files differ only by their extension, so only one of them can be linked");
+        }
+
+        var replace = false;
+        if (File.Exists(path))
+        {
+            if (_files.IsCurrent(path, row.SourceItemId))
+            {
+                return;
+            }
+
+            var address = LinkFiles.ReadUrl(path);
+
+            // A .strm with no address holds nothing, so only another address is left alone.
+            if (address is not null && !LinkFiles.PointsAtLinkRoute(address))
+            {
+                throw new InvalidOperationException($"A .strm that Zooid did not write is already at {path}, so it is left alone");
+            }
+
+            replace = true;
+        }
+
+        _files.Write(path, row.SourceItemId, replace);
+        _links.Invalidate();
+
+        // The first link raises the minimum reader past builds that mistake a .strm.
+        if (!_floorRaised)
+        {
+            table.RequireLinkAwareReaders();
+            _floorRaised = true;
+        }
+
+        _logger.LogDebug("Linked {FileName} at {LocalPath}", FormatUtilities.SanitizeForLog(Path.GetFileName(row.SourcePath)), FormatUtilities.SanitizeForLog(path));
+    }
+
+    /// <summary>
+    /// The link row of another source file that holds the .strm path <paramref name="row"/> would take,
+    /// or null, as when Film.mkv is re-encoded to Film.mp4 and becomes a new item on the source. Only a
+    /// link row qualifies, and only while the file at the path is this plugin's own link or is gone.
+    /// </summary>
+    /// <param name="row">The row of the link that wants the path.</param>
+    /// <param name="table">The content sync table to search for the path.</param>
+    /// <returns>The row holding the path, or null.</returns>
+    public static SyncItem? Predecessor(SyncItem row, ContentSyncTableManager table)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(table);
+        var path = row.LocalPath;
+        if (string.IsNullOrEmpty(path) || !path.EndsWith(LinkPaths.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return table.GetOtherByLocalPath(path, row.SourceItemId) is { } other
+            && other.StorageMode.IsLink()
+            && (!File.Exists(path) || LinkFiles.IsOwnLink(path))
+                ? other
+                : null;
+    }
+
+    /// <summary>
+    /// Hands a .strm path over from a link whose file the caller has checked is gone from the source. The
+    /// old row goes and its .strm stays for <see cref="Write"/> to replace in place, so the library keeps
+    /// the same item and its folder, subtitles, and .nfo.
+    /// </summary>
+    /// <param name="row">The link taking the path.</param>
+    /// <param name="predecessor">The row from <see cref="Predecessor"/>.</param>
+    /// <param name="table">The content sync table the old row is deleted from.</param>
+    public void TakeOver(SyncItem row, SyncItem predecessor, ContentSyncTableManager table)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(predecessor);
+        ArgumentNullException.ThrowIfNull(table);
+
+        // The .strm keeps its path, so its library item and companions carry over.
+        if (string.IsNullOrEmpty(row.LocalItemId))
+        {
+            row.LocalItemId = predecessor.LocalItemId;
+        }
+
+        if (string.IsNullOrEmpty(row.CompanionFiles))
+        {
+            row.CompanionFiles = predecessor.CompanionFiles;
+        }
+
+        table.Delete(predecessor.SourceItemId);
+        _links.Invalidate();
+        _logger.LogDebug(
+            "The link {LocalPath} now follows {NewFile}, since {OldFile} is gone from the source",
+            FormatUtilities.SanitizeForLog(row.LocalPath),
+            FormatUtilities.SanitizeForLog(Path.GetFileName(row.SourcePath)),
+            FormatUtilities.SanitizeForLog(Path.GetFileName(predecessor.SourcePath)));
+    }
+
+    /// <summary>
+    /// Removes a link once its copy is in place. A .strm that does not point at this plugin's link route
+    /// is left alone.
+    /// </summary>
+    /// <param name="path">The path of the .strm to remove.</param>
+    public void Remove(string path)
+    {
+        if (File.Exists(path) && LinkFiles.PointsAtLinkRoute(LinkFiles.ReadUrl(path)))
+        {
+            File.Delete(path);
+            _logger.LogDebug("Removed the link {LocalPath}, now that its copy is in place", FormatUtilities.SanitizeForLog(path));
+        }
+
+        _links.Invalidate();
+    }
+}
