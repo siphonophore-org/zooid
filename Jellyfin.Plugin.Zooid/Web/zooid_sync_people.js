@@ -249,7 +249,7 @@ export function createPeopleSyncTableModule(ctx, kit) {
                         self._addChangeDetailRow(tbody, detail.ImagesChangesDetail);
                     }
 
-                    self._dialog.open();
+                    self._sidecar.open();
                 }).catch(function(err) {
                     if (seq !== self._detailSeq) return;
                     console.error('Failed to load person detail:', err);

@@ -231,7 +231,7 @@ export function createUserSyncTableModule(ctx, kit) {
                         }
                     }
 
-                    self._dialog.open();
+                    self._sidecar.open();
                 }).catch(function(err) {
                     if (seq !== self._detailSeq) return;
                     console.error('Failed to load user detail:', err);

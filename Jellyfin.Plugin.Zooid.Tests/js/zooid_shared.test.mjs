@@ -330,7 +330,7 @@ test('showHealth gives a default message when the plugin is held and says nothin
 test('the shared module re-exports Stolon builders and the kept secret sentinel', function () {
     assert.equal(typeof mod.createPaginatedTable, 'function');
     assert.equal(typeof mod.confirmDialog, 'function');
-    assert.equal(typeof mod.bindDialog, 'function');
+    assert.equal(typeof mod.bindSidecar, 'function');
     assert.equal(typeof mod.generateGuid, 'function');
     assert.equal(shared.SECRET_KEPT, mod.SECRET_KEPT);
     assert.ok(mod.SECRET_KEPT.length > 0);

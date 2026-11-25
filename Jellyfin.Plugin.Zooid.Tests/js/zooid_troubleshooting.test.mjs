@@ -39,8 +39,8 @@ test('resetting the whole database asks first and sends nothing when the questio
     opened.view.querySelector('#btnResetEntireDatabase').click();
     await settle(20);
     var dialog = dialogText(opened.page.dom);
-    assert.equal(dialog.title, 'Reset database');
-    assert.match(dialog.body, /Reset the entire sync database\?/);
+    assert.equal(dialog.title, 'Reset the sync database');
+    assert.match(dialog.body, /every sync type/);
     assert.match(dialog.body, /It cannot be undone\./);
     assert.equal(clickDialogButton(opened.page.dom, 'Cancel'), true);
     await settle(20);
@@ -60,12 +60,12 @@ test('resetting the whole database posts the reset and reports it on the reset s
     assert.ok(status.classList.contains('stolon-status-ok'));
 });
 
-test('resetting one table names it in the question and in the result', async function () {
+test('resetting one table names it in the title and in the result', async function () {
     var opened = await openPage();
     opened.view.querySelector('#btnResetContentTable').click();
     await settle(20);
-    assert.equal(dialogText(opened.page.dom).title, 'Reset table');
-    assert.match(dialogText(opened.page.dom).body, /Reset the content sync table\?/);
+    assert.equal(dialogText(opened.page.dom).title, 'Reset the content sync table');
+    assert.match(dialogText(opened.page.dom).body, /next scan starts over/);
     clickDialogButton(opened.page.dom, 'Reset');
     await settle(20);
     assert.equal(posts(opened)[0].url, 'Zooid/Reset/Content');

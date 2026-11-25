@@ -185,7 +185,7 @@ export function createHistorySyncTableModule(ctx, kit) {
                 self.highlightChangedRow('historyModalRowPosition', item.MergedPlaybackPositionTicks, item.LocalPlaybackPositionTicks);
                 self.highlightChangedRow('historyModalRowLastPlayed', item.MergedLastPlayedDate, item.LocalLastPlayedDate);
 
-                self._dialog.open();
+                self._sidecar.open();
             },
 
             setTableValue: function(elementId, value, type) {

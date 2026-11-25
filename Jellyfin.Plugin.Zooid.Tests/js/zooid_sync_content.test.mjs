@@ -22,7 +22,8 @@ async function build() {
     questions = [];
     answer = true;
     env = await createSyncContext(IDS, {
-        confirmDialog: function (message, opts) { questions.push({ message: message, opts: opts }); return Promise.resolve(answer); }
+        confirmDialog: function (message, opts) { questions.push({ message: message, opts: opts }); return Promise.resolve(answer); },
+        createDialogItem: function (opts) { return opts; }
     });
     var mod = await loadScript('zooid_sync_content.js');
     module = mod.createContentSyncTableModule(env.ctx, env.kit);
@@ -142,8 +143,8 @@ test('bulkDelete asks a destructive question first and deletes only when it is c
     module.bulkDelete();
     await flush();
     assert.equal(questions.length, 1);
-    assert.equal(questions[0].message, 'Delete 2 items from this server? This cannot be undone.');
-    assert.equal(questions[0].opts.title, 'Delete Items');
+    assert.equal(questions[0].message, 'The files go from this server. This cannot be undone.');
+    assert.equal(questions[0].opts.title, 'Delete 2 items');
     assert.equal(questions[0].opts.confirmText, 'Delete');
     assert.equal(questions[0].opts.destructive, true);
     assert.equal(env.page.requests.filter(function (r) { return r.type === 'POST'; }).length, 0);
@@ -162,14 +163,15 @@ test('bulkDelete with nothing selected asks nothing', async function () {
     assert.equal(questions.length, 0);
 });
 
-test('modalDelete names the file in the question and deletes only when it is confirmed', async function () {
-    module._dialog = { isOpen: function () { return false; }, close: function () {} };
+test('modalDelete shows the file as the context and deletes only when it is confirmed', async function () {
+    module._sidecar = { isOpen: function () { return false; }, close: function () {} };
     module.currentModalItem = { SourceItemId: 'x', LocalPath: '/local/Film.mkv', SourcePath: '/source/Film.mkv' };
     answer = false;
     module.modalDelete();
     await flush();
-    assert.equal(questions[0].message, 'Delete "Film.mkv" from this server? This cannot be undone.');
+    assert.equal(questions[0].message, 'It goes from this server. This cannot be undone.');
     assert.equal(questions[0].opts.title, 'Delete file');
+    assert.equal(questions[0].opts.context.title, 'Film.mkv');
     assert.equal(env.page.requests.filter(function (r) { return r.type === 'POST'; }).length, 0);
     answer = true;
     module.modalDelete();

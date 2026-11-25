@@ -65,7 +65,7 @@ test('deleting the cached files asks a destructive question and posts only when 
     await settle(20);
     var dialog = dialogText(opened.page.dom);
     assert.equal(dialog.title, 'Delete cached files');
-    assert.match(dialog.body, /Delete every cached file\? Links keep playing from their sources\./);
+    assert.equal(dialog.body, 'Every cached file goes. Links keep playing from their sources.');
     clickDialogButton(opened.page.dom, 'Cancel');
     await settle(20);
     assert.equal(posts(opened).length, 0);

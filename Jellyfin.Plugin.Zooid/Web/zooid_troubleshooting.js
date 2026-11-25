@@ -16,17 +16,16 @@ export default function (view) {
     ({ escapeHtml, bindClick } = ZooidShared.pageHelpers());
 
     // confirmReset
-    // Asks in the shared dialog before a reset. Each paragraph of the question is its own line.
+    // Asks in a compact dialog before a reset.
     //
     // Inputs
-    // title [string]: The dialog title.
-    // paragraphs [string[]]: The question, then what it costs.
+    // title [string]: The dialog title, which names what is reset.
+    // cost [string]: What the reset costs.
     //
     // Output
     // [Promise]: Resolves true when the reset is confirmed.
-    function confirmReset(title, paragraphs) {
-        return confirmDialog(paragraphs.map(function (p) { return '<p>' + escapeHtml(p) + '</p>'; }).join(''), {
-            html: true,
+    function confirmReset(title, cost) {
+        return confirmDialog(cost, {
             title: title,
             confirmText: ZooidShared.t.tr('Reset'),
             destructive: true
@@ -38,11 +37,11 @@ export default function (view) {
     //
     // Inputs
     // table [string]: The route name of the table.
-    // question [string]: The question the dialog asks, naming the table.
+    // title [string]: The dialog title, naming the table.
     // done [string]: What the status says when the reset worked.
     // failed [string]: What the status says when it did not.
-    function resetTable(table, question, done, failed) {
-        confirmReset(ZooidShared.t.tr('TitleResetTable'), [question, ZooidShared.t.tr('ConfirmResetTableCost')]).then(function (confirmed) {
+    function resetTable(table, title, done, failed) {
+        confirmReset(title, ZooidShared.t.tr('ConfirmResetTableCost')).then(function (confirmed) {
             if (!confirmed) return;
 
             ZooidShared.apiRequest('Reset/' + table, 'POST').then(function() {
@@ -57,10 +56,7 @@ export default function (view) {
     // resetEntireDatabase
     // Asks first, then forgets the tracking of every sync table. Media is untouched.
     function resetEntireDatabase() {
-        confirmReset(ZooidShared.t.tr('TitleResetDatabase'), [
-            ZooidShared.t.tr('ConfirmResetDatabase'),
-            ZooidShared.t.tr('ConfirmResetDatabaseCost')
-        ]).then(function (confirmed) {
+        confirmReset(ZooidShared.t.tr('TitleResetDatabase'), ZooidShared.t.tr('ConfirmResetDatabaseCost')).then(function (confirmed) {
             if (!confirmed) return;
 
             ZooidShared.apiRequest('Reset/All', 'POST').then(function() {
@@ -75,12 +71,12 @@ export default function (view) {
     // bindPage
     // Wires the reset buttons. Stolon calls it once, the first time the page shows.
     function bindPage() {
-        bindClick('btnResetContentTable', function() { resetTable('Content', ZooidShared.t.tr('ConfirmResetContentTable'), ZooidShared.t.tr('ToastContentTableReset'), ZooidShared.t.tr('ErrorResetContentTable')); });
-        bindClick('btnResetHistoryTable', function() { resetTable('History', ZooidShared.t.tr('ConfirmResetHistoryTable'), ZooidShared.t.tr('ToastHistoryTableReset'), ZooidShared.t.tr('ErrorResetHistoryTable')); });
-        bindClick('btnResetMetadataTable', function() { resetTable('Metadata', ZooidShared.t.tr('ConfirmResetMetadataTable'), ZooidShared.t.tr('ToastMetadataTableReset'), ZooidShared.t.tr('ErrorResetMetadataTable')); });
-        bindClick('btnResetPeopleTable', function() { resetTable('People', ZooidShared.t.tr('ConfirmResetPeopleTable'), ZooidShared.t.tr('ToastPeopleTableReset'), ZooidShared.t.tr('ErrorResetPeopleTable')); });
-        bindClick('btnResetPlaylistTable', function() { resetTable('Playlists', ZooidShared.t.tr('ConfirmResetPlaylistTable'), ZooidShared.t.tr('ToastPlaylistTableReset'), ZooidShared.t.tr('ErrorResetPlaylistTable')); });
-        bindClick('btnResetUserTable', function() { resetTable('Users', ZooidShared.t.tr('ConfirmResetUserTable'), ZooidShared.t.tr('ToastUserTableReset'), ZooidShared.t.tr('ErrorResetUserTable')); });
+        bindClick('btnResetContentTable', function() { resetTable('Content', ZooidShared.t.tr('TitleResetContentTable'), ZooidShared.t.tr('ToastContentTableReset'), ZooidShared.t.tr('ErrorResetContentTable')); });
+        bindClick('btnResetHistoryTable', function() { resetTable('History', ZooidShared.t.tr('TitleResetHistoryTable'), ZooidShared.t.tr('ToastHistoryTableReset'), ZooidShared.t.tr('ErrorResetHistoryTable')); });
+        bindClick('btnResetMetadataTable', function() { resetTable('Metadata', ZooidShared.t.tr('TitleResetMetadataTable'), ZooidShared.t.tr('ToastMetadataTableReset'), ZooidShared.t.tr('ErrorResetMetadataTable')); });
+        bindClick('btnResetPeopleTable', function() { resetTable('People', ZooidShared.t.tr('TitleResetPeopleTable'), ZooidShared.t.tr('ToastPeopleTableReset'), ZooidShared.t.tr('ErrorResetPeopleTable')); });
+        bindClick('btnResetPlaylistTable', function() { resetTable('Playlists', ZooidShared.t.tr('TitleResetPlaylistTable'), ZooidShared.t.tr('ToastPlaylistTableReset'), ZooidShared.t.tr('ErrorResetPlaylistTable')); });
+        bindClick('btnResetUserTable', function() { resetTable('Users', ZooidShared.t.tr('TitleResetUserTable'), ZooidShared.t.tr('ToastUserTableReset'), ZooidShared.t.tr('ErrorResetUserTable')); });
         bindClick('btnResetEntireDatabase', resetEntireDatabase);
     }
 }

@@ -25,8 +25,9 @@ import {
     createRepeater,
     createSaveBar,
     generateGuid,
-    bindDialog,
+    bindSidecar,
     confirmDialog,
+    createDialogItem,
     createConfigPage,
     createToolApp,
     setToolTitle,
@@ -44,7 +45,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindDialog, confirmDialog, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
+export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 

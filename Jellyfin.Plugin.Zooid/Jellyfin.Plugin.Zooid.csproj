@@ -63,7 +63,6 @@
     <JellyfinString Include="Genres" />
     <JellyfinString Include="HeaderApiKey" />
     <JellyfinString Include="HeaderApiKeys" />
-    <JellyfinString Include="HeaderDeleteItems" Case="sentence" />
     <JellyfinString Include="HeaderError" />
     <JellyfinString Include="HeaderLibraries" />
     <JellyfinString Include="HeaderStatus" />

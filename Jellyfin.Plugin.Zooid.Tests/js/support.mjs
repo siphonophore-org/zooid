@@ -138,8 +138,8 @@ export var paths = { configDir: configDir, baseRoot: baseRoot };
 //
 // Inputs
 // ids [string[]]: The element ids the view holds. syncStatus is always added.
-// opts [object]: confirmDialog replaces the confirm dialog, createPaginatedTable replaces the table builder, and
-// config seeds the plugin configuration.
+// opts [object]: confirmDialog replaces the confirm dialog, createDialogItem the item context it shows, createPaginatedTable
+// replaces the table builder, and config seeds the plugin configuration.
 //
 // Output
 // [Promise]: The page, the view, the shared bag, the table kit, and the context.
@@ -165,8 +165,9 @@ export async function createSyncContext(ids, opts) {
         view: view,
         shared: shared,
         createPaginatedTable: opts.createPaginatedTable || function () { return { getBulkActionsContainer: function () { return null; } }; },
-        bindDialog: function () { return { isOpen: function () { return false; }, close: function () {}, open: function () {} }; },
+        bindSidecar: function () { return { isOpen: function () { return false; }, close: function () {}, open: function () {} }; },
         confirmDialog: opts.confirmDialog || function () { return Promise.resolve(true); },
+        createDialogItem: opts.createDialogItem || function (item) { return item; },
         activePollIntervals: []
     };
     return { page: page, view: view, shared: shared, kit: tableMod.createSyncTableKit(ctx), ctx: ctx, responses: responses };
@@ -207,19 +208,23 @@ export function clickDialogButton(dom, text) {
 }
 
 // dialogText
-// Reads the title and the paragraphs of the dialog that is open.
+// Reads the title and the text under it of the dialog that is open: the description of a compact one, or the subtitle and
+// the context of a full one.
 //
 // Inputs
 // dom [object]: The fake DOM helper from installPage.
 //
 // Output
-// [object]: The title, and the text of each paragraph, or null when no dialog is open.
+// [object]: The title and the text under it, or null when no dialog is open.
 export function dialogText(dom) {
     var dialog = dom.document.querySelector('.stolon-dialog');
     if (!dialog) return null;
     var title = dialog.querySelector('.stolon-modal-title');
-    var body = dialog.querySelector('.stolon-modal-body');
-    return { title: title ? title.textContent : '', body: body ? (body.innerHTML || body.children.map(function (c) { return c.textContent; }).join(' ')) : '' };
+    var parts = ['.stolon-modal-description', '.stolon-modal-subtitle', '.stolon-modal-context'].map(function (s) {
+        var el = dialog.querySelector(s);
+        return el ? el.textContent : '';
+    }).filter(Boolean);
+    return { title: title ? title.textContent : '', body: parts.join(' ') };
 }
 
 // statusText

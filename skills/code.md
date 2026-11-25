@@ -62,7 +62,7 @@ At the repository root, `tools/integration/` holds the Docker pool and matrix, `
 | Tables | `createPaginatedTable` |
 | Lists and row editors | `createCheckboxList`, `createRepeater`, `createSortableCardList` |
 | Charts | `createPieChart`, `createUsageMeter`, `createBarChart` |
-| Dialogs | `openDialog`, `confirmDialog`, `promptDialog`, `openEditorDialog`, `bindDialog` |
+| Dialogs and sidecars | `openDialog`, `confirmDialog`, `createDialogItem`, `openSidecar`, `sidecarOpener`, `promptSidecar`, `openEditorSidecar`, `bindSidecar` |
 
 ### Move Code Into Stolon
 

@@ -112,12 +112,14 @@
                             <!-- The table builds its own markup here. -->
                         </div>
 
-                        <!-- Content Item Detail Modal -->
-                        <div id="itemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
-                                <button type="button" id="btnModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
-                                <h2 id="modalTitle" class="stolon-modal-title"></h2>
-                                <div id="modalContent" class="stolon-modal-body">
+                        <!-- Content Item Detail Sidecar -->
+                        <div id="itemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                            <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                                <div class="stolon-sidecar-head">
+                                    <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="modalTitle" class="stolon-sidecar-title"></h2></div></div>
+                                    <button type="button" id="btnModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                                </div>
+                                <div id="modalContent" class="stolon-sidecar-body">
                                     <div class="zooid-modal-top-row">
                                         <span id="modalStatusBadge" class="stolon-table-status-badge"></span>
                                         <span id="modalServerMapping" class="zooid-modal-server-mapping"></span>
@@ -166,7 +168,10 @@
                                         <div id="modalCompanionFiles"></div>
                                     </div>
                                 </div>
-                                <div class="stolon-modal-button-row">
+                                <div class="stolon-sidecar-shelf">
+                                    <button is="emby-button" type="button" id="btnModalDelete" class="raised stolon-button stolon-destructive stolon-modal-button" title="Delete local file" data-str-title="ButtonDeleteLocalFile">
+                                        <span data-str="Delete">Delete</span>
+                                    </button>
                                     <button is="emby-button" type="button" id="btnModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
                                         <span data-str="ButtonIgnore">Ignore</span>
                                     </button>
@@ -178,9 +183,6 @@
                                     </button>
                                     <button is="emby-button" type="button" id="btnModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
                                         <span data-str="ButtonQueue">Queue</span>
-                                    </button>
-                                    <button is="emby-button" type="button" id="btnModalDelete" class="raised stolon-button stolon-destructive stolon-modal-button" title="Delete local file" data-str-title="ButtonDeleteLocalFile">
-                                        <span data-str="Delete">Delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -251,12 +253,14 @@
                             <!-- The table builds its own markup here. -->
                         </div>
 
-                        <!-- History Item Detail Modal -->
-                        <div id="historyItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
-                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
-                                <button type="button" id="btnHistoryModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
-                                <h2 id="historyModalTitle" class="stolon-modal-title"></h2>
-                                <div id="historyModalContent" class="stolon-modal-body">
+                        <!-- History Item Detail Sidecar -->
+                        <div id="historyItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                            <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+                                <div class="stolon-sidecar-head">
+                                    <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="historyModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                                    <button type="button" id="btnHistoryModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                                </div>
+                                <div id="historyModalContent" class="stolon-sidecar-body">
                                     <div class="zooid-modal-top-row">
                                         <span id="historyModalStatusBadge" class="stolon-table-status-badge"></span>
                                         <span id="historyModalServerMapping" class="zooid-modal-server-mapping"></span>
@@ -334,7 +338,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="stolon-modal-button-row">
+                                <div class="stolon-sidecar-shelf">
                                     <button is="emby-button" type="button" id="btnHistoryModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
                                         <span data-str="ButtonIgnore">Ignore</span>
                                     </button>
@@ -406,12 +410,14 @@
                             <!-- The table builds its own markup here. -->
                         </div>
 
-                        <!-- Metadata Item Detail Modal -->
-                        <div id="metadataSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="metadataSyncModalTitle">
-                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
-                                <button type="button" id="btnMetadataSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
-                                <h2 id="metadataSyncModalTitle" class="stolon-modal-title"></h2>
-                                <div class="stolon-modal-body">
+                        <!-- Metadata Item Detail Sidecar -->
+                        <div id="metadataSyncItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                            <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="metadataSyncModalTitle">
+                                <div class="stolon-sidecar-head">
+                                    <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="metadataSyncModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                                    <button type="button" id="btnMetadataSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                                </div>
+                                <div class="stolon-sidecar-body">
                                     <div class="zooid-modal-top-row">
                                         <span id="metadataSyncModalStatusBadge" class="stolon-table-status-badge"></span>
                                         <span id="metadataSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
@@ -461,7 +467,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="stolon-modal-button-row">
+                                <div class="stolon-sidecar-shelf">
                                     <button is="emby-button" type="button" id="btnMetadataSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
                                         <span data-str="ButtonIgnore">Ignore</span>
                                     </button>
@@ -533,12 +539,14 @@
                             <!-- The table builds its own markup here. -->
                         </div>
 
-                        <!-- User Item Detail Modal -->
-                        <div id="userSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="userSyncModalTitle">
-                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
-                                <button type="button" id="btnUserSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
-                                <h2 id="userSyncModalTitle" class="stolon-modal-title"></h2>
-                                <div class="stolon-modal-body">
+                        <!-- User Item Detail Sidecar -->
+                        <div id="userSyncItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                            <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="userSyncModalTitle">
+                                <div class="stolon-sidecar-head">
+                                    <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="userSyncModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                                    <button type="button" id="btnUserSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                                </div>
+                                <div class="stolon-sidecar-body">
                                     <div class="zooid-modal-top-row">
                                         <span id="userSyncModalStatusBadge" class="stolon-table-status-badge"></span>
                                         <span id="userSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
@@ -584,7 +592,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="stolon-modal-button-row">
+                                <div class="stolon-sidecar-shelf">
                                     <button is="emby-button" type="button" id="btnUserSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
                                         <span data-str="ButtonIgnore">Ignore</span>
                                     </button>
@@ -655,12 +663,14 @@
                             <!-- The table builds its own markup here. -->
                         </div>
 
-                        <!-- People Item Detail Modal -->
-                        <div id="peopleSyncItemDetailModal" class="stolon-dialog stolon-hidden" role="dialog" aria-modal="true" aria-labelledby="peopleSyncModalTitle">
-                            <div class="stolon-dialog-content zooid-modal-dialog zooid-modal-relative">
-                                <button type="button" id="btnPeopleSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
-                                <h2 id="peopleSyncModalTitle" class="stolon-modal-title"></h2>
-                                <div class="stolon-modal-body">
+                        <!-- People Item Detail Sidecar -->
+                        <div id="peopleSyncItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                            <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="peopleSyncModalTitle">
+                                <div class="stolon-sidecar-head">
+                                    <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="peopleSyncModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                                    <button type="button" id="btnPeopleSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                                </div>
+                                <div class="stolon-sidecar-body">
                                     <div class="zooid-modal-top-row">
                                         <span id="peopleSyncModalStatusBadge" class="stolon-table-status-badge"></span>
                                         <span id="peopleSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
@@ -696,7 +706,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="stolon-modal-button-row">
+                                <div class="stolon-sidecar-shelf">
                                     <button is="emby-button" type="button" id="btnPeopleSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
                                         <span data-str="ButtonIgnore">Ignore</span>
                                     </button>

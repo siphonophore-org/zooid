@@ -201,7 +201,7 @@ Take every screenshot with the kit in [tools/screenshots](../tools/screenshots/R
 | Kind | Size | How |
 | :--- | :--- | :--- |
 | Page or section | 800 wide at 2x | The page at 800 px, cropped to the content or to the section |
-| Dialog | 800 wide at 2x | The page at 800 px, cropped to the dialog |
+| Dialog or sidecar | 800 wide at 2x | The page at 800 px, cropped to the dialog or sidecar |
 | Phone | 375 wide at 2x | The page at 375 px |
 
 The kit crops out the Jellyfin header.

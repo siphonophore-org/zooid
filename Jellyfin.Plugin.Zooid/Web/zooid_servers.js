@@ -746,11 +746,8 @@ export default function (view) {
         var server = selectedServer();
         if (!server) return;
         var label = server.Name || server.ServerName || server.Url || ZooidShared.t.tr('ServerThisServer');
-        var question = '<p>' + escapeHtml(ZooidShared.t.format('ConfirmRemoveServer', label)) + '</p>' +
-            '<p>' + escapeHtml(ZooidShared.t.tr('ConfirmRemoveServerDetail')) + '</p>';
-        confirmDialog(question, {
-            html: true,
-            title: ZooidShared.t.tr('ButtonRemoveServer'),
+        confirmDialog(ZooidShared.t.tr('ConfirmRemoveServerDetail'), {
+            title: ZooidShared.t.format('TitleRemoveServer', label),
             confirmText: ZooidShared.t.tr('ButtonRemove'),
             destructive: true
         }).then(function (confirmed) {

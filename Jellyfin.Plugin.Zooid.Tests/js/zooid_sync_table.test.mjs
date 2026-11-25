@@ -36,7 +36,7 @@ async function setup(ids) {
         view: view,
         shared: shared,
         createPaginatedTable: function () { return {}; },
-        bindDialog: function () { return { isOpen: function () { return false; }, close: function () {} }; },
+        bindSidecar: function () { return { isOpen: function () { return false; }, close: function () {} }; },
         activePollIntervals: []
     });
 }
@@ -294,7 +294,7 @@ test('setModalStatus posts the status change, closes the modal, and reports it',
     await setup(['syncStatus']);
     var module = kit.createSyncTableModule(historySpec());
     module.table = fakeTable([]);
-    module._dialog = { isOpen: function () { return false; }, close: function () {} };
+    module._sidecar = { isOpen: function () { return false; }, close: function () {} };
     module.currentModalItem = { Id: 9 };
     module.setModalStatus('Queued');
     await flush();

@@ -71,8 +71,9 @@ export default function (view) {
             view: view,
             shared: ZooidShared,
             createPaginatedTable: shared.createPaginatedTable,
-            bindDialog: shared.bindDialog,
+            bindSidecar: shared.bindSidecar,
             confirmDialog: shared.confirmDialog,
+            createDialogItem: shared.createDialogItem,
             activePollIntervals: _activePollIntervals
         };
         var kit = loaded[1].createSyncTableKit(ctx);

@@ -22,7 +22,7 @@ export function createSyncTableKit(ctx) {
     var view = ctx.view;
     var ZooidShared = ctx.shared;
     var createPaginatedTable = ctx.createPaginatedTable;
-    var bindDialog = ctx.bindDialog;
+    var bindSidecar = ctx.bindSidecar;
     var _activePollIntervals = ctx.activePollIntervals;
 
     // Builds the module behind one Sync view. Every view shares the table setup, the status counts,
@@ -132,7 +132,7 @@ export function createSyncTableKit(ctx) {
         var module = {
             table: null,            // PaginatedTable instance
             currentModalItem: null, // Row or detail shown in the modal
-            _dialog: null,          // The detail modal, opened by showDetail and closed by closeModal
+            _sidecar: null,          // The detail sidecar, opened by showDetail and closed by closeModal
             currentConfig: null,    // Plugin configuration, refreshed whenever the page is shown
             _initialized: false,
             _detailSeq: 0,          // Counts detail requests so only the newest reply fills the modal
@@ -190,9 +190,9 @@ export function createSyncTableKit(ctx) {
 
                 bind(ids.modal('Ignore'), function() { self.modalIgnore(); });
                 bind(ids.modal('Queue'), function() { self.modalQueue(); });
-                // The close button carries stolon-dialog-close, so the dialog closes on it, on Escape, and on
+                // The close button carries stolon-dialog-close, so the sidecar closes on it, on Escape, and on
                 // a backdrop click alike, and every close runs the same refresh.
-                self._dialog = bindDialog(spec.modalId, { root: view, onClose: function() { self._onModalClosed(); } });
+                self._sidecar = bindSidecar(spec.modalId, { root: view, onClose: function() { self._onModalClosed(); } });
                 (spec.extraModalButtons || []).forEach(function(b) {
                     bind(ids.modal(b.id), function() { self[b.method](); });
                 });
@@ -322,8 +322,8 @@ export function createSyncTableKit(ctx) {
 
             // A status change can land after the admin already closed the modal, and still refreshes.
             closeModal: function() {
-                if (this._dialog.isOpen()) {
-                    this._dialog.close();
+                if (this._sidecar.isOpen()) {
+                    this._sidecar.close();
                 } else {
                     this._onModalClosed();
                 }

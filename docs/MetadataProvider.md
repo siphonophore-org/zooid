@@ -16,7 +16,7 @@ Zooid is also a media segment provider. It copies intros, credits, recaps, previ
 2. Keep **Zooid** on in the library's media segment providers. It is on unless it was turned off there.
 3. Run **Sync Information**, then **Media Segment Scan** under **Dashboard > Scheduled Tasks**, or wait for both.
 
-Media segments are a category of each Metadata row, like images and people. A row's dialog lists them under **Media segments**.
+Media segments are a category of each Metadata row, like images and people. A row's detail sidecar lists them under **Media segments**.
 
 ![Metadata Item](screenshots/Metadata%20Item.png)
 

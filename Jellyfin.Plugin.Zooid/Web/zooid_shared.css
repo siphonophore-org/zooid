@@ -7,11 +7,6 @@
 .pluginConfigurationPage .stolon-button.stolon-hidden,
 .stolon-dialog .stolon-button.stolon-hidden { display: none !important; }
 
-/* zooid-modal-relative */
-/* Makes a dialog the anchor for its absolutely placed close button. */
-/* Example: <div class="stolon-dialog-content zooid-modal-relative"></div> */
-.zooid-modal-relative { position: relative; }
-
 /* zooid-health-dashboard */
 /* Dark rounded panel holding a row of labeled figures for the last run. */
 /* Example: <div class="zooid-health-dashboard"><div class="zooid-health-row"><div class="zooid-health-card"><span class="zooid-health-label">Last sync</span><span class="zooid-health-value">Never</span></div></div></div> */
@@ -445,10 +440,9 @@ div:not(.zooid-form-row) + .zooid-form-row {
 /* Example: <div class="flex zooid-gap-sm"></div> */
 .zooid-gap-sm { gap: 8px; }
 
-/* zooid-modal-dialog */
-/* Wide detail dialog and the rows inside it: status line, info grid, paths, and the change summary. */
-/* Example: <div class="stolon-dialog-content zooid-modal-dialog"><div class="zooid-modal-top-row"></div><div class="zooid-modal-info-grid"></div></div> */
-.zooid-modal-dialog { max-width: 900px; width: 95vw; }
+/* zooid-modal-top-row */
+/* The rows inside a sync item's detail sidecar: status line, info grid, paths, and the change summary. */
+/* Example: <div class="stolon-sidecar-body"><div class="zooid-modal-top-row"></div><div class="zooid-modal-info-grid"></div></div> */
 .zooid-modal-top-row {
     display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
 }

@@ -43,7 +43,7 @@ Every string is in sentence case, mirroring Jellyfin, such as "Allow media playb
 | Field label | Scheduled speed |
 | Checkbox label | Sync watched state |
 | Button, verb first | Add server |
-| Dialog title | Remove server |
+| Dialog title | Remove Den |
 | Badge and status chip | Pending deletion |
 | Column header | Last sync |
 | Activity log name | Items synced |
@@ -146,18 +146,19 @@ A message reports what happened in one sentence that ends with a period.
 
 ### Confirm Dialogs
 
-A confirm asks one question and states the consequence.
+A confirm's title names the action and what it acts on. Its message says what follows from it.
 
 ```js
-confirmDialog('Remove source-a? Its library mappings are removed too.', {
-    title: 'Remove server',
+confirmDialog('Its mappings and synced rows go with it. Downloaded files stay.', {
+    title: 'Remove Den',
     confirmText: 'Remove',
     destructive: true
 });
 ```
 
-* The message is a question, then one sentence on the consequence. "Delete 3 items? This cannot be undone."
-* The title is the action in sentence case, such as **Remove server**. Never leave the default **Confirm**.
+* Never repeat the title as a question, such as **Remove server** over "Remove this server?". The message is one or two short sentences on the consequence, such as "The files go from this server. This cannot be undone."
+* The title is in sentence case and names its target, such as **Delete 3 items** or **Reset the content sync table**. Never leave the default **Confirm**.
+* A confirm about one item shows it as the context, with `createDialogItem`, such as the poster and file name of a file to delete.
 * The confirm button repeats the action verb, such as **Remove** or **Delete**. Never **OK** or **Yes**.
 * Set `destructive: true` for anything that loses data.
 * Never "Are you sure you want to". Ask the question directly.
@@ -284,7 +285,7 @@ Pick one model per page and keep it.
 | :--- | :--- | :--- |
 | One Save per page | Settings depend on each other | One Save Bar, the last thing on the page |
 | One Save per section | Sections are independent and long | One Save Bar, the last thing in each section's content |
-| Editor dialog | Each record is edited on its own | **Done** in `openEditorDialog` |
+| Editor sidecar | Each record is edited on its own | **Save** in `openEditorSidecar` |
 
 Every page and section Save is the same:
 
@@ -354,7 +355,7 @@ grep -o "export function create[A-Za-z]*" ~/.nuget/packages/siphonophore.stolon/
 
 * Every button is `<button is="emby-button" type="button">`.
 * Icons are `<span class="material-icons" aria-hidden="true">name</span>`.
-* Close a dialog with `stolon-dialog-close` and `&times;`. Never "✕" or another glyph.
+* A sidecar's close button is a `stolon-row-btn stolon-dialog-close` holding the `close` icon, at the end of its header. Never "✕", `&times;`, or another glyph. A dialog has no close button.
 
 | Action | Icon |
 | :--- | :--- |
@@ -377,7 +378,7 @@ grep -o "export function create[A-Za-z]*" ~/.nuget/packages/siphonophore.stolon/
 | One record at a time from a list | `stolon-selector` with New, Rename, and Remove |
 | Records in priority order | `createSortableCardList` |
 | A plain list of records | `stolon-card-list` with `stolon-card-item-*` |
-| Edit one record in a dialog | `openEditorDialog` |
+| Edit one record in a sidecar | `openEditorSidecar` |
 | A large searchable list | `createPaginatedTable` |
 | Edit table rows in place | `stolon-bulk-edit-bar` and `stolon-edit-row` |
 | Uploaded files | `stolon-asset-list` |
@@ -425,23 +426,27 @@ grep -o "export function create[A-Za-z]*" ~/.nuget/packages/siphonophore.stolon/
 * Progress inside a row uses `stolon-progress` and `stolon-progress-bar`.
 * Never block the page with `Dashboard.showLoadingMsg`.
 
-### Dialogs
+### Dialogs and Sidecars
+
+A dialog is only for an alert or a confirmation. It never scrolls and has no close button. Everything else, inputs, an editor, and the details of a selected item, is a sidecar that slides in from the trailing edge.
 
 | Need | Use |
 | :--- | :--- |
-| A yes or no question | `confirmDialog` |
-| A few values | `promptDialog` |
-| A record editor | `openEditorDialog`, with `wide: true` for a large one |
-| A custom dialog | `openDialog` |
-| A dialog already in the page markup | `bindDialog` |
+| A yes or no question | `confirmDialog`, compact |
+| A yes or no question about one item | `confirmDialog` with a `context` from `createDialogItem`, full |
+| An alert | `openDialog`, compact |
+| A few values | `promptSidecar` |
+| A record editor | `openEditorSidecar` |
+| The details of a row | `openSidecar` or `sidecarOpener` |
+| A sidecar already in the page markup | `bindSidecar` |
 
-* Build dialogs in JS with `openDialog` and its wrappers. Use `bindDialog` only when the markup is large and static.
-* A dialog title is in sentence case and names what the dialog does.
-* Buttons read, from left to right, the destructive action, then **Cancel**, then the primary action.
+* A compact dialog is a title, a description, and buttons. A full one is a title, a subtitle, a context, and buttons.
+* A sidecar keeps its header, the title and the close button, and its shelf of buttons pinned, and only its body scrolls. Its shelf reads, from left to right, the destructive action, then **Cancel** and the other actions, then the primary action.
+* Build sidecars in JS with `openSidecar` and its wrappers. Use `bindSidecar` only when the markup is large and static, as the Sync detail panels are.
 
 ## Layout
 
-* Use Stolon's breakpoints, 768 px for tablet and 600 px for phone. Use 700 px only where Stolon does, for dialogs.
+* Use Stolon's breakpoints, 768 px for tablet and 600 px for phone. Dialogs and sidecars size themselves.
 * Test every page at 375 px wide. Nothing scrolls sideways except a table.
 * Look at every changed page in the pool before calling it done. Reload the page after `run.py up`, since the dashboard caches scripts.
 * Spacing comes from `--stolon-gap-wide` and `--stolon-gap-narrow`. Never add margins between fields.

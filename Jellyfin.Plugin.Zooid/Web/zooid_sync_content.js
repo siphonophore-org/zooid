@@ -18,6 +18,7 @@ export function createContentSyncTableModule(ctx, kit) {
     var view = ctx.view;
     var ZooidShared = ctx.shared;
     var confirmDialog = ctx.confirmDialog;
+    var createDialogItem = ctx.createDialogItem;
     var createSyncTableModule = kit.createSyncTableModule;
     var renderRowInfo = kit.renderRowInfo;
     var setHealthLastSync = kit.setHealthLastSync;
@@ -277,8 +278,8 @@ export function createContentSyncTableModule(ctx, kit) {
                 var self = this;
                 var ids = this.table.getSelectedIds();
                 if (ids.length === 0) return;
-                confirmDialog(ZooidShared.plural(ids.length, 'ConfirmDeleteItemsOne', 'ConfirmDeleteItemsMany'), {
-                    title: t.tr('HeaderDeleteItems'),
+                confirmDialog(t.tr('ConfirmDeleteItemsDetail'), {
+                    title: ZooidShared.plural(ids.length, 'TitleDeleteItemsOne', 'TitleDeleteItemsMany'),
                     confirmText: t.tr('Delete'),
                     destructive: true
                 }).then(function(confirmed) {
@@ -437,7 +438,7 @@ export function createContentSyncTableModule(ctx, kit) {
                     modalDeleteBtn.classList.remove('stolon-hidden');
                 }
 
-                self._dialog.open();
+                self._sidecar.open();
             },
 
             // A pending deletion cannot be queued.
@@ -470,8 +471,10 @@ export function createContentSyncTableModule(ctx, kit) {
 
                 var item = this.currentModalItem;
                 var fileName = ZooidShared.getFileName(item.LocalPath || item.SourcePath);
-                confirmDialog(t.format('ConfirmDeleteFile', fileName), {
+                var libraries = t.format('MappingArrow', item.SourceLibraryName || t.tr('Unknown'), item.LocalLibraryName || t.tr('Unknown'));
+                confirmDialog(t.tr('ConfirmDeleteFile'), {
                     title: t.tr('TitleDeleteFile'),
+                    context: createDialogItem({ image: ZooidShared.proxyImage(item.SourceItemId, false, item.ServerKey), title: fileName, subtitle: libraries }),
                     confirmText: t.tr('Delete'),
                     destructive: true
                 }).then(function(confirmed) {
