@@ -8,9 +8,9 @@ Give each entry the least access that covers what you want it to do. A standard 
 
 | Credential | What Jellyfin treats it as |
 | :--- | :--- |
-| An **API Key** from **Dashboard > API Keys** | Full access to everything. An API Key belongs to no user. |
-| A **Sign in** as an administrator | Full access to everything, plus the media downloading setting of that account. |
-| A **Sign in** as a standard user | What that user may see and do, nothing more. |
+| An **API Key** from **Dashboard > API Keys** | Full access to everything. An API Key belongs to no user |
+| A **Sign in** as an administrator | Full access to everything, plus the media downloading setting of that account |
+| A **Sign in** as a standard user | What that user may see and do, nothing more |
 
 **Test connection** reads which of these the entry holds, who it belongs to, and whether that account may download media. The **Authentication** step then lists what works with it, and the parts that need more are turned off.
 
@@ -46,23 +46,25 @@ These user settings on the other server affect a standard user's entry:
 
 ## Push and Sync
 
-With Push and Sync, a change is announced as a hint and the receiving server pulls the change itself. So two credentials are involved:
+With Push and Sync, a change is announced as a hint and the receiving server pulls the change itself. Two credentials are involved.
 
 * **The sender's key for the receiver** must be allowed by the receiver's whitelist. An administrator's key is allowed from any server on the receiver's **Servers** page. A standard user's key needs that user on the receiver's whitelist.
 * **The receiver's key for the sender** decides what the receiver can read when it pulls. If it is a standard user's key, the receiver only gets what that user can see, and only that user's history and settings. The sender is never announced a change the receiver could not read.
+
+A sender also presents the `X-Sync-Pairing` header on each call that names it as the sender. It holds the secret the receiver issued when the two paired. A receiver that has no pairing with the sender answers `428`, and the sender pairs and tries again.
 
 **Check link** reports both. It says whether the other server lists this one, and the access the other server holds for this one.
 
 ## Whitelist
 
-The routes under `/Zooid/Peer` are what other servers call to send changes, pair, look up items, and negotiate history. **Settings > Whitelist** decides who may call them. Your own dashboard is never limited.
+The routes under `/Sync/Peer` are what other servers call to send changes, pair, look up items, and negotiate history. **Settings > Whitelist** decides who may call them. Your own dashboard is never limited.
 
 | Caller | Allowed when |
 | :--- | :--- |
 | Administrator or API Key | It calls from the address of an enabled server on the **Servers** page, by its Server URL or External URL, or it has a whitelist row that covers its location |
 | Standard user | It has a whitelist row that covers its location |
 
-Each whitelist row is one user and the locations they may call from, separated by commas, such as `myserver.example.com, 192.168.1.0/24`. A location is a host name, a URL, an IP address, or a range. Leave the locations blank to allow every location. Select **API keys** as the user to cover API Keys.
+Each whitelist row is one user and the locations they may call from, separated by commas, such as `myserver.example.com, 192.168.1.0/24`. A location is a host name, a URL, an IP address, or a range. Leave the locations blank to allow every location. Select **API Keys** as the user to cover API Keys.
 
 A standard user who is let in reaches only their own data. History and version reads work only for their own user, lookups and playlists cover only what they can see, and playlist items they cannot see are left out.
 
@@ -74,11 +76,11 @@ A standard user who is let in reaches only their own data. History and version r
 | This IP is not whitelisted | An administrator calling from an address that is not on that server's **Servers** page or whitelist |
 | This user is not whitelisted for this IP | The user has a row, but none of its locations match |
 | Zooid is not installed there | The other server has no Zooid |
-| A version message | Zooid there is a different version |
+| Zooid there speaks a protocol this server does not | The two Zooid protocols do not overlap. See [Versioning](Versioning.md#mixing-versions-in-a-pool) |
 
 Every refused call is answered with `403` and a body such as `{ "Code": "UserNotWhitelisted", "Message": "This user is not whitelisted" }`, where `Code` is `UserNotWhitelisted`, `IpNotWhitelisted`, or `UserNotWhitelistedForIp`. It is also logged on the server that refused it, with the user, the address, and the reason.
 
-Host names are looked up once and remembered for an hour. When a caller does not match a remembered address, the name is looked up again before the call is refused, at most every thirty seconds. A dynamic DNS name that moved therefore keeps working. A name that cannot be looked up is logged as an error and its last known addresses are kept. Behind a reverse proxy, add the proxy under **Dashboard > Networking > Known Proxies** so Jellyfin sees the real address.
+Host names are looked up once and remembered for an hour. When a caller does not match a remembered address, the name is looked up again before the call is refused, at most every thirty seconds. A dynamic DNS name that moves keeps working. A name that cannot be looked up is logged as an error and its last known addresses are kept. Behind a reverse proxy, add the proxy under **Dashboard > Networking > Known Proxies** so Jellyfin sees the real address.
 
 ## Links
 
@@ -91,7 +93,7 @@ Streaming a [link](Links.md) uses the linking server's key for the source, like 
 | Check links and take their media info and images | Only items that user can see | Every linked item |
 | Remote control of a viewer from the source's dashboard | Works, once the source's entry for the linking server holds a key that server's whitelist allows | Works, once the source's entry for the linking server holds a key |
 
-The address inside a link, `/Zooid/Link`, is the one route that needs no Jellyfin sign in, since Jellyfin's own ffmpeg calls it without a token. It answers only this server itself, from and to its loopback address with no proxy header, with the link's secret, while a user who was allowed at play is playing. See [Links security](Links.md#security).
+The address inside a link, `/Sync/Link`, is the one route that needs no Jellyfin sign in, since Jellyfin's own ffmpeg calls it without a token. It answers only this server itself, from and to its loopback address with no proxy header, with the link's secret, while a user who was allowed at play is playing. See [Links security](Links.md#security).
 
 ## On This Server
 

@@ -6,12 +6,14 @@ An entry that holds a standard user's key syncs only that user's own settings. M
 
 ## Settings
 
+User settings live under **Settings > Synchronization > Users**.
+
 * **Enable user sync** turns user settings syncing on.
-* **User policy** syncs each user's permissions and access policy, including whether the account is disabled. Administrator rights are never copied, since each server's administrator grants them there. Library, channel, and device access lists stay local too.
-* **User configuration** syncs each user's display and playback preferences.
-* **Profile image** syncs each user's profile picture. A scan downloads the source's picture only when its tag has changed, or on every scan when **Deep image verification** is on.
-* **Precedence** chooses which server speaks for a user that several servers map onto the same local user. See [Several servers](SyncTypes.md#several-servers).
+* **Precedence**, under **Several servers**, chooses which server speaks for a user that several servers map onto the same local user. See [Several servers](SyncTypes.md#several-servers).
 * **User conflicts** chooses what a user's permissions become when they were changed on this server and on a Sync server since the two last agreed.
+* **User configuration** syncs each user's display and playback preferences.
+* **User policy** syncs each user's permissions and access policy, including whether the account is disabled. Administrator rights are never copied, since each server's administrator grants them there. Library, channel, and device access lists stay local too.
+* **Profile image** syncs each user's profile picture. A scan downloads the source's picture only when its tag has changed, or on every scan when **Deep image verification** is on.
 
 ![Several servers](screenshots/settings/Several%20Servers.png)
 

@@ -13,7 +13,7 @@ No other branch lives on the remote. Work on a local branch, then merge it into 
 
 ## Which Branch
 
-* **Feature.** Anything new, changed behavior, a refactor, or a Stolon upgrade goes to `unstable`. It ships in a feature release, which raises `F` in the version.
+* **Feature.** A feature, a change in behavior, a refactor, or a raised Stolon version goes to `unstable`. It ships in a feature release, which raises `F` in the version.
 * **Patch.** A fix for a released bug goes straight to `main`. It ships in a bug release, which raises `B`.
 
 ## Dependencies

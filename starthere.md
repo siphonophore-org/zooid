@@ -47,7 +47,7 @@ Work is done when it has been checked, not when it has been written.
 
 Stop and ask before any of these, even when the task seems to call for it.
 
-* **The database.** A schema change, a migration, a change to the minimum reader, or anything that resets, moves, or deletes `sync.db`.
+* **The database.** A schema change, a change to the minimum reader, or anything that resets, moves, or deletes `sync.db`.
 * **The protocol.** A change to a hint, a peer route, pairing, or a conflict rule that another server reads.
 * **Data loss.** Anything that deletes or replaces media, history, metadata, links, or recycling bin files, or loosens a prune safety limit.
 * **Security.** A change to authentication, secrets, the SSRF guard, the whitelist, or who a link streams as.

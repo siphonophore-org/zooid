@@ -428,21 +428,19 @@ grep -o "export function create[A-Za-z]*" ~/.nuget/packages/siphonophore.stolon/
 
 ### Dialogs and Sidecars
 
-A dialog is only for an alert or a confirmation. It never scrolls and has no close button. Everything else, inputs, an editor, and the details of a selected item, is a sidecar that slides in from the trailing edge.
+A dialog is only for a confirmation. It never scrolls and has no close button. Everything else, inputs, an editor, and the details of a selected item, is a sidecar that slides in from the trailing edge.
 
 | Need | Use |
 | :--- | :--- |
 | A yes or no question | `confirmDialog`, compact |
 | A yes or no question about one item | `confirmDialog` with a `context` from `createDialogItem`, full |
-| An alert | `openDialog`, compact |
-| A few values | `promptSidecar` |
-| A record editor | `openEditorSidecar` |
-| The details of a row | `openSidecar` or `sidecarOpener` |
+| A confirmation with its own layout | `openDialog`, compact or full |
+| Inputs, an editor, or the details of a row | `openSidecar` |
 | A sidecar already in the page markup | `bindSidecar` |
 
 * A compact dialog is a title, a description, and buttons. A full one is a title, a subtitle, a context, and buttons.
 * A sidecar keeps its header, the title and the close button, and its shelf of buttons pinned, and only its body scrolls. Its shelf reads, from left to right, the destructive action, then **Cancel** and the other actions, then the primary action.
-* Build sidecars in JS with `openSidecar` and its wrappers. Use `bindSidecar` only when the markup is large and static, as the Sync detail panels are.
+* Build sidecars in JS with `openSidecar`. Use `bindSidecar` only when the markup is large and static, as the Sync detail panels are.
 
 ## Layout
 

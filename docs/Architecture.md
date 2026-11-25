@@ -26,14 +26,13 @@ Provider      Jellyfin refresh ──▶ PeerMetadataProvider ──▶ PeerMeta
 
 `Plugin.cs` builds the plugin on `PluginBase` from Stolon.
 
-1. It reads the stored database version. When the database is older than this release can open, the plugin is **held**. It copies the settings aside, refuses every save, starts no background work, and every page and `GET /Zooid/Health` say why.
-2. It builds a `SecretProtector` with Stolon's `StableSecretProtection`.
-3. It encrypts any API key still stored in plain text.
+1. It builds a `SecretProtector` with Stolon's `StableSecretProtection`.
+2. It encrypts any API key still stored in plain text.
 
 `PluginServiceRegistrator.cs` registers services.
 
 * Every class with `[PluginService]` is registered by reflection.
-* Each hosted service except `HiddenTaskScheduleCleaner` is wrapped in `Gate<T>`, which starts nothing while the plugin is held.
+* Nine services run in the background as hosted services. They are `LinkProbe`, `LinkPlaybackReporter`, `LinkSessionSweeper`, `LinkCacheFiller`, `OutboundHintWorker`, `InboundHintWorker`, `LocalChangeObserver`, `HiddenTaskScheduleCleaner`, and `QueueMaintenanceService`.
 * `Tasks/HiddenTaskScheduleCleaner` removes any schedule left on a hidden task, so only the two visible tasks run on a timer.
 * `LinkPlaybackFilter` is added as an MVC filter on Jellyfin's own routes.
 * Two named `HttpClient`s carry the SSRF guard, Stolon's `StolonRetryHandler`, and `RedirectRefusingHandler`. `ZooidSource` may reach private addresses and `ZooidSourcePublic` may not.
@@ -74,7 +73,7 @@ Two visible tasks run every six hours. Each runs hidden tasks in order. Each ste
 | **Sync Content** (`SyncContentTask`) | `UpdateSyncTablesTask`, then `SyncMissingContentTask` when the refresh succeeded, then `SyncCollectionsTask` |
 | **Sync Information** (`SyncInformationTask`) | Metadata, People, Users, and History, each a refresh then an apply, then `SyncPlaylistsTask` |
 
-**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Zooid/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Synchronization** page.
+**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Sync/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Synchronization** page.
 
 The task bases live in `Tasks/Common/`.
 
@@ -98,11 +97,11 @@ Every sync type follows the same path. A refresh task reads the sources and fill
 * Each of the first five tables has a manager on `SyncTableManagerBase` in `Services/Database/`. `PlaylistCopies` is held by `PlaylistCopyStore`.
 * When several sources offer the same item, `RefreshSyncTaskBase.CollectAsync` lets one speak for it. Rank decides unless the task's `ContestAsync` names another.
 * Content writes copies with `DownloadService`, links with `LinkWriter`, and removals with `FileDeletionService` and `RecyclingBinService`.
-* Content takes a file from the highest ranked source that holds it. On an incremental scan, `UpdateSyncTablesTask.ApplyReportedRemovalsAsync` asks each source for `GET /Zooid/Peer/Changes`, the files that left its library, which the source keeps in `RemovedItems`.
-* History merges three way in `HistorySyncMergeService`. The source whose history of a file moved since the last scan speaks for it, so each source is merged in turn. For a Sync server with **Negotiate history** on, the merge is offered to the other server through `POST /Zooid/Peer/History`, which `PeerHistoryService` answers there.
+* Content takes a file from the highest ranked source that holds it. On an incremental scan, `UpdateSyncTablesTask.ApplyReportedRemovalsAsync` asks each source for `GET /Sync/Peer/Changes`, the files that left its library, which the source keeps in `RemovedItems`.
+* History merges three way in `HistorySyncMergeService`. The source whose history of a file moved since the last scan speaks for it, so each source is merged in turn. For a Sync server with **Negotiate history** on, the merge is offered to the other server through `POST /Sync/Peer/History`, which `PeerHistoryService` answers there.
 * Metadata and people let the source with the newest stamp speak, through `ScanConflictSettler.NewestOffersAsync`, unless precedence is `Rank`. `ScanConflictSettler.SettleAsync` then keeps a value this server edited more recently.
 * Users have no stamps and no live changes. The source that changed a user since the last scan speaks for that user. With a Sync server, `UserSyncTableService.SettleBothWays` keeps a change made on this server until that server takes it, and `UserPolicyCombiner` combines the two policies when both changed, by **User conflicts**.
-* Playlists mirror through `PlaylistMirror` and decide with `VersionConflictResolver`. A deletion is stamped like an edit. `SyncPlaylistsTask.SettleDeletedAsync` settles a deletion that was not announced, by **Removed playlists**, and a playlist this server knew and no longer holds is not made again from an older copy.
+* Playlists mirror through `PlaylistMirror` and decide with `VersionConflictResolver`. A deletion is stamped like an edit. `SyncPlaylistsTask.SettleDeletedAsync` settles a deletion that was not announced, by **Removed playlists**, and a playlist this server knew and then lost is not made again from an older copy.
 * Content and metadata scan incrementally between full scans, using `ScanWatermarkStore`.
 
 ## Peers
@@ -111,16 +110,16 @@ Every sync type follows the same path. A refresh task reads the sources and fill
 
 Servers that list each other share a secret, so one server cannot pretend to be another.
 
-1. A server asks the other for `GET /Zooid/Peer/Link`.
-2. `PeerController` calls back to the entry's own saved URL with `POST /Zooid/Peer/Pair`, carrying a new secret.
+1. A server asks the other for `GET /Sync/Peer/Link`.
+2. `PeerController` calls back to the entry's own saved URL with `POST /Sync/Peer/Pair`, carrying a new secret.
 3. `PeerPairController` accepts the secret only while its side expects a pairing.
 4. Both sides store the secret in `PeerPairings`, encrypted with `SecretProtector`.
 
-Every later request carries the secret in `X-Zooid-Pairing`. `PeerController.Sender` answers `409` for a server it does not list and `428` for a wrong secret, and the client pairs again on `428`.
+Every later request carries the secret in `X-Sync-Pairing`. `PeerController.Sender` answers `409` for a server it does not list and `428` for a wrong secret, and the client pairs again on `428`.
 
 ### Protocol
 
-`Services/Queue/HintProtocol` sets `ProtocolVersion` and `MinProtocolVersion`. Requests carry them in headers, and `RequireCompatibleProtocolAttribute` answers `426` when two servers do not overlap. `GET /Zooid/Peer/Capabilities` reports the protocol, the sync types this server accepts, and `Link` when it offers links. `OutboundHintWorker` reads it every minute and pauses a server whose protocol does not overlap.
+`Services/Queue/HintProtocol` sets `ProtocolVersion` and `MinProtocolVersion`. Requests carry them in headers, and `RequireCompatibleProtocolAttribute` answers `426` when two servers do not overlap. `GET /Sync/Peer/Capabilities` reports the protocol, the sync types this server accepts, and `Link` when it offers links. `OutboundHintWorker` reads it every minute and pauses a server whose protocol does not overlap.
 
 ### Who May Call
 
@@ -130,12 +129,12 @@ Every later request carries the secret in `X-Zooid-Pairing`. `PeerController.Sen
 
 | Controller | Route | Serves |
 | :--- | :--- | :--- |
-| `PeerController` | `/Zooid/Peer` | Hints, completion, status, interest, versions, history, playlists, lookups, media segments |
-| `PeerController.Links` | `/Zooid/Peer` | Streams, stream checks, playback reports, remote control, link details, images, removals, copies |
-| `PeerPairController` | `/Zooid/Peer/Pair` | Pairing |
-| `LinkController` | `/Zooid/Link` | The address a `.strm` holds, for this server only |
-| `HintsController` | `/Zooid/Hints` | The **Queue** page, **Check link**, and stamp lookups |
-| `ServersController` | `/Zooid/Servers` | Removing a server's rows |
+| `PeerController` | `/Sync/Peer` | Hints, completion, status, interest, versions, history, playlists, lookups, media segments |
+| `PeerController.Links` | `/Sync/Peer` | Streams, stream checks, playback reports, remote control, link details, images, removals, copies |
+| `PeerPairController` | `/Sync/Peer/Pair` | Pairing |
+| `LinkController` | `/Sync/Link` | The address a `.strm` holds, for this server only |
+| `HintsController` | `/Sync/Hints` | The **Queue** page, **Check link**, and stamp lookups |
+| `ServersController` | `/Sync/Servers` | Removing a server's rows |
 | `ConfigurationController` | `/Sync` | Everything else the pages call |
 
 Peer routes need a signed in caller and the whitelist. Operator routes need an administrator.
@@ -148,7 +147,7 @@ A change travels as a hint that says what changed, never the value. The receiver
 2. **Stamp.** A hand made edit is stamped at once in `ObjectVersions` with this server and the time. History is also stamped by part, played or favorite, as `HistoryParts` names them.
 3. **Gather.** The change waits until the item has gone untouched for **Send changes after**.
 4. **Publish.** `LocalHintPublisher` writes one `OutboundHints` row per server that this one pushes to and that wants it. `LoopBreaker` holds a change that keeps coming back.
-5. **Deliver.** `OutboundHintWorker` sends batches to `POST /Zooid/Peer/Queue`. `HintDelivery` decides what each answer means. A `200` waits for completion, a `400` fails, a refusal pauses the server, and anything else retries with growing delays.
+5. **Deliver.** `OutboundHintWorker` sends batches to `POST /Sync/Peer/Queue`. `HintDelivery` decides what each answer means. A `200` waits for completion, a `400` fails, a refusal pauses the server, and anything else retries with growing delays.
 6. **Receive.** `PeerController.Queue` checks pairing and direction, sorts each hint with `HintTriage`, and stores it in `InboundHints`. A hint for an item that has not arrived yet is parked until it does.
 7. **Apply.** `InboundHintWorker` runs one lane for content and one for everything else.
 
@@ -161,22 +160,22 @@ A change travels as a hint that says what changed, never the value. The receiver
 
     A history hint names its parts in its item type, such as `Movie+Played`, written by `HintProtocol.HistoryItemType`.
 
-8. **Complete.** The receiver reports `POST /Zooid/Peer/Complete`, and the sender deletes the row. `OutboundHintWorker` asks for `GET /Zooid/Peer/Status` after ten minutes and resends any hint the receiver lost.
+8. **Complete.** The receiver reports `POST /Sync/Peer/Complete`, and the sender deletes the row. `OutboundHintWorker` asks for `GET /Sync/Peer/Status` after ten minutes and resends any hint the receiver lost.
 
 `QueueMaintenanceService` clears settled hints, retries errored rows, and raises items that have failed for a day on the **Activity** page. `HintActivityLog` writes one activity entry per outcome with Stolon's `ActivitySummary`.
 
 ## Links
 
-A link is a `.strm` holding an address on the linking server itself, `/Zooid/Link/{id}?k={secret}`. The secret is an HMAC keyed by `zooid-link.key`, so no credential for the source is ever written to a file.
+A link is a `.strm` holding an address on the linking server itself, `/Sync/Link/{id}?k={secret}`. The secret is an HMAC keyed by `zooid-link.key`, so no credential for the source is ever written to a file.
 
 | Step | Where |
 | :--- | :--- |
 | Write the `.strm`, `.nfo`, and subtitles | `LinkWriter`, `LinkFiles`, `LinkNfo` |
 | Give the link the source's media info | `LinkMediaInfo`, `LinkProbe` |
-| Ask the source whether a user may play | `LinkPlaybackFilter`, `LinkAccess`, `POST /Zooid/Peer/Stream/Check` |
+| Ask the source whether a user may play | `LinkPlaybackFilter`, `LinkAccess`, `POST /Sync/Peer/Stream/Check` |
 | Allow the stream for a short time | `LinkGrants` |
 | Serve the address in the `.strm` | `LinkController`, which accepts only this server's own requests |
-| Stream the bytes | `LinkStreamer`, from the link cache or `GET /Zooid/Peer/Stream/{itemId}` |
+| Stream the bytes | `LinkStreamer`, from the link cache or `GET /Sync/Peer/Stream/{itemId}` |
 | Send a link's file for Jellyfin's **Download** | `LinkPlaybackFilter`, `LinkAccess`, `LinkStreamer` |
 | Map the user and enforce limits on the source | `LinkPolicy`, `LinkSessions`, `ThrottledReadStream` |
 | Show playback on the source | `LinkPlaybackReporter`, `LinkPlaybackSessions` |
@@ -195,25 +194,25 @@ Zooid is also a metadata and image provider that Jellyfin calls on a refresh, an
 | :--- | :--- |
 | Answer Jellyfin for each media type | `PeerMetadataProvider<TItem, TInfo>` and its subclasses, and `PeerImageProvider`, each in a file of its own in `Services/Providers/` |
 | List the sources that can answer a lookup | `ParentDirectory` |
-| Find the item on a source and read its metadata and images | `PeerMetadataSource`, through `POST /Zooid/Peer/Lookup` |
+| Find the item on a source and read its metadata and images | `PeerMetadataSource`, through `POST /Sync/Peer/Lookup` |
 | Keep the fill from being announced as an edit made here | `ProviderFills` |
-| Read the sources' media segments into each Metadata row on refresh, and write them to the local segment table on sync | `RefreshMetadataSyncTableTask` through `POST /Zooid/Peer/Segments` and `MediaSegmentsValue.Choose`, then `SyncMissingMetadataTask` into `MediaSegmentStore` |
+| Read the sources' media segments into each Metadata row on refresh, and write them to the local segment table on sync | `RefreshMetadataSyncTableTask` through `POST /Sync/Peer/Segments` and `MediaSegmentsValue.Choose`, then `SyncMissingMetadataTask` into `MediaSegmentStore` |
 | Answer the source's media segments, with the server they were first made on | `PeerSegmentReader` |
 | Answer Jellyfin's **Media Segment Scan** from the kept segments | `PeerSegmentProvider`, registered with `[PluginService]` as an `IMediaSegmentProvider` |
 
-While the plugin is held, a lookup finds nothing. So does a lookup for an item while `EnableMetadataSync` or `MetadataSyncProvider` is off, and for a person while `EnablePeopleSync` or `PeopleSyncProvider` is off, and no server is asked.
+A lookup for an item finds nothing while `EnableMetadataSync` or `MetadataSyncProvider` is off, and for a person while `EnablePeopleSync` or `PeopleSyncProvider` is off, and no server is asked.
 
 The media segment provider answers only while `EnableMetadataSync` and `MetadataSyncSegmentProvider` are on, and never asks a source itself. It uses kept segments only when the source's file has the same size and runtime as the local one, and `PeerSegmentProvider.Plan` decides the rest with `MetadataSyncReplaceSegments` and `MetadataSyncRemoveSegments`. It runs last, as `IHasOrder` with `int.MaxValue`. When nothing is kept for an item, it gives back the segments Jellyfin holds, so nothing is removed. `PeerSegmentReader` serves every segment a file shows, with `OriginServerId` set to the server they were first made on when Zooid copied them, and null when they were made there. `MediaSegmentsValue.Choose` takes the first server in rank order with segments, keeps the origin, or the server's id when it is null, and passes over segments whose origin is this server, so a server never takes back its own.
 
 ## Database
 
-`sync.db` lives in `<Jellyfin data>/zooid/`. `Services/Database/SyncDatabase` opens it in WAL mode with one write connection and up to four readers. A corrupt file, or one from a newer release this one cannot read, is set aside with Stolon's `DatabaseSchema.SetAside`.
+`sync.db` lives in `<Jellyfin data>/zooid/`. `Services/Database/SyncDatabase` opens it in WAL mode with one write connection and up to four readers. It opens the schema through Stolon's `DatabaseSchema.Open`. A database a newer build wrote is used as it is when that build allows this reader. A corrupt file, or a newer one this build cannot read, is set aside with Stolon's `DatabaseSchema.SetAside` and a fresh database is started.
 
-`Services/Database/SyncSchema` creates every table and sets the version.
+`Services/Database/SyncSchema` creates every table and holds the version.
 
-* `CurrentSchemaVersion` is the schema this release writes.
-* `MinReaderVersion` is the oldest schema version that can read it. It rises to `LinkReaderVersion` once the database holds a link, and to `UnkeepReaderVersion` once a copy is going back to a link.
-* `OldestUpgradableRelease` is `12.4.13.0`, the oldest release this one upgrades from, and `OldestUpgradableSchema` is the schema it writes. `SyncSchema.Upgrade` brings a database from there forward by creating the tables added since, and changes no stored row.
+* `CurrentSchemaVersion` is the schema this build writes, which is `1`.
+* `MinReaderVersion` is the oldest schema version whose code can still use the database, which is `1`. It rises only when a change alters or removes something older code relies on.
+* A schema change raises `CurrentSchemaVersion` and adds the step that brings the version before it forward.
 
 | Table | Holds | Store |
 | :--- | :--- | :--- |
@@ -239,7 +238,7 @@ The five sync table managers extend `SyncTableManagerBase`, and every other stor
 
 ## Config Pages
 
-Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's tool app. The app shows a sidebar of tools, swaps each tool in place, and keeps the open tool in the address as `tool=`. Each tool is its own page in `Web/` with a script of the same name, loaded the first time it opens. Each tool's script calls `createZooidPage` in `zooid_shared.js`, which runs it through Stolon's `createConfigPage` and builds the helper bag with the `Zooid` route prefix. The tool list is `zooidTools` in the same file. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the tool is left with unsaved changes. Every tool calls `Health` as it loads and shows the reason at its top while the plugin is held. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
+Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's tool app. The app shows a sidebar of tools, swaps each tool in place, and keeps the open tool in the address as `tool=`. Each tool is its own page in `Web/` with a script of the same name, loaded the first time it opens. Each tool's script calls `createZooidPage` in `zooid_shared.js`, which runs it through Stolon's `createConfigPage` and builds the helper bag with the `Zooid` route prefix. The tool list is `zooidTools` in the same file. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the tool is left with unsaved changes. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
 
 | Tool | Page | Calls |
 | :--- | :--- | :--- |

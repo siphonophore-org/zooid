@@ -242,7 +242,7 @@ The Jellyfin image is Linux and runs Jellyfin as process 1 of each container, as
 8. To time the Sync tab routes, use the API key in `tools/integration/.state/credentials.json` under `servers`, not the admin login. Send it in an `Authorization: MediaBrowser Token="<key>"` header. The `X-Emby-Token` header and the `api_key` query are refused.
 
     ```bash
-    curl -s -o /dev/null -w "%{time_total}" -H 'Authorization: MediaBrowser Token="<key>"' "http://localhost:8113/Zooid/Items?take=50"
+    curl -s -o /dev/null -w "%{time_total}" -H 'Authorization: MediaBrowser Token="<key>"' "http://localhost:8113/Sync/Items?take=50"
     ```
 
 9. To read the query plans, copy the whole data folder out, since the database runs in WAL mode, and open the copy only.

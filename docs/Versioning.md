@@ -1,48 +1,44 @@
 # Versioning
 
-Releases use a four part version, `JJ.JJ.F.B`. It matches the supported Jellyfin version, followed by the plugin's own feature and bug count:
+Releases use a four part version, `JJ.JJ.F.B`. It matches the supported Jellyfin version, followed by the plugin's own feature and bug count.
 
 ```
-12.4.18.1
-└┬─┘ └┬┘└
- │    │ └ 1 = Plugin bug release within that feature
- │    └─── 18 = Plugin feature release
+12.4.0.0
+└┬─┘ │ └ 0 = Plugin bug release within that feature
+ │   └─── 0 = Plugin feature release
  └──────── 12.4 = Jellyfin version this build is released for
 ```
 
+| Part | Raised when | Then |
+| :--- | :--- | :--- |
+| `JJ.JJ` | The plugin moves to a new Jellyfin version | `F` and `B` start at 0 |
+| `F` | A release adds a feature or changes behavior | `B` starts at 0 |
+| `B` | A release only fixes bugs | Nothing else changes |
+
+Zooid 12.4.0.0 is the first release. It needs Jellyfin 12.4.
+
+## What a Release Carries
+
+Each release carries three numbers besides its version.
+
+| Number | 12.4.0.0 | What it decides |
+| :--- | :--- | :--- |
+| Protocol | 1, oldest 1 | Which servers this one exchanges live changes, history negotiation, and conflict checks with |
+| Database schema | 1 | The layout of `zooid/sync.db` in the Jellyfin data folder |
+| Minimum reader | 1 | The oldest schema whose code can still use the database |
+
+A release raises the protocol only when a hint, a peer route, or a conflict rule changes in a way another server would misread. It raises the schema when the database layout changes, and the minimum reader only when that change alters or removes something older code relies on. The changelog says when the protocol changes.
+
 ## Mixing Versions in a Pool
 
-Servers in a pool do not need the same plugin version. Each build speaks a numbered protocol. Two servers exchange live changes, history negotiation, and conflict checks as long as their protocols overlap. A release that does not change the protocol works alongside the release before it, so servers can be updated one at a time.
+Servers in a pool do not need the same plugin version. Each build speaks a numbered protocol and names the oldest protocol it still speaks. Two servers talk as long as those ranges overlap. Each call between servers carries the `X-Sync-Version`, `X-Sync-Protocol`, and `X-Sync-Min-Protocol` headers so the receiver can tell.
 
-The protocol number changes only when a hint, a peer route, or a conflict rule changes in a way an older server would misread. The changelog says so when it does. Until both servers are compatible, changes for the other server wait in the queue and **Check link** reports the reason.
+When the protocols do not overlap, changes for the other server wait in the queue and **Check link** reports the reason. A server that reports no protocol is compatible only when it runs exactly the same plugin version.
 
-A server that reports no protocol is compatible only when it runs exactly the same plugin version.
+## The Database
 
-## Updating From an Older Release
+Zooid's database notes its schema and the oldest schema that can read it. A build that finds a database from a newer schema uses it unchanged when its own schema is at or above that minimum reader. Otherwise it keeps the file as a `.newer-*` backup and starts a fresh database.
 
-Version 12.4.18.1 carries no upgrade steps for anything older than 12.4.13.0. It opens the database and settings that 12.4.13.0 leaves behind, and nothing before them. On its first start it adds the two tables the **Statistics** page reads, the table of media segments, and four media segment columns to the Metadata table, and changes nothing else in it.
-
-To update a server that runs a release before 12.4.13.0:
-
-1. Install 12.4.13.0 and restart Jellyfin.
-2. Leave it running for a day. It converts the database and the settings when it starts, and marks the copies it already tracks during its upkeep, which waits for a moment when no content task is running.
-3. Update to 12.4.18.1 and restart Jellyfin.
-
-A server already on 12.4.13.0 or later updates directly.
-
-When a server skips 12.4.13.0, Zooid holds itself and Jellyfin runs as usual. These things are true until 12.4.13.0 has run:
-
-* **The database is left exactly as it was.** Nothing is read from it, written to it, or moved aside.
-* **The settings are left exactly as they were.** They are copied to `Jellyfin.Plugin.Zooid.xml.before-12.4.13.0` beside the settings file before anything reads them. Every save is refused, so the settings an older release wrote are still there for 12.4.13.0 to convert.
-* **Nothing of Zooid runs.** No background work starts, playback is not touched, and its metadata lookups answer nothing. Its tasks fail with the reason.
-* **Every Zooid page says why** in a line at its top. The Jellyfin log says the same, and the **Activity** page shows it as "Earlier update required".
-
-Installing 12.4.13.0, starting Jellyfin, leaving it a day, and then updating again picks up where the server left off.
-
-## Downgrading
-
-Zooid's database notes the oldest schema that can read it. A release that only added to the database leaves that alone, so an older release keeps using the file. Once a server holds a link, the database names the oldest schema that knows links as its oldest reader. Once a kept copy is on its way back to a link, it names the oldest schema that knows that. An older release sets such a database aside as a `.newer-*` backup and starts fresh, rather than take a `.strm` for a broken copy and download over it.
-
-## Links and Other Releases
+## Links and Other Servers
 
 [Links](Links.md) need Zooid on both servers. The source advertises `Link` among its features, and a server with a **Link** mapping waits for a source that does.

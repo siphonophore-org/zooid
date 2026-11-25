@@ -1,6 +1,10 @@
 # Setup
 
-Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar folds to its icons with the button at its top. A tool with nothing to show is left out of the sidebar.
+This page walks through a first setup, from opening the Zooid page to reading the **Dashboard**. Install the plugin first, as described in [Installation](Installation.md).
+
+## The Zooid Page
+
+Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar.
 
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
@@ -9,43 +13,51 @@ Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar fo
 | **Queue** | The changes sent between servers as they happen | Always |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
-| **Statistics** | How the synced files are kept, by server, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
-| **Settings** | The options | Always |
+| **Statistics** | How the synced files are kept, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
+| **Settings** | Bandwidth, processing, the whitelist, and one section for each sync type | Always |
 | **Troubleshooting** | Resets that forget Zooid's tracking. Media is untouched | Always |
+
+On a phone the sidebar is hidden. The heading over the tool becomes a title menu that lists every tool.
+
+A sync item's details open in a sidecar that slides in from the trailing edge of the page. Its header and buttons stay in place while its body scrolls. Every confirmation is a small dialog whose title names the action and its target, such as "Remove source-a".
 
 ## Servers
 
 ![Servers](screenshots/settings/Servers.png)
 
-A server's place in the list is its rank, and servers higher in the list rank first. Drag a server to change the order. Select a server to open its steps, and select it again to close them. Each server has these steps.
+Open **Servers** and select **Add server**. A server's place in the list is its rank, and servers higher in the list rank first. Drag a server to change the order. Select a server to open its steps, and select it again to close them. Select **Save** when the steps are done.
 
 | Step | What it holds |
 | :--- | :--- |
-| 1. Connection | **Name**, **Server URL**, an optional **External URL**, and **Allow private network address** |
-| 2. Authentication | An **API Key** or a **Sign in**, **Test connection**, what the key can do there, and the Direction |
-| 3. Linking | For Push and Sync servers, **Allow linking**, the stream limit, and who unmapped users stream as. A warning shows when that server does not run Zooid |
-| 4. Libraries | Which library there fills which library here, and their root folders. How each one keeps its files is set on the [Storage](#storage) tab |
-| 5. Users | Which user there maps to which user here, for history, user settings, and playlists, and, with Allow linking on, that user's own link stream limit and speed |
+| Connection | **Name**, **Enabled**, **Server URL**, an optional **External URL**, and **Allow private network address** |
+| Authentication | An **API Key** or a **Sign in**, **Test connection**, what the key can do there, the **Direction**, and **Check link** |
+| Linking | For Push and Sync servers only. **Allow linking**, **Link streams at once**, and who **Unmapped users** stream as |
+| Libraries | Which library there fills which library here, and their root folders |
+| Users | Which user there maps to which user here, for history, user settings, and playlists |
 
-**The other server needs Zooid for everything but a plain pull.** A server that runs plain Jellyfin can be a **Pull** server whose libraries are kept as copies, and nothing else. Saving an entry as Push or Sync, or with a library kept as links, is refused when that server answers and does not run Zooid, or runs one too far from this version for the two to talk. A server that cannot be reached is saved, since it cannot be asked, and nothing is sent to it until it answers.
+Steps are numbered in the order they show, so a Pull server's **Libraries** is step 3.
 
-Steps are numbered in the order they show, so a Pull server's Libraries is step 3.
+**The other server needs Zooid for everything but a plain pull.** A server that runs plain Jellyfin can be a Pull server whose libraries are kept as copies, and nothing else. Saving an entry as Push or Sync, or with a library kept as links, is refused when that server answers and does not run Zooid. It is also refused when the two Zooid protocols do not overlap. A server that cannot be reached is saved, and nothing is sent to it until it answers.
 
-**Allow private network address** lets a server entry use a loopback, LAN, or carrier NAT address. Carrier NAT is 100.64.0.0/10, the range Tailscale uses. With it off, only public addresses are reached, and a plain `http://` URL is refused, since it would send the API Key unencrypted.
+### Connection
 
-| Connection | Authentication |
-| :--- | :--- |
-| ![Connection](screenshots/settings/Connection.png) | ![Authentication](screenshots/settings/Authentication.png) |
+![Connection](screenshots/settings/Connection.png)
 
-| Library Mapping | User Mapping |
-| :--- | :--- |
-| ![Library Mapping](screenshots/settings/Library%20Mapping.png) | ![User Mapping](screenshots/settings/User%20Mapping.png) |
+* **Name** names the server in tables and logs. Empty uses the server's own name.
+* **Enabled** keeps the settings and skips the server while off.
+* **Server URL** is the URL this server uses to reach that one, such as `http://source-a:8096`.
+* **External URL** is the URL a browser uses for that server, when it differs.
+* **Allow private network address** lets the entry use a loopback, LAN, or carrier NAT address. Carrier NAT is `100.64.0.0/10`, the range Tailscale uses. With it off, only public addresses are reached, and a plain `http://` URL is refused, since it would send the key unencrypted.
 
-![Linking](screenshots/settings/Linking.png)
+### Authentication
 
-**Test connection** shows who the key belongs to, whether it may download, whether Zooid there lets it in, and what each sync type can do with it.
+![Authentication](screenshots/settings/Authentication.png)
 
-### Direction
+Pick **API Key** and paste a key from that server's **Dashboard > API Keys**, or pick **Sign in**, enter a **Username** and **Password**, and select **Generate token**. Only the token is kept. The key is stored encrypted and never shown again.
+
+**Test connection** shows who the key belongs to, whether it may download, whether Zooid there lets it in, and what each sync type can do with it. A standard user's key works in every direction. It is limited to what that user can see and to that user's own history, settings, and playlists. An administrator's key or an API Key reaches everything. See [Permissions](Permissions.md) for each function.
+
+Then pick the **Direction**.
 
 | Direction | Needs Zooid there | What happens |
 | :--- | :--- | :--- |
@@ -53,39 +65,85 @@ Steps are numbered in the order they show, so a Pull server's Libraries is step 
 | Push | Yes, listing this server as Pull or Sync | Changes made here are sent to that server as they happen, and it may download this server's files. This server reads nothing from it |
 | Sync | Yes, listing this server as Sync | Both, for a pool of equals |
 
-**Check link** confirms the other server is set up for the chosen direction. It answers with a verdict and a line for each thing it learned. These are how that server lists this one, which way changes travel, what it applies from this server, what it reads here, whether the two are paired, and the two clocks when they differ.
+### Check Link
 
 ![Check link](screenshots/settings/Check%20Link.png)
 
-### Links
+**Check link** shows for Push and Sync. It confirms the other server is set up for the chosen direction. It answers with a verdict and a line for each thing it learned. These are how that server lists this one, which way changes travel, what it applies from this server, what it reads here, whether the two are paired, and the two clocks when they differ.
 
-**Allow linking** in the Linking step, and **Storage** set to **Link** on the **Storage** page, hold a library as `.strm` links that stream from the source instead of full copies. The source allows linking on its entry for this server, and this server sets Storage on its entry for the source. Links that are played can also be kept in a link cache, set under Content in Settings. A Pull server can never link here. See [Links](Links.md).
+### Libraries
 
-### Keys and Permissions
+![Library Mapping](screenshots/settings/Library%20Mapping.png)
 
-A standard user's key works in every direction. It is limited to what that user can see and to that user's own history, settings, and playlists. An administrator's key or an API key reaches everything. See [Permissions](Permissions.md) for each function.
+The libraries load once **Test connection** succeeds. Select **Add library mapping** and pick a **Source library** there and a **Local library** here. Both must keep the same folder and file structure under their root folders. How each library keeps its files is set on [Storage](#storage).
+
+### Users
+
+![User Mapping](screenshots/settings/User%20Mapping.png)
+
+The users load once **Test connection** succeeds. Select **Add user mapping** and pair a user there with a user here. History, user settings, and playlists follow these mappings. With **Allow linking** on, each mapping can also cap that user's link streams and speed.
+
+### Linking
+
+![Linking](screenshots/settings/Linking.png)
+
+**Linking** shows for Push and Sync servers, since a Pull server can never link here. **Allow linking** lets that server hold its libraries as `.strm` links that stream from this one.
+
+* **Link streams at once** sets the most streams that server may run at once. 0 is no limit.
+* **Count their own playback** counts a user's own playback here toward the limit on their user mapping.
+* **Honor remote bitrate limits** refuses a version above the user's **Maximum remote streaming bitrate**, so they get a smaller version when the film has one.
+* **Unmapped users** sets who streams for a user on that server with no user mapping here.
+
+A warning shows when that server does not run Zooid. See [Links](Links.md).
+
+### Several Servers
+
+Add each other server the same way. Their order in the list is their rank. For metadata, people, users, and playlists, **Precedence** under **Settings** decides which server speaks for an item that several hold. See [Sync Types](SyncTypes.md#several-servers).
 
 ## Storage
 
 ![Storage](screenshots/settings/Storage.png)
 
-Pick a server, and each of its enabled library mappings has a card. With content sync off, only the filter and history settings show:
+Open **Storage** and pick a server. Each of its enabled library mappings has a card. With content sync off, only the filter and history settings show.
 
 | Setting | What it holds |
 | :--- | :--- |
-| Storage | Full **Copy** files, the default, which follow that server: a file it removes is handled by **Removed files** here. Or **Link** files, which stream from any server that holds the file and go only when none holds it. See [Links](Links.md) |
-| Link cache | For a Link library, whether its played links are kept in the link cache |
-| Always keep | For a Link library, the shows and films that are full copies instead of links |
-| Library filter | **Allow all**, or a **Whitelist** or **Blacklist** of files, collections, and playlists. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
-| Negotiate history | For a Sync server, while history sync is on, whether merged watch history is written back to that server. See [History](History.md) |
+| **Storage** | **Copy** downloads each file and follows that server, so a file it removes is handled by **Removed files** here. **Link** writes a `.strm` that streams from any server that holds the file, and goes only when none holds it. See [Links](Links.md) |
+| **Link cache** | For a Link library, **Cache this library's links** keeps played links and upcoming episodes in the link cache |
+| **Always keep** | For a Link library, the shows and films that are full copies instead of links |
+| **Library filter** | **Filter mode** syncs everything, or only what is picked, or everything but what is picked. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
+| **Negotiate history** | For a Sync server with history sync on, writes merged watch history back to that server. See [History](History.md) |
 
-Below the cards, **Permanent copies** lists the full copies held in that server's Link libraries and why each is a copy. **Turn back into links** makes the selected copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file. A copy covered by an Always keep pick stays a copy until the pick is removed.
+Below the cards, **Permanent copies** lists the full copies held in that server's Link libraries and why each is a copy. **Turn back into links** makes the selected copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file. A copy covered by an **Always keep** pick stays a copy until the pick is removed.
+
+## Settings
+
+![Settings](screenshots/settings/Settings.png)
+
+Open **Settings**, turn on each sync type you want, and select **Save**.
+
+| Section | What it holds |
+| :--- | :--- |
+| **Bandwidth** | Every speed limit, in Mbps, where 0 is no limit. **Downloads** is shared by every download to this server, and a **Streams to** row covers each server allowed to link. Each has a **Normal** and a **Scheduled** speed, and **Scheduled speed** uses the second one during the set hours |
+| **Processing** | **Send changes after (seconds)**, **Change retries**, **Failed item retries**, **Refresh parallelism**, **Full scan every (hours)**, and **Deep image verification** |
+| **Whitelist** | Who may call this server's sync routes, and from where. Administrators and API Keys calling from an enabled server on the **Servers** page always may. See [Permissions](Permissions.md#whitelist) |
+| **Synchronization** | One section for each sync type, **Content**, **History**, **Metadata**, **People**, **Playlists**, and **Users**. Each has its own switch, its options, and a table of what a standard user and an administrator can do |
+
+Each sync type's page describes its options. See [Sync Types](SyncTypes.md).
+
+## Dashboard
+
+| Dashboard | Dashboard on a phone |
+| :---: | :---: |
+| ![Dashboard](screenshots/Dashboard.png) | ![Dashboard on a phone](screenshots/Dashboard%20Phone.png) |
+
+The **Dashboard** shows how the servers, the change queue, and each sync type stand. The servers card shows how many servers are turned on and whether each one runs Zooid, answers without it, or cannot be reached. The **Queue** card counts the changes received and failing. Each sync type has a card with its counts, or a note to turn it on under **Settings**. Select a card to open its tool.
 
 ## Statistics
 
 ![Statistics](screenshots/Statistics.png)
 
-The **Statistics** page opens with **Usage** while content sync is on: a chart of how the synced files are kept here, as copies, links, and cached links. Select a part to open a callout under the chart that breaks it down by server, with each server's count and share, and select it again to close it. Below it, the page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
+**Statistics** opens with **Usage** while content sync is on. It charts how the synced files are kept here, as copies, links, and cached links. Select a part to open a callout under the chart that breaks it down by server, with each server's count and share. Select it again to close it. Below it, the page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found.
 
 | Bar | Counts |
 | :--- | :--- |
@@ -93,18 +151,12 @@ The **Statistics** page opens with **Usage** while content sync is on: a chart o
 | Updated | Items that were in step and that the scan found changed on a source |
 | Removed | Items the scan stopped tracking, since no source holds them any more |
 
-A scan of a sync type runs from its scheduled task or from **Refresh** on the **Synchronization** page. An item that is already waiting to sync is not counted again by a later scan.
+A scan of a sync type runs from its scheduled task or from **Refresh** on **Synchronization**. An item that is already waiting to sync is not counted again by a later scan.
 
-While a server may link to this one, the tab also charts **Link streams**, under **Content** when content sync is on and in a section of its own when it is off: how many streams this server started for each such server on each of the last 30 days, one line for each server. A film counts once however often its player seeks. See [Links](Links.md).
+While a server may link to this one, the page also charts **Link streams**. It shows how many streams this server started for each such server on each of the last 30 days, one line for each server. It sits under **Content** when content sync is on and in a section of its own when it is off. A film counts once however often its player seeks. See [Links](Links.md).
 
-## Settings
+## Troubleshooting
 
-![Settings](screenshots/settings/Settings.png)
+![Troubleshooting](screenshots/Troubleshooting.png)
 
-| Section | What it holds |
-| :--- | :--- |
-| Bandwidth | Every speed limit, in Mbps, where 0 is no limit. **Downloads** is shared by every download to this server, and a **Streams to** row covers each server allowed to link. Each has a **Normal** and a **Scheduled** speed, and **Scheduled speed** uses the second one during the set hours |
-| Processing | How long changes wait before they are sent, retries, parallelism, and how often a full scan runs |
-| Whitelist | Who may call this server's sync routes, and from where. Administrators and API keys calling from an enabled server on the **Servers** page always may |
-| Content, History, Metadata, People, Playlists, Users | One section per sync type, each with a table of what a standard user and an administrator can do. Options that do not apply are hidden |
-| Troubleshooting | Resets for each sync table, which forget tracking and never touch media |
+**Troubleshooting** holds resets that forget Zooid's tracking. Media is untouched. **Reset individual tables** has a **Reset** for each of **Content sync**, **History sync**, **Metadata sync**, **People sync**, **Playlist sync**, and **User sync**. **Reset entire database** has **Reset all**, which forgets the tracking of every sync type. Each reset asks first in a dialog that names the table, and it cannot be undone. The next scan starts over.

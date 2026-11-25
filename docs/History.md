@@ -4,6 +4,8 @@ History syncing copies watch state from a source Jellyfin server onto this serve
 
 ## Settings
 
+History settings live under **Settings > Synchronization > History**.
+
 * **Enable history sync** turns watch history syncing on.
 * **Played / unplayed status** syncs whether each item is marked played.
 * **Playback position** syncs the resume position for partly watched items.
@@ -20,7 +22,7 @@ A part that is switched off is left alone in both directions. It is not written 
 
 By default history flows one way. The source's watch state is merged with this server's and the result is written here only. With **Negotiate history** turned on for a library, the merged result is also written to the source, so a play, a resume position, or a favorite made on either server reaches the other. It is offered only for a Sync server, since Pull and Push servers only take history one way and have nothing to negotiate.
 
-This needs Zooid installed on the source too. This server calls the source's plugin at `/Zooid/Peer/History` using the same key the other sync types use, and the source accepts the call when its **Whitelist** allows that key. The plugin adds no login of its own. An entry that holds a standard user's key negotiates only that user's history, and only once the source whitelists that user. See [Permissions](Permissions.md).
+This needs Zooid installed on the source too. This server calls the source's plugin at `/Sync/Peer/History` using the same key the other sync types use, and the source accepts the call when its **Whitelist** allows that key. The plugin adds no login of its own. An entry that holds a standard user's key negotiates only that user's history, and only once the source whitelists that user. See [Permissions](Permissions.md).
 
 Each write is a proposal. This server tells the source what state it last read there and what state it wants both servers to hold. The source writes only if its live state still matches the reading. If someone played the item there in the meantime, the source reports the change back instead of accepting the write. This server merges again with the fresh state and tries once more. A row that cannot settle after that is marked Errored with the reason.
 
@@ -40,6 +42,6 @@ A change announced as it happens says which part changed. Playing covers played,
 
 When a server entry is set to **Push** or **Sync**, a change made here is announced to that server as it happens instead of waiting for the next scan. This server watches its own user data for plays, resume positions, and favorites, gathers the edits to one item into one notice once it has gone untouched for **Send changes after (seconds)**, 60 by default, and queues a hint for every **Push** or **Sync** server whose mappings cover that user and that library. A hint says what changed and where, never the value. The other server runs Zooid too, lists this server as **Pull** or **Sync**, and pulls the change from here through the same code the scan uses, including the negotiation above, so hints and scans cannot disagree.
 
-Hints are stored on both ends until the work is done. A server that is down, refuses the key, or lacks the plugin is retried with backoff and shown on the dashboard with the reason, and a hint the other server accepted but never finished is checked and sent again. A hint is given up only after the retry limits under **Settings > Processing**, and the scheduled **Sync Information** task still runs the full comparison as the safety net for anything the hints missed.
+Hints are stored on both ends until the work is done. A server that is down, refuses the key, or lacks the plugin is retried with backoff and shown in the **Queue** tool with the reason, and a hint the other server accepted but never finished is checked and sent again. A hint is given up only after the retry limits under **Settings > Processing**, and the scheduled **Sync Information** task still runs the full comparison as the safety net for anything the hints missed.
 
 A write made because of a hint raises no hint of its own, and a value that already matches is never written, so a pool of three or more servers settles without echoing. When two servers have never exchanged a particular item, the newer edit wins, part by part when the sender says which part it changed. After that the agreed base recorded on both sides makes every merge three way.

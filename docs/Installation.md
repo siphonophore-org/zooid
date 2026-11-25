@@ -1,6 +1,6 @@
 # Installation
 
-Zooid needs Jellyfin 12.4 or later. A server on an older Jellyfin does not see Zooid 12.4.18.1 in its catalog and keeps the last release built for it.
+Zooid needs Jellyfin 12.4. Install it on every server that should push, sync, or link. A server that Zooid only pulls from can run plain Jellyfin.
 
 ## Add the Plugin Repository
 
@@ -24,12 +24,8 @@ Restart Jellyfin completely and wait for it to start.
 
 ## Check It Works
 
-Go to **Dashboard > Plugins > Zooid** and confirm the configuration page loads.
+Open **Zooid** from the dashboard menu, or go to **Dashboard > Plugins > Zooid**. The Zooid page opens on its **Dashboard** tool.
 
-## Updating
-
-A server on 12.4.13.0 or later updates from the catalog as usual. A server on anything older must run 12.4.13.0 for a day first, since 12.4.18.1 does not convert databases or settings written before 12.4.13.0. See [Updating From an Older Release](Versioning.md#updating-from-an-older-release).
-
-Servers in a pool can run different Zooid versions as long as their wire protocols overlap, so they can be updated one at a time. See [Versioning](Versioning.md). A server whose protocol does not overlap holds its changes until it does.
+Servers in a pool can run different Zooid versions as long as their protocols overlap. See [Versioning](Versioning.md).
 
 Next: [Setup](Setup.md).

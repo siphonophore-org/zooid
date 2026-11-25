@@ -14,16 +14,15 @@ Documentation describes the release it ships with. It reads as if this version w
 | :--- | :--- |
 | Links now survive a restart. | Links survive a restart. |
 | The Stream direction was removed. | Leave it out. |
-| No longer converts older databases. | Converts databases from 12.4.13.0 or later. |
+| The page no longer asks twice. | The page asks once. |
 | Fixed an issue where scans missed items. | A scan hears every server that holds an item. |
-| New in 12.4.14.0, Precedence decides... | Precedence decides... |
-| This release carries no upgrade steps. | Version 12.4.14.0 carries no upgrade steps. |
+| New in this release, Precedence decides... | Precedence decides... |
 
-"Now" and "no longer" are fine when they describe state rather than history. "The file is no longer on the source" describes what the plugin sees, so it stays.
+Quote an on-screen message exactly as the code writes it, even when it reads "the file is no longer on the source". Everywhere else, leave out "now", "no longer", "new", "changed", and "fixes".
 
-A version number belongs in docs only when the reader needs it to act, such as the minimum Jellyfin version or the oldest release that can upgrade directly. Keep those facts in [Installation](../docs/Installation.md) and [Versioning](../docs/Versioning.md), and name the version outright instead of "this release" or "an older release".
+A version number belongs in docs only when the reader needs it to act, such as the minimum Jellyfin version. Keep those facts in [Installation](../docs/Installation.md) and [Versioning](../docs/Versioning.md), and name the version outright instead of "this release". Example version strings in samples are `12.4.0.0`.
 
-Remove compatibility notes for peers the plugin no longer supports. The plugin requires Jellyfin 12.4, so text about 12.2 peers describes servers that cannot be in the pool.
+Leave out compatibility notes for peers the plugin does not support. The plugin requires Jellyfin 12.4, so text about 12.2 peers describes servers that cannot be in the pool.
 
 ## Writing Style
 
@@ -56,7 +55,7 @@ Remove compatibility notes for peers the plugin no longer supports. The plugin r
 * Write a path through the UI with `>` between the steps, in bold. **Dashboard > Plugins > Zooid > Settings**.
 * Write a tab as its label, in bold. **Sync**, **Servers**, **Storage**, **Statistics**, **Settings**.
 * Quote activity log names and on-screen messages in double quotes. "Zooid needs attention".
-* Write routes, files, settings keys, and values in code. `POST /Zooid/Tasks/{taskKey}/Run`.
+* Write routes, files, settings keys, and values in code. `POST /Sync/Tasks/{taskKey}/Run`.
 
 A docs page and the UI must use the same word for the same thing. When a label changes, search `docs/` for the old one and change it everywhere in the same commit.
 
@@ -79,7 +78,7 @@ Name page files in PascalCase with no spaces, such as `LiveChanges.md`.
 
 ## Architecture
 
-[docs/Architecture.md](../docs/Architecture.md) maps how the parts of the plugin connect and the rules that hold across all of them. It is the page a new contributor, person or AI, reads first.
+[docs/Architecture.md](../docs/Architecture.md) maps how the parts of the plugin connect and the rules that hold across all of them. It is the page a new contributor reads first.
 
 Review it after every change, and update it in the same commit when the change affects any of these.
 
@@ -114,7 +113,7 @@ A feature page opens with one sentence on what the feature is, then one section 
 An API route follows this shape.
 
 ````markdown
-### POST /Zooid/Example?serverId={id}
+### POST /Sync/Example?serverId={id}
 
 One sentence on what the route does and who calls it.
 
@@ -187,11 +186,11 @@ Use `##` for README headings. Keep the README under 40 lines.
 
 ### How to Take Them
 
-Take every screenshot with the kit in [tools/screenshots](../tools/screenshots/README.md). It serves the plugin's real pages with jellyfin-web's real styles and a stand-in server that holds a generic pool, and writes each PNG to `docs/screenshots/`. `node shots.mjs` retakes all of them, and `node shots.mjs "Queue,Queue Phone"` retakes only those.
+Take every screenshot with the kit in [tools/screenshots](../tools/screenshots/README.md). It serves the plugin's real pages with jellyfin-web's real styles and a stand-in server that holds a generic pool, and writes each PNG to `docs/screenshots/`. Its README says how to run it, how to retake every shot, and how to retake only some.
 
-* Capture every page and dialog a docs page describes. A new one is one more entry in the `shots` list of `shots.mjs`.
+* Capture every page, dialog, and sidecar a docs page describes. A new subject is one more entry in the kit.
 * Capture the dark theme only, which is Jellyfin's default.
-* Keep every name generic. The pool lives in `stub.js`, and new sample data goes there.
+* Keep every name generic. New sample data goes in the kit's stand-in server.
 * Fill lists, counts, and badges so each shot shows what the text around it describes.
 * Hide nothing with editing. When a value is private, change the sample data instead.
 * Look at every PNG the kit writes before committing it.
@@ -209,19 +208,19 @@ The kit crops out the Jellyfin header.
 ### Names and Placement
 
 * Save to `docs/screenshots/`, with dialogs for the Settings tab in `docs/screenshots/settings/`.
-* Name the file in Title Case after what it shows, with spaces. `Library Mapping.png`, `Queue Phone.png`.
-* Link with `%20` for spaces and alt text that names the subject. `![Library Mapping](screenshots/settings/Library%20Mapping.png)`.
+* Name the file in Title Case after what it shows, with spaces. Add ` Phone` to the name of a phone shot.
+* Link with `%20` for spaces and alt text that names the subject. `![Page Name](screenshots/Page%20Name.png)`.
 * Place two related shots side by side in a table whose header row holds the captions.
 
 ```markdown
-| Queue | Queue on a phone |
+| Page Name | Page Name on a phone |
 | :---: | :---: |
-| ![Queue](screenshots/Queue.png) | ![Queue on a phone](screenshots/Queue%20Phone.png) |
+| ![Page Name](screenshots/Page%20Name.png) | ![Page Name on a phone](screenshots/Page%20Name%20Phone.png) |
 ```
 
 ### When to Retake
 
-Retake a screenshot in the same commit as any change that alters what it shows, including a label, a tab, a layout, or the Jellyfin version in the header. A new Stolon version changes how every component looks, so retake every screenshot when it is raised. A screenshot that shows a tab or label the plugin no longer has is a bug.
+Retake a screenshot in the same commit as any change that alters what it shows, including a label, a tab, a layout, or the Jellyfin version in the header. A new Stolon version changes how every component looks, so retake every screenshot when it is raised. A screenshot that shows a tab or label the plugin does not have is a bug.
 
 ## The Docker Pool
 

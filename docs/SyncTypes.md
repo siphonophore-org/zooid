@@ -1,6 +1,6 @@
 # Sync Types
 
-Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recycling bin** and **Clean Temporary Directory**, tidy up after them. **Sync Content** refreshes and downloads files, handles removed files, and mirrors collections. **Sync Information** compares and applies metadata, people, user settings, and history, then copies playlists.
+Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recycling Bin** and **Clean Temporary Directory**, tidy up after them. **Sync Content** refreshes and downloads files, handles removed files, and mirrors collections. **Sync Information** compares and applies metadata, people, user settings, and history, then copies playlists.
 
 | Type | Matched by | Live with Push or Sync | Details |
 | :--- | :--- | :--- | :--- |
@@ -11,13 +11,25 @@ Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recyc
 | Users | User mapping | No, scheduled only | [Users](Users.md) |
 | Playlists | Owner mapping, items by file path | Yes, including deletions | [Playlists](Playlists.md) |
 
-Content, History, Metadata, People, and Users each have a table on the **Synchronization** page, and each row opens to show what was found and what happens next. Playlists have no table. Their live changes show on the **Queue** page.
+Content, History, Metadata, People, and Users each have a table in the **Synchronization** tool. Pick one under **Sync type**. Playlists have no table. Their live changes show in the **Queue** tool, with every other live change.
+
+## The Sync Table
+
+Each row is one item and its status, such as **Synced**, **Queued**, **Errored**, or **Ignored**. Filter the table by status. Select rows to act on them together from the toolbar. **Ignore** keeps a row from syncing, and **Queue** marks it to sync on the next run.
+
+Select a row to open its details in a sidecar that slides in from the trailing edge. Its title and close button stay at the top, and its buttons, such as **Ignore** and **Queue**, stay at the bottom. The details scroll between them. They show what was found on each server and what happens next. A History, Metadata, People, or Users row compares the two servers in a table that grows with its rows.
+
+An action that removes something asks first, in a small dialog whose title names the action and its target. Deleting one file shows **Delete file** with the file's poster and name.
+
+| Sync table | Item details |
+| :---: | :---: |
+| ![Sync table](screenshots/Sync%20Table.png) | ![Item details](screenshots/Item%20Detail.png) |
 
 ## Several Servers
 
 A server can pull from one source, pull from several ranked sources, sync with one server, sync with several, and sync with servers that have servers of their own that it has never heard of. The same rules cover all of them.
 
-**Who is heard.** When more than one server holds the same thing, one of them speaks for it on each scan. Metadata, People, Users, and Playlists each have a **Precedence** setting:
+**Who is heard.** When more than one server holds the same thing, one of them speaks for it on each scan. Metadata, People, Users, and Playlists each have a **Precedence** setting in **Settings**.
 
 | Setting | Who speaks |
 | :--- | :--- |
@@ -43,7 +55,3 @@ Content has no **Precedence** setting. The order of the servers on the **Servers
 * Something announced more than ten times in ten minutes, each time right after it was applied here, is held, and the scheduled scan carries it.
 
 **Self correcting.** Announcements are a shortcut. The scheduled scan compares everything with every server and settles whatever an announcement missed, including a change made on the server every other server ranks last.
-
-| Sync Table | Item Detail |
-| :--- | :--- |
-| ![Sync Table](screenshots/Sync%20Table.png) | ![Item Detail](screenshots/Item%20Detail.png) |

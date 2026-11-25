@@ -4,7 +4,7 @@ Content syncing mirrors missing or updated media files from a source Jellyfin se
 
 ## Settings
 
-Under **Settings > Content**:
+Under **Settings > Synchronization > Content**:
 
 * **Enable content sync** turns content syncing on.
 * **Detect updated files** checks each synced file on disk against the source's size on a full scan, and downloads it again when it differs or is missing. A size change on the source is always picked up and follows **Changed files**.
@@ -15,7 +15,7 @@ Under **Settings > Content**:
 * **Removed files** decides what happens to a local file once its item is gone from the source. **Keep** leaves it. **Delete** deletes it on the next **Sync Content** run that does a full scan (**Full scan every (hours)** under Processing, 24 by default), but still asks first whenever the plugin cannot be sure the file should go. **Delete after approval** holds every deletion as Pending deletion until you approve it. **Ignore** keeps the files and, once everything in a movie or show folder is gone from the source, writes an empty `.ignore` file in that folder so Jellyfin hides it on its next scan. A season is never hidden on its own, so a show that still has episodes on the source stays as it is. A folder that already has a `.ignore` is left alone. A hidden title shows again when it comes back on the source, or when Removed files is set to anything else. Switching away from Delete cancels deletions that were still waiting. A link is not a local file and does not follow this setting. It is always removed once no server offers its file. See [Links](Links.md#when-the-file-is-gone).
 * **Enable recycling bin** moves deleted or replaced files to a recycling bin instead of removing them for good. **Recycling bin path** is its folder.
 * **Keep for (days)** sets how many days files stay in the recycling bin before permanent removal. Only files and trickplay folders the plugin put there expire. They carry the time they were recycled in their name, and anything else in the folder is left alone. A file from deep inside a library gets a shortened name, ending in its own file name and that time, so the move never fails on the filesystem's name length limit.
-* **Remove empty folders** deletes the folders a removal leaves holding nothing but files Zooid wrote. A folder that still holds anything else, such as artwork Jellyfin saved, stays. A title deleted by hand from the **Synchronization** page also takes its artwork and `.nfo` files, as Jellyfin's own delete does.
+* **Remove empty folders** deletes the folders a removal leaves holding nothing but files Zooid wrote. A folder that still holds anything else, such as artwork Jellyfin saved, stays. A title deleted by hand from the **Synchronization** tool also takes its artwork and `.nfo` files, as Jellyfin's own delete does.
 * **Downloads at once** limits how many files download at once.
 * **Temporary folder** is where files download before they move into place. Blank uses a `zooid` folder in Jellyfin's cache folder.
 * **Minimum free space (GB)** blocks downloads when free space falls below this many gigabytes. Downloads running at the same time hold space for each other, so several large files cannot together fill a disk that each would fit on alone. A file that only fits once another download finishes waits for it.
@@ -23,9 +23,11 @@ Under **Settings > Content**:
 
 Elsewhere:
 
-* **Storage** and **Library filter**, on each library mapping in the **Storage** page. Storage holds the source's files as full **Copy** files, the default, or as **Link** files that stream from the source. See [Links](Links.md). The filter is covered below. **Link cache** shows how much of the link cache is used, while the cache is on. How the synced files are kept, as copies, links, and cached links, is charted on the **Statistics** page.
+* **Storage** and **Library filter**, on each library mapping in the **Storage** page. Storage holds the source's files as full **Copy** files, the default, or as **Link** files that stream from the source. See [Links](Links.md). The filter is covered below. **Link cache** shows how much of the link cache is used, while the cache is on. How the synced files are kept, as copies, links, and cached links, is charted under **Usage** in the **Statistics** tool, beside what the last scans of each sync type found.
 * **Downloads** under **Settings > Bandwidth** caps the total rate of every download to this server, in Mbps, where 0 means no limit. With **Scheduled speed** on, the **Scheduled** rate applies during the set hours, in the server's time. A download already running follows the hours as they begin and end. Downloads into the link cache are held to it too.
 * **Failed item retries** under **Settings > Processing** sets how many times a failed download or item is tried within one run. One that still fails is tried again on the next run, and is raised on the Activity page once it has failed for a day. See [When something goes wrong](#when-something-goes-wrong). A retry picks up where the failed attempt stopped when the source supports it, and starts over if the file changed on the source in between.
+
+![Statistics](screenshots/Statistics.png)
 
 A `.strm` on the source is never copied or linked, whether it is one of the source's links or one a user made.
 
@@ -34,9 +36,9 @@ A `.strm` on the source is never copied or linked, whether it is one of the sour
 
 ## Collection Syncing
 
-Each library mapping's **Library filter**, on the **Storage** page, is **Allow all**, or a **Whitelist** or **Blacklist** of files, collections, and playlists. It applies to content, history, and metadata alike.
+Each library mapping has a **Library filter** on the **Storage** page. Its **Filter mode** is **Allow all**, or a **Whitelist** or **Blacklist** of files, collections, and playlists. It applies to content, history, and metadata alike.
 
-A source collection can be used as a sync list. On the **Storage** page, set a library mapping's **Library filter** to **Whitelist**, open the item picker, switch the browse toggle to **Collections**, and select the collection. From then on:
+A source collection can be used as a sync list. On the **Storage** page, set a library mapping's **Filter mode** to **Whitelist**, switch the browse toggle to **Collections**, and select the collection. From then on:
 
 * Everything in the collection syncs through the normal content pipeline. A series in the collection picks up new episodes automatically, because membership is resolved on every scan.
 * Anyone with collection-management permission on the source can add or remove items from the collection in Jellyfin, with no plugin access needed. Removing an item removes it from the whitelist. Its local copy waits for approval to be deleted when **Removed files** is **Delete** or **Delete after approval**, since a membership change is not a removal from the source.
@@ -73,10 +75,10 @@ A server also keeps a record of the files that left its library, for 30 days. A 
 Zooid is meant to be set up and left alone. What fails is tried again without anyone asking, and only what cannot fix itself is brought to an administrator.
 
 * **Every failed item is retried on the next run**, for every sync type, once the tries set by **Failed item retries** are used up. A full disk, a source that was down, or a network that dropped clears on its own.
-* **An item that has failed on every run for a day is raised once** on Jellyfin's **Activity** page, as "Items failed for a day", with how many items of each kind are failing. It goes on being retried. Filter the **Synchronization** page by Errored to see each one.
+* **An item that has failed on every run for a day is raised once** on Jellyfin's **Activity** page, as "Items failed for a day", with how many items of each kind are failing. It goes on being retried. Filter the **Synchronization** tool's table by **Errored** to see each one.
 * **A link that is missing or out of date is written again** at the start of every **Sync Content** run. A link holds nothing, so it is never repaired, only replaced.
 * **A file that was already here is this server's own.** A file on this server before it was matched to another server's is tracked, and stays when that server removes its file, whatever **Removed files** is set to. Only files this server downloaded follow **Removed files**.
-* **When both servers already hold a title as different files, the direction decides.** A **Pull** server is a source to mirror. Its file replaces this server's by **Changed files**, and is from then on a downloaded file like any other. A **Sync** server is an equal. Each keeps its own file, the row is settled and says the two differ, and only what each lacks is filled in. Queue the row on the **Synchronization** page to take the other server's file by hand. A [Link library](Links.md#versions) keeps this server's own file the same way, whatever the direction.
+* **When both servers already hold a title as different files, the direction decides.** A **Pull** server is a source to mirror. Its file replaces this server's by **Changed files**, and is from then on a downloaded file like any other. A **Sync** server is an equal. Each keeps its own file, the row is settled and says the two differ, and only what each lacks is filled in. Queue the row in the **Synchronization** tool to take the other server's file by hand. A [Link library](Links.md#versions) keeps this server's own file the same way, whatever the direction.
 * **A copy is kept above all else.** A download interrupted while replacing a file puts the old file, its subtitles, artwork, and `.nfo` back on the next run. A download that does not match the size the source reported never replaces a file that is already here.
 * **A server that does not answer holds only its own files.** Removed files are still cleaned up for the servers that answered. The same goes for a server whose library filter names a collection it no longer has.
 * **A full disk does not stop removals.** Files waiting to be removed are removed before the run gives up for lack of space.
@@ -95,9 +97,11 @@ A server goes on naming the origin of a copy for a day after removing it, since 
 
 An origin is recorded when a file is downloaded. A file that was already on a server when it was matched to another server's has none recorded, and counts as that server's own. A server without Zooid reports no origins, so it is read as if every file on it were its own.
 
-## Deleting From the Sync Page
+## Deleting From the Sync Table
 
-Deleting a file from the **Synchronization** page removes it from disk, or moves it to the recycling bin, and keeps its row as **Ignored**, so the next run does not download it again. Queue the row to download it again.
+**Delete** in a row's details, or **Delete local file** on the toolbar for the selected rows, removes the file from disk, or moves it to the recycling bin. A small dialog asks first. For one file it is titled **Delete file** and shows the file's poster and name. For several it is titled with the count, such as **Delete 3 items**.
+
+The row stays as **Ignored**, so the next run does not download it again. Queue the row to download it again.
 
 ## Library Refresh
 

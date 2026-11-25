@@ -13,7 +13,7 @@ Test each behavior at the lowest layer that can prove it. Go up a layer only for
 | Layer | Proves | Runs | Time |
 | :--- | :--- | :--- | :--- |
 | Unit | One class or function gives the right output for each input | `dotnet test` | Seconds |
-| Store | SQL, schema, and migrations against a real SQLite file | `dotnet test` | Seconds |
+| Store | SQL and schema against a real SQLite file | `dotnet test` | Seconds |
 | Controller | A route's status codes, guards, and response shape | `dotnet test` | Seconds |
 | JavaScript | Page logic, such as formatting, filters, and state | `node --test` | Seconds |
 | API integration | Every call to another server works against a real Jellyfin | `dotnet test --filter` | Minutes |
@@ -85,8 +85,8 @@ public void Decide_EqualValues_Adopts()
 ### Stores
 
 * Use a real SQLite file in a temp folder, and delete it in `Dispose`.
-* Open it through `SyncSchema` so the test runs the same create and migrate as the plugin.
-* Test a migration by writing the older schema by hand, opening it, and checking the result.
+* Open it through `SyncSchema` so the test creates the same schema as the plugin.
+* When a schema version is added, test its step by writing the schema before it by hand, opening it, and checking the result.
 
 ### Fakes
 
@@ -194,7 +194,7 @@ def scenario_reorder_rehomes(creds, apis):
 * Never sign in as admin from another script during a run. It revokes the harness token.
 * Never open `sync.db` with sqlite on the host while the pool is up.
 * Run `reset`, then `test`, before every release.
-* `GET /Zooid/Items` returns at most 200 rows a page. A scenario that needs more pages through them.
+* `GET /Sync/Items` returns at most 200 rows a page. A scenario that needs more pages through them.
 * When one scenario fails, read the server logs for that moment before anything else. Then run it alone with `scenarios`. Call it a timing fault only when the logs show the cause and the scenario passes alone, and report it either way.
 * A run on an earlier build proves nothing about this one. Run the pool again after any change to C#, to the Stolon version, or to a page script.
 

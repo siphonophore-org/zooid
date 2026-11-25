@@ -40,7 +40,7 @@ async function section(p, target) {
   const h = await p.evaluateHandle((t) => {
     const header = document.querySelector(`.stolon-collapsible-header[data-target="${t}"]`)
       || [...document.querySelectorAll('.stolon-collapsible-header')].find((x) => x.querySelector('.stolon-collapsible-title')?.textContent.trim() === t && x.offsetParent);
-    if (header.classList.contains('collapsed')) header.click();
+    if (header.classList.contains('collapsed') || header.classList.contains('stolon-collapsed')) header.click();
     return header.closest('.stolon-collapsible-section');
   }, target);
   await p.waitForTimeout(600);

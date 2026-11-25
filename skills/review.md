@@ -1,6 +1,6 @@
 # Review
 
-The check to run on your own changes before you call them done. People and AI assistants run it the same way.
+The check to run on your own changes before you call them done.
 
 ## How to Review
 

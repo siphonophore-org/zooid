@@ -4,9 +4,12 @@ Metadata syncing copies item details from a source Jellyfin server onto matching
 
 ## Settings
 
+Metadata settings live under **Settings > Synchronization > Metadata**.
+
 ![Metadata](screenshots/settings/Metadata.png)
 
 * **Enable metadata sync** turns metadata syncing on.
+* **Precedence**, under **Several servers**, chooses which server is heard for an item that several servers hold, either the one whose edit is newest or always the highest ranked. See [Several servers](SyncTypes.md#several-servers).
 * **Metadata** syncs core fields such as titles, overviews, and dates.
 * **Genres** syncs item genres.
 * **Tags** syncs item tags.
@@ -14,14 +17,13 @@ Metadata syncing copies item details from a source Jellyfin server onto matching
 * **People** syncs who appears in each item. A full scan reads an item's cast only when the item is new, the source saved it since the last scan, or its other details changed, since building a cast is most of the source's work. An edit announced as a live change always reads it.
 * **Images** syncs item images such as posters and backdrops.
 * **Folder items** also syncs metadata for container items such as series and seasons.
-* **Enable metadata provider** lets a library fill items from the servers this one pulls from, where Zooid is on in its metadata or image fetchers. It is on by default and works only while **Enable metadata sync** is on. See [Metadata provider](MetadataProvider.md).
+* **Enable metadata provider**, under **Providers**, lets a library fill items from the servers this one pulls from, where Zooid is on in its metadata or image fetchers. It is on by default and works only while **Enable metadata sync** is on. See [Metadata provider](MetadataProvider.md).
 * **Enable media segment provider** lets Jellyfin's media segment scan copy intros, credits, and other segments from the same file on the servers this one pulls from. It is off by default and works only while **Enable metadata sync** is on. See [Media segments](MetadataProvider.md#media-segments).
     * **Replace existing segments** replaces the segments another provider gave a file with the ones copied from a server, type by type. It is off by default.
     * **Remove segments no server has** removes the segments Zooid copied to a file when no server this one pulls from has any for it. Segments another provider made here are never removed. It is off by default.
     * **Consolidate duplicate intros** shrinks intros that overlap to the part they share, so 0:00 to 0:30 and 0:05 to 0:45 become 0:05 to 0:30. It is off by default.
     * **Consolidate duplicate outros** shrinks outros that overlap to the part they share, the same way as intros. It is off by default.
     * **Consolidate other segments** joins overlapping segments of the same type, other than intros and outros, into one that covers both, so 1:00 to 1:30 and 1:05 to 1:45 become 1:00 to 1:45. It is off by default.
-* **Precedence** chooses which server is heard for an item that several servers hold, either the one whose edit is newest or always the highest ranked. See [Several servers](SyncTypes.md#several-servers).
 
 The library filter on the **Storage** page applies to metadata as it does to content.
 

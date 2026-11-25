@@ -4,6 +4,8 @@ Playlist syncing copies the playlists of mapped users between servers. Users wit
 
 ## Settings
 
+Playlist settings live under **Settings > Synchronization > Playlists**.
+
 * **Enable playlist sync** turns playlist syncing on.
 * **Precedence** chooses which server is heard for a playlist that more than one server holds. See [Several servers](SyncTypes.md#several-servers).
 * **Removed playlists** chooses what happens to a copy when the server it came from deletes its playlist. **Delete** deletes the copy, and **Keep** leaves it.
@@ -33,7 +35,7 @@ Every playlist belongs to one user. A copied playlist belongs to the local user 
 
 Making a playlist, adding, removing, or moving items, renaming it, changing who it is shared with, and deleting it each send a hint. The other server then reads the whole playlist from this one and replaces its copy, or deletes its copy for a deletion. Changes made by Zooid itself are never announced back, so a pair does not echo. A deletion that arrives right after an edit sticks. Jellyfin's refresh from the edit can save the playlist back as it finishes, so Zooid deletes it again when that refresh completes. A new playlist made with the same name in the meantime is left alone.
 
-Zooid records which local playlists are copies in its database, and tags them as well, so a database reset, or **Playlist sync** on the **Troubleshooting** page, rebuilds the record from the tags. A copied playlist remembers the playlist it was first made as, so both copies stay one playlist across any number of servers. A local playlist that was never copied is only touched when the other server holds a copy made from it, and a hint or a scheduled run only changes or deletes a local playlist that belongs to the mapped owner. Every change holds the playlist lock, so a hint and the scheduled run never create the same copy twice.
+Zooid records which local playlists are copies in its database, and tags them as well, so a database reset, or resetting **Playlist sync** in the **Troubleshooting** tool, rebuilds the record from the tags. A copied playlist remembers the playlist it was first made as, so both copies stay one playlist across any number of servers. A local playlist that was never copied is only touched when the other server holds a copy made from it, and a hint or a scheduled run only changes or deletes a local playlist that belongs to the mapped owner. Every change holds the playlist lock, so a hint and the scheduled run never create the same copy twice.
 
 ## Deletions
 

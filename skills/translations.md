@@ -8,7 +8,7 @@ How this plugin shows its text in the viewer's language. Stolon builds the strin
 | :--- | :--- |
 | Jellyfin's own | `<JellyfinString Include="Key" />` items in `Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj` |
 | This plugin's own | `Jellyfin.Plugin.Zooid/Localization/en-us.json`, one file per language |
-| The endpoint pages load them from | `GET /Zooid/Translations`, which answers with `StolonTranslations.Serve` and allows anonymous callers |
+| The endpoint pages load them from | `GET /Sync/Translations`, which answers with `StolonTranslations.Serve` and allows anonymous callers |
 | The check that every key a page uses exists | `Jellyfin.Plugin.Zooid.Tests/Localization/TranslationKeyTests.cs` |
 
 ## Rules
@@ -30,7 +30,7 @@ How this plugin shows its text in the viewer's language. Stolon builds the strin
 3. Not found: add `"Key": "English"` to `Localization/en-us.json`.
 4. Use it.
     * Markup: `data-str="Key"`, `data-str-title`, `data-str-label`, or `data-str-placeholder`, with the English as the element's own text.
-    * Script: `shared.t.tr('Key')`, `shared.t.format('Key', value)`, or `shared.plural(count, 'KeyOne', 'KeyMany')`. `zooid_shared.js` loads the strings once with `loadTranslations('Zooid/Translations')`, and a page's `bind` and `load` and the Sync tab's modules run only after they arrive.
+    * Script: `shared.t.tr('Key')`, `shared.t.format('Key', value)`, or `shared.plural(count, 'KeyOne', 'KeyMany')`. `zooid_shared.js` loads the strings once with `loadTranslations('Sync/Translations')`, and a page's `bind` and `load` and the Sync tab's modules run only after they arrive.
     * Tab names: `tabName('Key', 'English')` in `zooid_shared.js`, since the tabs show before the strings load.
     * C#: `StolonTranslations.Get(TranslationKeys.Key, language)` or `StolonTranslations.Format(...)`. Text a route returns to a page uses `StolonTranslations.RequestLanguage(Request)`, and `StolonTranslations.UseLanguage` puts Stolon's own text, such as an SSRF refusal, in that language. Text for everyone, such as an activity log entry, uses `StolonTranslations.ServerLanguage(config)`.
 5. Build. Fix every `STOL` error and warning.

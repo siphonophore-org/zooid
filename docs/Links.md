@@ -20,7 +20,7 @@ A link is one hop. No `.strm` on a server, one of its links or one a user made, 
 ## How It Works
 
 1. On the linking server, a library mapping is set to **Link**. **Sync Content** writes a `.strm` for each new video instead of downloading it, under the same name with only the extension changed. `Film (2020) - 4K.mkv` on the source becomes `Film (2020) - 4K.strm`. An `.nfo` with the source's details and any subtitle files are written beside it.
-2. The `.strm` holds one line, an address on the linking server itself, `http://127.0.0.1:{port}{base URL}/Zooid/Link/{id}?k={secret}`. No credential for the source is ever written into a file.
+2. The `.strm` holds one line, an address on the linking server itself, `http://127.0.0.1:{port}{base URL}/Sync/Link/{id}?k={secret}`. No credential for the source is ever written into a file.
 3. Jellyfin adds the link to the library. Zooid then gives it the media info the source already holds for the file, so it shows its runtime, codecs, and tracks before anyone plays it.
 4. When someone presses play, the linking server asks the source whether that user may stream the file. If not, playback stops at once with the source's reason. A link whose file is in the link cache skips this and plays from the linking server.
 5. The player reads the file through the linking server's own stream route. Zooid fetches the bytes from the source with the linking server's own credentials, passing seeks through as byte ranges. Direct play is streamed for the user who asked. A transcode reads the link's address, as Jellyfin's ffmpeg does for any `.strm`.
@@ -43,10 +43,10 @@ With it on, these appear:
 * **Honor remote bitrate limits** refuses a file above a user's **Maximum remote streaming bitrate**, since a link streams the file as it is. A film held in several versions still plays in a version under the limit. See [Versions](#versions).
 * **Unmapped users** is the user here who streams for a user on that server with no user mapping here. **Refuse stream** refuses them.
 
-Stream speeds are set under **Settings > Bandwidth**, in the **Streams to** row for each server allowed to link:
+Stream speeds are set under **Settings > Bandwidth**, in the **Streams to** *server* row for each server allowed to link. Both columns are in Mbps.
 
-* **Normal (Mbps)** is the most each stream to that server, and each download into its [link cache](#the-link-cache), is sent at. Set it above the bitrate of the files you share, or playback buffers. 0 means no limit. The first few seconds of a stream are sent at full speed, so playback starts at once. The speed is shared by everything sent to that server for one user, however many requests a player splits its reading into.
-* **Scheduled (Mbps)** is used instead during the schedule's hours, while **Scheduled speed** is on. Downloads and link streams share the schedule's hours, each with its own speed. 0 means no limit during those hours.
+* **Normal** is the most each stream to that server, and each download into its [link cache](#the-link-cache), is sent at. Set it above the bitrate of the files you share, or playback buffers. 0 means no limit. The first few seconds of a stream are sent at full speed, so playback starts at once. The speed is shared by everything sent to that server for one user, however many requests a player splits its reading into.
+* **Scheduled** is used instead during the schedule's hours, while **Scheduled speed** is on. Downloads and link streams share the schedule's hours, each with its own speed. 0 means no limit during those hours.
 
 Save the server. The source then advertises links to servers that ask.
 
@@ -152,7 +152,7 @@ When several servers hold the same film, plays are spread over them:
 * With none idle, the server with the most streams free takes it. Streams free is the lesser of what that server still allows this one and what this one still takes from it. Equal room goes to the link's own server, then to the higher ranked server in the list.
 * A server at a limit is passed over for the next.
 
-This server's own limits are set under **Settings > Content > Links**. **All servers** is the most links it streams at once in all, and **From** *server* is the most it takes from that server at once. 0 is no limit. At the limit for all servers, a play is refused until one ends. A play counts from its first read until 90 seconds after its last, and a link that plays from the link cache streams from nobody and is not counted. Each source's own limits for this server apply as well, as set in its **Linking** step. The others are asked together, so one slow server does not hold up the rest. When the link's own server takes more than two seconds to answer, the others are asked alongside it. A server that did not answer is passed over for the next minute while another can play the file, so only the first play after a server goes down waits on it. A server is tried when one of its enabled library mappings covers the folder the link sits in. It is asked for the file at the matching path there, with the same checks as the link's own server, and it is used only when it allows the user and its file is the same size. The link file itself never changes, and the next play asks the link's own server first again.
+This server's own limits are set under **Links** in **Settings > Synchronization > Content**. **All servers** is the most links it streams at once in all, and **From** *server* is the most it takes from that server at once. 0 is no limit. At the limit for all servers, a play is refused until one ends. A play counts from its first read until 90 seconds after its last, and a link that plays from the link cache streams from nobody and is not counted. Each source's own limits for this server apply as well, as set in its **Linking** step. The others are asked together, so one slow server does not hold up the rest. When the link's own server takes more than two seconds to answer, the others are asked alongside it. A server that did not answer is passed over for the next minute while another can play the file, so only the first play after a server goes down waits on it. A server is tried when one of its enabled library mappings covers the folder the link sits in. It is asked for the file at the matching path there, with the same checks as the link's own server, and it is used only when it allows the user and its file is the same size. The link file itself never changes, and the next play asks the link's own server first again.
 
 This happens at three moments:
 
@@ -202,7 +202,7 @@ A link can keep a full local copy of its file in the link cache. The `.strm` nev
 
 * It plays from the linking server, under the linking server's own rules. The source is not asked, its limits do not apply, and the link plays while the source is down.
 * Playback is not reported to the source, since it sends nothing. History sync carries played state there.
-* The **Synchronization** page shows the row as **Linked (cached)**.
+* The **Synchronization** tool shows the row as **Linked (cached)**.
 
 The cache is one folder with one size limit, whichever servers its links stream from. It is off until it is given a size.
 
@@ -222,7 +222,7 @@ A file that changes on the source leaves the cache. When the source announces th
 
 ### Settings
 
-On the linking server, under **Content** in **Settings**:
+On the linking server, under **Link cache** in **Settings > Synchronization > Content**:
 
 * **Cache size** is the most disk the cache may use. **Off** turns the cache off and empties it. **Use all available space** takes what the cache holds plus what is free on its disk, less **Minimum free space**. **Use up to a fixed amount** takes **Fixed amount (GB)**, and an amount of 0 uses all available space. **Use a percentage of available space** takes **Share of available space (%)** of that same room. A cache sized by its disk follows the disk. When other files have filled it, the cache drops its own files the next time it needs room.
 * **Cache location** is where the files are kept, as a full path. Blank uses a folder under Jellyfin's cache. The cache keeps its files in a `zooid-links` folder of its own inside the location, so it never shares a folder with anything else. Changing it empties the old location.
@@ -241,11 +241,11 @@ On each library mapping set to **Link**, on the **Storage** page:
 
 Every **Sync Content** run drops files whose link is gone or became a copy, or whose library no longer caches its links, or that the link check found the source will not stream, and applies retention and the size limit. A file that is being played is never dropped to make room.
 
-The cache is kept across restarts. At startup, downloads cut short and cache files the cache has no record of are cleared, and whole cached files are kept. **Empty the Cache** in **Settings** deletes every cached file, and so does uninstalling the plugin. Only the cache's own files are ever removed from its folder.
+The cache is kept across restarts. At startup, downloads cut short and cache files the cache has no record of are cleared, and whole cached files are kept. **Delete cached files**, under **Link cache** in **Settings**, deletes every cached file, and so does uninstalling the plugin. Only the cache's own files are ever removed from its folder.
 
 ## The Link Check
 
-Every **Sync Content** run asks each connected server about the links that stream from it. A link whose file is gone from the source, or whose source no longer allows linking, shows on the **Synchronization** page as an error starting with `Link check:` and the source's reason, before anyone presses play. The `.strm` is left in place, and the row is settled again on the first run where the source can stream the file. A source that cannot be reached flags nothing, since play falls back to another server and the next run checks again. A link whose file was removed for good is removed on the next full scan. See [When the File Is Gone](#when-the-file-is-gone).
+Every **Sync Content** run asks each connected server about the links that stream from it. A link whose file is gone from the source, or whose source no longer allows linking, shows in the **Synchronization** tool as an error starting with `Link check:` and the source's reason, before anyone presses play. The `.strm` is left in place, and the row is settled again on the first run where the source can stream the file. A source that cannot be reached flags nothing, since play falls back to another server and the next run checks again. A link whose file was removed for good is removed on the next full scan. See [When the File Is Gone](#when-the-file-is-gone).
 
 The reasons a row can show are `the file is no longer on the source`, `the item is a link on the source, not a file`, `the source cannot read the file`, and `linking is not allowed for *server* here`.
 
@@ -271,17 +271,17 @@ These still follow **Removed files**, as a copy does:
 
 A link becomes a full copy in any of three ways:
 
-* **Keep a full local copy**, the pin on the **Synchronization** page's toolbar for the selected rows, or **Download** in a link's details. These are queued at once, whatever **New files** is set to, since choosing them is the approval. When any of them is cached, a **Sync Content** run starts at once, or right after the one already running, to move it into place.
-* Picking it under **Always keep** on its mapping in the **Storage** page. The next refresh marks it under the **New files** approval, the same as below, and a new file under a pick is added as a copy. A pick removed before its copy is approved leaves it a link. A copy made for a pick goes back to being a link when the pick is removed. The next sync checks that the source still has the file and offers links, writes the link, and moves the copy into the link cache, or removes it when the cache is off or cannot hold it. A copy kept by hand stays until you turn it back under **Permanent copies** on the **Storage** page.
+* **Keep a copy**, the pin on the **Synchronization** tool's toolbar for the selected rows, or **Download** in a link's details. These are queued at once, whatever **New files** is set to, since choosing them is the approval. When any of them is cached, a **Sync Content** run starts at once, or right after the one already running, to move it into place.
+* Picking it under **Always keep** on its mapping in the **Storage** page. The next refresh marks it under the **New files** approval, the same as below, and a new file under a pick is added as a copy. A pick removed before its copy is approved leaves it a link. A copy made for a pick goes back to being a link when the pick is removed. The next sync checks that the source still has the file and offers links, writes the link, and moves the copy into the link cache, or removes it when the cache is off or cannot hold it. A copy kept by hand stays until you select it under **Permanent copies** on the **Storage** page and choose **Turn back into links**.
 * Setting the mapping's **Storage** back to **Copy**. The next refresh marks its links under the **New files** approval. They are queued when new files download on their own, wait as Pending replacement when they need approval, and stay links when new files are switched off. Setting it back to Link before approving keeps them links. A link still waiting for its own first approval is left until that is settled.
 
 The next **Sync Content** run moves the link's cached file into place when the cache holds the whole file at the size the source reports, and otherwise downloads the copy through the normal download path. Either way the copy passes the same disk space and validation checks. A move between two disks is a copy, and it never holds up playback of other links. If it fails, the file stays in the cache and the copy is downloaded instead. The `.strm` is removed only once the copy is in place, so the link keeps playing until then. If the download fails, the link stays and the row retries. Zooid's `.nfo` and the subtitles stay beside the copy, since they describe the same film. Jellyfin sees one item removed and one added, and history sync carries watched state across.
 
 Copies already in a library stay copies when its mapping is set to Link.
 
-## The Sync Tab
+## The Sync Table
 
-A synced link shows as **Linked**, a cached one as **Linked (cached)**, and one on its way to a copy as **Linked (copy next)**. Rows in any other state add **(Link)**, **(Link, Cached)**, **(Link to Copy)**, or **(Copy to Link)** for a copy turning back into a link. The **Downloaded** and **Linked** filters split synced rows into copies and links, and **Cached** shows only the links whose file is in the cache. **Mark synced**, **Ignore**, **Queue**, and **Delete** work as for copies. Deleting a link removes the `.strm` and, as for a copy, every file beside it under the same name, which means its `.nfo`, subtitles, and images.
+A synced link shows as **Linked**, a cached one as **Linked (cached)**, and one on its way to a copy as **Linked (copy next)**. Rows in any other state add **(Link)**, **(Link, cached)**, **(Link to Copy)**, or **(Copy to Link)** for a copy turning back into a link. The **Synced** and **Linked** filters split synced rows into copies and links, and **Cached** shows only the links whose file is in the cache. **Mark synced**, **Ignore**, **Queue**, and **Delete** work as for copies. See [Deleting From the Sync Table](Content.md#deleting-from-the-sync-table). Deleting a link removes the `.strm` and, as for a copy, every file beside it under the same name, which means its `.nfo`, subtitles, and images.
 
 ## Matching Across Servers
 
@@ -298,7 +298,7 @@ Every sync type that matches by path still matches when one server holds `Film.m
 * **The address never reaches a client.** It is cleared from playback info and from every item response. Jellyfin's **Download** route sends the file the link stands in for, never the `.strm`, and its file route refuses links.
 * **Only a user who was allowed at play can be read for.** A user is recorded when the source allows them at play, or when they press play on a link whose file is in the link cache. Stream and transcode requests on a link must come from a user who holds that permission, so no one can stream a link under another viewer's permission. A subtitle or attachment request from a signed in user needs that user's permission too. One that names no user, which is how players such as webOS ask and how Jellyfin answers for any item, is read while a viewer is playing the link and refused otherwise. A permission nobody uses expires after two minutes. Once in use it lasts an hour after the last read.
 * **No source credential is ever written to disk.** The linking server streams with the key on its entry for the source, and the source checks the user it streams as on every play that streams from it.
-* **A cached link follows the linking server's rules only.** Any user there who can see the item can play it, and one with download permission there can download it, including one the source would refuse, and it keeps playing after the source turns off **Allow linking** until the next **Sync Content** run, whose link check finds the source will not stream it and drops the file. Turn off **Cache this library's links**, or use **Empty the Cache**, where the source's rules must always apply. A cached link downloads under the same rules.
+* **A cached link follows the linking server's rules only.** Any user there who can see the item can play it, and one with download permission there can download it, including one the source would refuse, and it keeps playing after the source turns off **Allow linking** until the next **Sync Content** run, whose link check finds the source will not stream it and drops the file. Turn off **Cache this library's links**, or use **Delete cached files**, where the source's rules must always apply. A cached link downloads under the same rules.
 
 ## Troubleshooting
 
@@ -325,7 +325,7 @@ When the source refuses, the player shows `This item streams from another server
 | this server could not tell who is playing | The request carried no signed in user |
 | press play again, so this server can ask the source | The client streamed without asking for playback first. See Limitations |
 
-A link row that errors on the **Synchronization** page says why:
+A link row that errors in the **Synchronization** tool says why:
 
 | Reason | Meaning |
 | :--- | :--- |
@@ -354,9 +354,3 @@ The link cache logs why a file was not cached:
 * **Renames on the source** give the file a new id there. A rename or a new container in the same folder moves the link to the new name, with a new `.nfo`. A file moved to another folder is linked as a new file, and the old link is removed.
 * **A file deleted on the source fails to play for up to ten minutes.** The source holds a removal back that long, so a rename can arrive first, and the link moves or goes once the removal arrives.
 * **A file rewritten on the source is linked again.** Any change the source announces writes the link and its `.nfo` again, so a link always carries the source's current details.
-
-## Upgrades and Downgrades
-
-Updating has a floor. See [Versioning](Versioning.md#updating-from-an-older-release).
-
-Once a server holds a link, its database tells older releases not to use it. An older release then sets the database aside and starts fresh rather than mistake a `.strm` for a broken copy and download over it. The old database is kept beside the new one as a `.newer-*` backup. The `.strm` files are left as they are, and the older release downloads full copies beside them. A server that never held a link keeps using the same database after a downgrade.

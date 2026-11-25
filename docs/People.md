@@ -4,12 +4,14 @@ People syncing copies person entities from a source Jellyfin server onto this se
 
 ## Settings
 
+People settings live under **Settings > Synchronization > People**.
+
 ![People](screenshots/settings/People.png)
 
 * **Enable people sync** turns people syncing on.
-* **Images** syncs profile images for people, along with any backdrops a person carries.
-* **Enable metadata provider** lets a library fill people from the servers this one pulls from, where Zooid is on in its metadata or image fetchers. It is on by default and works only while **Enable people sync** is on. See [Metadata provider](MetadataProvider.md).
-* **Precedence** chooses which server is heard for a person that several servers know, either the one whose edit is newest or always the highest ranked. See [Several servers](SyncTypes.md#several-servers).
+* **Precedence**, under **Several servers**, chooses which server is heard for a person that several servers know, either the one whose edit is newest or always the highest ranked. See [Several servers](SyncTypes.md#several-servers).
+* **Images** syncs each person's photo, along with any backdrops a person carries.
+* **Enable metadata provider**, under **Metadata provider**, lets a library fill people from the servers this one pulls from, where Zooid is on in its metadata or image fetchers. It is on by default and works only while **Enable people sync** is on. See [Metadata provider](MetadataProvider.md).
 
 ## Images
 

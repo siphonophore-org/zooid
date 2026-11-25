@@ -12,7 +12,7 @@ A version is `JJ.JJ.F.B`.
 | `F` | The feature release | The release adds or changes behavior a user will notice |
 | `B` | The bug release within that feature | The release only fixes bugs |
 
-Raising a part sets every part after it to `0`. `12.4.13.2` becomes `12.4.14.0` for a feature and `12.4.13.3` for a fix.
+Raising a part sets every part after it to `0`. The first release is `12.4.0.0`. From there, a feature release raises `F` by one and sets `B` to `0`, and a fix raises `B` by one.
 
 ## Branch
 
@@ -21,8 +21,8 @@ A feature release is cut on `unstable`, then **Sync Branches** with `promote` mo
 ## Before the Release
 
 1. **Stolon.** When the release needs a Stolon change, release Stolon first with its **Release** workflow, then raise `Siphonophore.Stolon` in `Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj` and delete any local copy Stolon replaces. Wait until NuGet serves the version, and never release against a local package. Raise Stolon on a branch, and merge it once every check below has passed on it.
-2. **Protocol.** When a hint, a peer route, or a conflict rule changed in a way an older server would misread, raise `HintProtocol.ProtocolVersion`. Raise `HintProtocol.MinProtocolVersion` only when this release can no longer talk to the protocol before it.
-3. **Database.** When the schema changed, raise `SyncSchema.CurrentSchemaVersion`. Raise `SyncSchema.MinReaderVersion` only when a migration changes or removes something older releases rely on.
+2. **Protocol.** When a hint, a peer route, or a conflict rule changes in a way a server on the previous protocol would misread, raise `HintProtocol.ProtocolVersion`. Raise `HintProtocol.MinProtocolVersion` only when the release cannot talk to the protocol before it.
+3. **Database.** When the schema changes, raise `SyncSchema.CurrentSchemaVersion` and add the step that brings the version before it forward. Raise `SyncSchema.MinReaderVersion` only when the change alters or removes something the code of an earlier schema relies on, never for added tables, nullable or defaulted columns, or indexes.
 4. **Build.**
 
     ```bash
@@ -53,7 +53,7 @@ A feature release is cut on `unstable`, then **Sync Branches** with `promote` mo
 
     Every check must run on the commit that is released. Run them again after any later change.
 
-7. **Docs.** Every page describes this release. Retake any screenshot whose subject changed, and all of them when the Stolon version changed. Update [Versioning](../docs/Versioning.md) when the protocol, the schema reader, or the upgrade path changed, and [Architecture](../docs/Architecture.md) when the parts or their connections changed.
+7. **Docs.** Every page describes this release. Retake any screenshot whose subject changed, and all of them when the Stolon version changed. Update [Versioning](../docs/Versioning.md) when the protocol or the schema version changed, and [Architecture](../docs/Architecture.md) when the parts or their connections changed.
 
     ```bash
     mkdocs build --strict
@@ -68,13 +68,13 @@ Edit `build.yaml`.
 1. Set `version` to the new version.
 2. Replace the whole `changelog` with this release's entries. Each release lists only its own changes. See [documentation.md](documentation.md#release-notes) for how to write them.
 3. Say in `changed` when the protocol changed, so a user knows to update every server in the pool.
-4. Name the Stolon version in `developer` when it changed, such as "Uses Siphonophore.Stolon 12.4.2", with what it replaced locally.
+4. Name the Stolon version in `developer` when it changed, such as "Uses Siphonophore.Stolon 12.4.8", with what it replaced locally.
 5. Keep `description` and `overview` true for this release. The Siphonophore `plugins.json` holds the catalog's own copy, so update both together.
 
 Commit it on its own.
 
 ```bash
-git commit -am "Set the release to 12.4.14.0"
+git commit -am "Set the release to 12.4.0.0"
 ```
 
 ```bash
