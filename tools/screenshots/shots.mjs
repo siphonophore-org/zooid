@@ -50,27 +50,44 @@ async function syncType(p, value) {
   await p.selectOption('#syncTypeDropdown', value);
   await p.waitForTimeout(2500);
 }
-async function metadataRow(p, name) {
-  await syncType(p, 'metadata');
-  await p.evaluate((n) => [...document.querySelectorAll('#metadataSyncItemsTableContainer .zooid-item-name')].find((e) => e.textContent === n).click(), name);
+// Opens a row of the Synchronization table whose name reads a text, and returns its sidecar's panel.
+async function row(p, type, name, sidecar) {
+  await syncType(p, type);
+  await p.evaluate((n) => [...document.querySelectorAll('.zooid-item-name')].find((e) => (n === null || e.textContent === n) && e.offsetParent).click(), name);
   await p.waitForTimeout(1200);
-  return p.evaluateHandle(() => document.querySelector('#metadataSyncItemDetailModal .stolon-dialog-content'));
+  return p.evaluateHandle((id) => document.querySelector('#' + id + ' .stolon-sidecar-panel'), sidecar);
+}
+// Opens the first server's card on Servers.
+async function firstServer(p) {
+  await p.evaluate(() => {
+    const card = document.querySelector('#serverList .stolon-card-item');
+    (card.querySelector('.stolon-card-item-head, [role=button], .stolon-card-item-header') || card).click();
+  });
+  await p.waitForTimeout(800);
+}
+// The sidecar's panel at the window's full height, cropped to the panel.
+async function sidecar(p, panel, file) {
+  await element(p, panel, file, 0);
 }
 
 const shots = {
+  'Dashboard': { page: 'dashboard', vp: { width: 800, height: 1400 }, act: (p) => content(p, 'Dashboard.png') },
+  'Dashboard Phone': { page: 'dashboard', vp: { width: 375, height: 1500 }, act: (p) => content(p, 'Dashboard Phone.png') },
   'settings/Servers': { page: 'servers', act: (p) => contentTo(p, '#btnAddServer', 'settings/Servers.png') },
-  'settings/Connection': { page: 'servers', act: async (p) => element(p, await section(p, 'serverStepConnection'), 'settings/Connection.png') },
-  'settings/Authentication': { page: 'servers', act: async (p) => element(p, await section(p, 'serverStepAuthentication'), 'settings/Authentication.png') },
+  'settings/Connection': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepConnection'), 'settings/Connection.png'); } },
+  'settings/Authentication': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepAuthentication'), 'settings/Authentication.png'); } },
   'settings/Check Link': { page: 'servers', act: async (p) => {
+      await firstServer(p);
       await section(p, 'serverStepAuthentication');
-      await p.click('#btnCheckPeer'); await p.waitForTimeout(1200);
+      await p.evaluate(() => { document.getElementById('peerCheckArea').classList.remove('stolon-hidden'); document.getElementById('btnCheckPeer').click(); });
+      await p.waitForTimeout(1500);
       await element(p, await $(p, '#peerCheckArea'), 'settings/Check Link.png');
     } },
-  'settings/Linking': { page: 'servers', act: async (p) => element(p, await section(p, 'serverStepStream'), 'settings/Linking.png') },
-  'settings/Library Mapping': { page: 'servers', act: async (p) => element(p, await section(p, 'serverStepLibraries'), 'settings/Library Mapping.png') },
-  'settings/User Mapping': { page: 'servers', act: async (p) => element(p, await section(p, 'serverStepUsers'), 'settings/User Mapping.png') },
+  'settings/Linking': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepStream'), 'settings/Linking.png'); } },
+  'settings/Library Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepLibraries'), 'settings/Library Mapping.png'); } },
+  'settings/User Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepUsers'), 'settings/User Mapping.png'); } },
   'settings/Storage': { page: 'storage', vp: { width: 800, height: 4200 }, act: async (p) => { await section(p, 'Libraries'); await section(p, 'Permanent copies'); await p.waitForTimeout(800); await content(p, 'settings/Storage.png'); } },
-  'Statistics': { page: 'statistics', act: (p) => content(p, 'Statistics.png') },
+  'Statistics': { page: 'statistics', vp: { width: 800, height: 3000 }, act: (p) => content(p, 'Statistics.png') },
   'settings/Settings': { page: 'settings', act: (p) => content(p, 'settings/Settings.png') },
   'settings/Metadata': { page: 'settings', act: async (p) => element(p, await section(p, 'Metadata'), 'settings/Metadata.png') },
   'settings/People': { page: 'settings', act: async (p) => element(p, await section(p, 'People'), 'settings/People.png') },
@@ -78,22 +95,12 @@ const shots = {
       await section(p, 'Users');
       await span(p, '#userSyncOptions > .stolon-subsection-title', '#userSyncOptions > .zooid-settings-group', 'settings/Several Servers.png');
     } },
-  'Queue': { page: 'sync', act: async (p) => { await syncType(p, 'queue'); await content(p, 'Queue.png'); } },
-  'Queue Phone': { page: 'sync', vp: { width: 375, height: 812 }, act: async (p) => { await syncType(p, 'queue'); await content(p, 'Queue Phone.png'); } },
-  'Sync Table': { page: 'sync', vp: { width: 800, height: 1400 }, act: async (p) => { await syncType(p, 'metadata'); await content(p, 'Sync Table.png'); } },
-  'Item Detail': { page: 'sync', vp: { width: 800, height: 1100 }, act: async (p) => element(p, await metadataRow(p, 'Harbor Lights'), 'Item Detail.png', 0) },
-  'Metadata Item': { page: 'sync', vp: { width: 800, height: 1100 }, act: async (p) => {
-      const dialog = await metadataRow(p, 'Harbor Lights');
-      // Scrolls the dialog so its Media segments rows sit at the top.
-      await p.evaluate((d) => {
-        const row = [...d.querySelectorAll('.zooid-modal-section-header td')].find((td) => td.textContent.trim().toLowerCase() === 'media segments');
-        let box = row.parentElement;
-        while (box && box !== d.parentElement && !(box.scrollHeight > box.clientHeight + 4 && getComputedStyle(box).overflowY !== 'visible')) box = box.parentElement;
-        box.scrollTop += row.getBoundingClientRect().top - box.getBoundingClientRect().top - 60;
-      }, dialog);
-      await p.waitForTimeout(400);
-      await element(p, dialog, 'Metadata Item.png', 0);
-    } }
+  'Troubleshooting': { page: 'troubleshooting', act: (p) => content(p, 'Troubleshooting.png') },
+  'Queue': { page: 'queue', vp: { width: 800, height: 1400 }, act: (p) => content(p, 'Queue.png') },
+  'Queue Phone': { page: 'queue', vp: { width: 375, height: 1400 }, act: (p) => content(p, 'Queue Phone.png') },
+  'Sync Table': { page: 'sync', vp: { width: 800, height: 1400 }, act: async (p) => { await syncType(p, 'content'); await content(p, 'Sync Table.png'); } },
+  'Item Detail': { page: 'sync', vp: { width: 800, height: 640 }, act: async (p) => sidecar(p, await row(p, 'content', null, 'itemDetailModal'), 'Item Detail.png') },
+  'Metadata Item': { page: 'sync', vp: { width: 800, height: 1100 }, act: async (p) => sidecar(p, await row(p, 'metadata', 'Harbor Lights', 'metadataSyncItemDetailModal'), 'Metadata Item.png') }
 };
 
 for (const [name, s] of Object.entries(shots)) {

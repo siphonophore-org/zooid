@@ -239,6 +239,10 @@ var STATISTICS = {
         { Key: 'History', Runs: runs([[22, 18, 0], [4, 31, 0], [2, 12, 1], [6, 25, 0], [3, 9, 0], [1, 16, 0], [8, 27, 2], [5, 14, 0], [2, 20, 0], [7, 11, 0]]) },
         { Key: 'Metadata', Runs: runs([[14, 6, 0], [2, 9, 0], [0, 3, 1], [6, 12, 0], [1, 4, 0], [0, 7, 2], [9, 5, 0], [3, 8, 0], [0, 2, 0], [5, 10, 1]]) }
     ],
+    Files: [
+        { ServerKey: SERVERS[0].Key, Name: 'Basement', Copies: 412, Links: 238, CachedLinks: 31 },
+        { ServerKey: SERVERS[1].Key, Name: 'Cabin', Copies: 96, Links: 0, CachedLinks: 0 }
+    ],
     LinkStreams: {
         Days: streamDays(),
         Servers: [
@@ -319,7 +323,9 @@ function route(path, q, method, body) {
         { Id: 3, SourceItemId: id(0x94003), ServerKey: SERVERS[0].Key, LocalPath: '/media/tv/Small Town Bakers/Season 01/Small Town Bakers S01E02.mkv', Kept: 'Own', SourceSizeFormatted: '980 MB', Status: 'Synced' }
     ], q);
     if (path === 'SourceLibraryItems') return page((SOURCE_ITEMS[q.get('libraryId')] || []).filter(function (i) { return !q.get('search') || i.Name.toLowerCase().indexOf(q.get('search').toLowerCase()) >= 0; }), q);
-    if (path === 'UserStatus' || path === 'PeopleStatus' || path === 'HistoryStatus') return { Synced: 0, Queued: 0, Errored: 0, Ignored: 0 };
+    if (path === 'HistoryStatus') return { Synced: 1842, Queued: 6, Errored: 0, Ignored: 3 };
+    if (path === 'PeopleStatus') return { Synced: 734, Queued: 2, Errored: 0, Ignored: 0 };
+    if (path === 'UserStatus') return { Synced: 12, Queued: 0, Errored: 0, Ignored: 0 };
     window.__unrouted = (window.__unrouted || []).concat(method + ' ' + path);
     return {};
 }
