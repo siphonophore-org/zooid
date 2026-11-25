@@ -4,8 +4,9 @@ name: '🧪 Release Unstable'
 # every Friday, and by hand from the Actions tab on any day. The version is the Jellyfin version followed by
 # the date, 12.4.YYYY.MMDD, such as 12.4.2026.1124, so each unstable build sorts after every stable release
 # and after the builds before it. The date is today in Denver unless the run names one. A scheduled run skips
-# when the newest pre-release already holds the unstable branch's last commit. A run for a date that already
-# has a pre-release replaces that pre-release's zip.
+# when the newest pre-release already holds the unstable branch's last commit. Releases are immutable once
+# published, so the zip goes into a draft that is published after, and a date that already has a release is
+# refused. A draft left by a failed run is filled and published.
 
 on:
   schedule:
@@ -64,9 +65,9 @@ jobs:
             exit 0
           fi
 
-          STATE=$(gh release view "${TAG}" --json isPrerelease,isDraft --jq 'if .isPrerelease then "pre" elif .isDraft then "draft" else "stable" end' 2>/dev/null || echo "missing")
-          if [ "$STATE" = "stable" ] || [ "$STATE" = "draft" ]; then
-            echo "::error::${TAG} is already a ${STATE} release."
+          STATE=$(gh release view "${TAG}" --json isDraft --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo "missing")
+          if [ "$STATE" = "published" ]; then
+            echo "::error::${TAG} is already released, and a published release cannot change. Pick another date."
             exit 1
           fi
           echo "skipped=false" >> "$GITHUB_OUTPUT"
@@ -128,13 +129,13 @@ jobs:
           STATE: ${{ steps.build_info.outputs.state }}
         run: |
           set -euo pipefail
-          if [ "$STATE" = "pre" ]; then
-            gh release edit "${TAG}" --notes-file /tmp/notes.md
-            git push --force origin "HEAD:refs/tags/${TAG}"
+          if [ "$STATE" = "draft" ]; then
+            gh release edit "${TAG}" --prerelease --target "$(git rev-parse HEAD)" --notes-file /tmp/notes.md
           else
-            gh release create "${TAG}" --prerelease --target "$(git rev-parse HEAD)" --title "${TAG}" --notes-file /tmp/notes.md
+            gh release create "${TAG}" --draft --prerelease --target "$(git rev-parse HEAD)" --title "${TAG}" --notes-file /tmp/notes.md
           fi
           gh release upload "${TAG}" "dist/zooid-${VERSION}.zip" "dist/zooid-${VERSION}.zip.md5" --clobber
+          gh release edit "${TAG}" --draft=false
 
   # A release made with this run's own token starts no other workflow, so the publish run is called here.
   publish:
