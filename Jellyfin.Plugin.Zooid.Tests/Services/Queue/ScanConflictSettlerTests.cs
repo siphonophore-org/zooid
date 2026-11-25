@@ -95,8 +95,8 @@ public sealed class ScanConflictSettlerTests : IDisposable
 
     private static QueuePeerHandler PeerWithStamps(params ObjectVersion[] held)
         => new QueuePeerHandler()
-            .OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion })
-            .OnJson("/Zooid/Peer/Versions", new VersionsResponse { Items = new List<ObjectVersion>(held) });
+            .OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion })
+            .OnJson("/Sync/Peer/Versions", new VersionsResponse { Items = new List<ObjectVersion>(held) });
 
     private static ObjectVersion Stamp(string server, DateTime at, string key = "peer-item")
         => new() { Kind = HintKind.Metadata, Key = key, ServerId = server, Timestamp = at };
@@ -172,7 +172,7 @@ public sealed class ScanConflictSettlerTests : IDisposable
 
         Assert.Equal(SyncStatus.Queued, row.Status);
         Assert.Empty(_stored);
-        Assert.Equal(0, peer.CountOf("/Zooid/Peer/Versions"));
+        Assert.Equal(0, peer.CountOf("/Sync/Peer/Versions"));
     }
 
     /// <summary>
@@ -187,8 +187,8 @@ public sealed class ScanConflictSettlerTests : IDisposable
     {
         HeldHere(ThisServer, Later);
         var peer = capabilitiesFail
-            ? new QueuePeerHandler().OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.BadGateway)
-            : PeerWithStamps().OnStatus("/Zooid/Peer/Versions", HttpStatusCode.InternalServerError);
+            ? new QueuePeerHandler().OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.BadGateway)
+            : PeerWithStamps().OnStatus("/Sync/Peer/Versions", HttpStatusCode.InternalServerError);
         var edited = Row();
         var untouched = Row(peerKey: "other-item", localItem: Guid.Parse("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
 
@@ -337,7 +337,7 @@ public sealed class ScanConflictSettlerTests : IDisposable
         {
             Source(PeerWithStamps(), "keeps"),
             Source(new QueuePeerHandler(), "plain"),
-            Source(new QueuePeerHandler().OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.BadGateway), "failing")
+            Source(new QueuePeerHandler().OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.BadGateway), "failing")
         };
 
         var versioned = await _settler.ServersWithVersionsAsync(sources, CancellationToken.None);
@@ -444,7 +444,7 @@ public sealed class ScanConflictSettlerTests : IDisposable
     [Fact]
     public async Task NewestOffersAsync_OneServerCannotBeRead_RankDecides()
     {
-        var first = Source(new QueuePeerHandler().OnStatus("/Zooid/Peer/Versions", HttpStatusCode.InternalServerError), "first");
+        var first = Source(new QueuePeerHandler().OnStatus("/Sync/Peer/Versions", HttpStatusCode.InternalServerError), "first");
         var second = Source(PeerWithStamps(Stamp("second-id", Later, SecondItem)), "second");
 
         var winners = await NewestAsync(new[] { Offer(first, FirstItem), Offer(second, SecondItem) }, "first", "second");

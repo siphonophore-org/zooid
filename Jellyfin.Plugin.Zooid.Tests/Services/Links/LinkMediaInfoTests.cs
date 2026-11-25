@@ -223,7 +223,7 @@ public sealed class LinkMediaInfoTests
         await Info(new LinkStubClientFactory(handler), Server()).ShipAsync(new Movie(), Link, CancellationToken.None);
 
         using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
-        Assert.Equal("/Zooid/Peer/Links/Describe", sent!.RequestUri!.AbsolutePath);
+        Assert.Equal("/Sync/Peer/Links/Describe", sent!.RequestUri!.AbsolutePath);
         Assert.Equal("this-server", body.RootElement.GetProperty("ServerId").GetString());
         Assert.Equal("aaaa", body.RootElement.GetProperty("ItemIds")[0].GetString());
         Assert.True(body.RootElement.GetProperty("Details").GetBoolean());

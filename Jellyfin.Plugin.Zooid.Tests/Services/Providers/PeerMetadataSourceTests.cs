@@ -82,14 +82,14 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAllAsync_LocalPath_IsAskedForAsTheSourcesPath()
     {
-        var server = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var server = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
 
         var matches = await _harness.Source.FindAllAsync(Keys(), firstOnly: false, CancellationToken.None);
 
         using var match = Assert.Single(matches);
         Assert.Equal(ItemOnA, match.ItemId);
         Assert.Equal("a", match.Parent.Key);
-        var body = Assert.Single(server.To("/Zooid/Peer/Lookup")).Body;
+        var body = Assert.Single(server.To("/Sync/Peer/Lookup")).Body;
         Assert.Contains("\"Path\":\"" + ProviderTestHarness.SourceRoot + "/Film (2020)/film.mkv\"", body, StringComparison.Ordinal);
         Assert.Contains("\"ItemType\":\"Movie\"", body, StringComparison.Ordinal);
     }
@@ -110,7 +110,7 @@ public sealed class PeerMetadataSourceTests
     [InlineData("Person", false, false, true, true, true)]
     public async Task FindAllAsync_ProviderSwitches_DecideWhetherAnyServerIsAsked(string itemType, bool metadataSync, bool metadataProvider, bool peopleSync, bool peopleProvider, bool asks)
     {
-        var server = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var server = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
         var config = _harness.Config.Configuration;
         config.EnableMetadataSync = metadataSync;
         config.MetadataSyncProvider = metadataProvider;
@@ -153,14 +153,14 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAllAsync_FirstOnly_StopsAtTheFirstSourceThatHasIt()
     {
-        _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
-        var second = _harness.AddSource("b").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
+        _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var second = _harness.AddSource("b").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
 
         var matches = await _harness.Source.FindAllAsync(Keys(), firstOnly: true, CancellationToken.None);
 
         using var match = Assert.Single(matches);
         Assert.Equal("a", match.Parent.Key);
-        Assert.Empty(second.To("/Zooid/Peer/Lookup"));
+        Assert.Empty(second.To("/Sync/Peer/Lookup"));
     }
 
     /// <summary>
@@ -171,10 +171,10 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAllAsync_All_ReturnsEverySourceThatHasIt()
     {
-        _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
-        _harness.AddSource("none").OnJson("/Zooid/Peer/Lookup", "{\"Found\":false}");
-        _harness.AddSource("broken").OnJson("/Zooid/Peer/Lookup", "{\"Found\":true,\"ItemId\":\"not-a-guid\"}");
-        _harness.AddSource("b").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
+        _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        _harness.AddSource("none").OnJson("/Sync/Peer/Lookup", "{\"Found\":false}");
+        _harness.AddSource("broken").OnJson("/Sync/Peer/Lookup", "{\"Found\":true,\"ItemId\":\"not-a-guid\"}");
+        _harness.AddSource("b").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
 
         var matches = await _harness.Source.FindAllAsync(Keys(), firstOnly: false, CancellationToken.None);
 
@@ -193,8 +193,8 @@ public sealed class PeerMetadataSourceTests
     public async Task FindAllAsync_OneSourceFails_TheOthersStillAnswer(bool refuses)
     {
         var failing = _harness.AddSource("a");
-        _ = refuses ? failing.OnStatus("/Zooid/Peer/Lookup", HttpStatusCode.Forbidden, "no") : failing.OnThrow("/Zooid/Peer/Lookup", new HttpRequestException("reset"));
-        _harness.AddSource("b").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
+        _ = refuses ? failing.OnStatus("/Sync/Peer/Lookup", HttpStatusCode.Forbidden, "no") : failing.OnThrow("/Sync/Peer/Lookup", new HttpRequestException("reset"));
+        _harness.AddSource("b").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
 
         var matches = await _harness.Source.FindAllAsync(Keys(), firstOnly: true, CancellationToken.None);
 
@@ -210,12 +210,12 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAllAsync_NothingToMatchBy_AsksNoSource()
     {
-        var server = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var server = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
 
         var matches = await _harness.Source.FindAllAsync(Keys("/unmapped/film.mkv"), firstOnly: false, CancellationToken.None);
 
         Assert.Empty(matches);
-        Assert.Empty(server.To("/Zooid/Peer/Lookup"));
+        Assert.Empty(server.To("/Sync/Peer/Lookup"));
     }
 
     /// <summary>
@@ -226,16 +226,16 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAllAsync_Cancelled_Throws()
     {
-        var first = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
-        var second = _harness.AddSource("b").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
+        var first = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var second = _harness.AddSource("b").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB));
         await _harness.Directory.ParentsAsync(CancellationToken.None);
         using var cancelled = new CancellationTokenSource();
         await cancelled.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => _harness.Source.FindAllAsync(Keys(), firstOnly: false, cancelled.Token));
 
-        Assert.Empty(first.To("/Zooid/Peer/Lookup"));
-        Assert.Empty(second.To("/Zooid/Peer/Lookup"));
+        Assert.Empty(first.To("/Sync/Peer/Lookup"));
+        Assert.Empty(second.To("/Sync/Peer/Lookup"));
     }
 
     /// <summary>
@@ -246,7 +246,7 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAsync_PinnedToAListedSource_UsesThePinWithoutALookup()
     {
-        var first = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var first = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
         var pinned = _harness.AddSource("b");
         var keys = Keys(ids: new() { [PeerMetadataSource.PinnedProviderKey] = "B:" + ItemOnB.ToString("N") });
 
@@ -254,8 +254,8 @@ public sealed class PeerMetadataSourceTests
 
         Assert.Equal("b", match!.Parent.Key);
         Assert.Equal(ItemOnB, match.ItemId);
-        Assert.Empty(first.To("/Zooid/Peer/Lookup"));
-        Assert.Empty(pinned.To("/Zooid/Peer/Lookup"));
+        Assert.Empty(first.To("/Sync/Peer/Lookup"));
+        Assert.Empty(pinned.To("/Sync/Peer/Lookup"));
     }
 
     /// <summary>
@@ -271,13 +271,13 @@ public sealed class PeerMetadataSourceTests
     [InlineData(" ")]
     public async Task FindAsync_PinThatCannotBeUsed_FallsBackToASearch(string pin)
     {
-        var server = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
+        var server = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA));
         var keys = Keys(ids: new() { [PeerMetadataSource.PinnedProviderKey] = pin });
 
         using var match = await _harness.Source.FindAsync(keys, CancellationToken.None);
 
         Assert.Equal(ItemOnA, match!.ItemId);
-        Assert.Single(server.To("/Zooid/Peer/Lookup"));
+        Assert.Single(server.To("/Sync/Peer/Lookup"));
     }
 
     /// <summary>
@@ -288,7 +288,7 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task FindAsync_NoSourceHasIt_IsNull()
     {
-        _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", "{\"Found\":false}");
+        _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", "{\"Found\":false}");
 
         Assert.Null(await _harness.Source.FindAsync(Keys(), CancellationToken.None));
     }
@@ -302,10 +302,10 @@ public sealed class PeerMetadataSourceTests
     public async Task GetSearchResultsAsync_SourcesThatHaveIt_BecomeNamedPinnedResults()
     {
         _harness.AddSource("a", "Attic")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
             .OnJson("/Items", "{\"Items\":[{\"Id\":\"" + ItemOnA.ToString("N") + "\",\"Name\":\"Film\",\"ProductionYear\":2020,\"Overview\":\"About it\",\"IndexNumber\":3,\"ProviderIds\":{\"Imdb\":\"tt1\",\"Blank\":\" \"}}]}");
         _harness.AddSource("b", "Basement")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB))
             .OnStatus("/Items", HttpStatusCode.InternalServerError);
 
         var results = (await _harness.Source.GetSearchResultsAsync("Movie", new MovieInfo { Path = LocalFilm, Name = "Film" }, CancellationToken.None)).ToList();
@@ -331,9 +331,9 @@ public sealed class PeerMetadataSourceTests
     public async Task GetSearchResultsAsync_AfterTheSearch_EveryClientIsDisposed()
     {
         _harness.AddSource("a")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
             .OnJson("/Items", ClientJson.Page(1, ClientJson.Item(ItemOnA, name: "Film")));
-        _harness.AddSource("b").OnJson("/Zooid/Peer/Lookup", "{\"Found\":false}");
+        _harness.AddSource("b").OnJson("/Sync/Peer/Lookup", "{\"Found\":false}");
 
         await _harness.Source.GetSearchResultsAsync("Movie", new MovieInfo { Path = LocalFilm }, CancellationToken.None);
 
@@ -355,7 +355,7 @@ public sealed class PeerMetadataSourceTests
     [InlineData("read-empty")]
     public async Task GetMetadataAsync_NothingToRead_HasNoMetadata(string scenario)
     {
-        var server = _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", scenario == "not-found" ? "{\"Found\":false}" : ProviderTestHarness.FoundItem(ItemOnA));
+        var server = _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", scenario == "not-found" ? "{\"Found\":false}" : ProviderTestHarness.FoundItem(ItemOnA));
         _ = scenario == "read-fails" ? server.OnStatus("/Items", HttpStatusCode.InternalServerError) : server.OnJson("/Items", ClientJson.Page(0));
 
         var result = await _harness.Source.GetMetadataAsync<Movie>(new MovieInfo { Path = LocalFilm, Name = "Film" }, CancellationToken.None);
@@ -376,7 +376,7 @@ public sealed class PeerMetadataSourceTests
     public async Task GetMetadataAsync_FoundItem_IsFilledAndKeepsOnlyAnExistingPin(bool pinned)
     {
         var server = _harness.AddSource("a")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
             .OnJson("/Items", "{\"Items\":[{\"Id\":\"" + ItemOnA.ToString("N") + "\",\"Type\":\"Movie\",\"Name\":\"Film\",\"Overview\":\"About it\",\"PreferredMetadataLanguage\":\"de\",\"Studios\":[{\"Name\":\"Acme\"}]}]}");
         var info = new MovieInfo { Path = LocalFilm, Name = "film" };
         if (pinned)
@@ -392,7 +392,7 @@ public sealed class PeerMetadataSourceTests
         Assert.Equal(new[] { "Acme" }, result.Item.Studios);
         Assert.Equal("de", result.ResultLanguage);
         Assert.Equal(pinned, result.Item.ProviderIds.ContainsKey(PeerMetadataSource.PinnedProviderKey));
-        Assert.Equal(pinned ? 0 : 1, server.To("/Zooid/Peer/Lookup").Count);
+        Assert.Equal(pinned ? 0 : 1, server.To("/Sync/Peer/Lookup").Count);
         Assert.Contains("ids=" + ItemOnA, Assert.Single(server.To("/Items")).Query, StringComparison.Ordinal);
     }
 
@@ -405,7 +405,7 @@ public sealed class PeerMetadataSourceTests
     public async Task GetImagesAsync_ListedImages_AreOfferedWithFetchAndThumbnailAddresses()
     {
         _harness.AddSource("a", "Attic")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
             .OnJson("/Items/" + ItemOnA + "/Images", "[{\"ImageType\":\"Primary\",\"Width\":100,\"Height\":150},{\"ImageType\":\"Backdrop\",\"ImageIndex\":2},{\"Width\":5}]");
         _harness.Entry("a").ExternalUrl = "https://public.example/";
 
@@ -429,12 +429,12 @@ public sealed class PeerMetadataSourceTests
     public async Task GetImagesAsync_PinnedSource_ComesFirst()
     {
         _harness.AddSource("a", "Attic")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnA))
             .OnJson("/Items/" + ItemOnA + "/Images", "[{\"ImageType\":\"Primary\"}]");
         _harness.AddSource("down", "Down")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(Guid.NewGuid()));
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(Guid.NewGuid()));
         _harness.AddSource("b", "Basement")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnB))
             .OnJson("/Items/" + ItemOnB + "/Images", "[{\"ImageType\":\"Primary\"}]");
         var movie = new Movie { Path = LocalFilm, Name = "Film" };
         movie.ProviderIds[PeerMetadataSource.PinnedProviderKey] = "b:" + ItemOnB.ToString("N");
@@ -452,7 +452,7 @@ public sealed class PeerMetadataSourceTests
     [Fact]
     public async Task GetImagesAsync_NoSourceHasIt_IsEmpty()
     {
-        _harness.AddSource("a").OnJson("/Zooid/Peer/Lookup", "{\"Found\":false}");
+        _harness.AddSource("a").OnJson("/Sync/Peer/Lookup", "{\"Found\":false}");
 
         var images = await _harness.Source.GetImagesAsync(new Movie { Path = LocalFilm }, CancellationToken.None);
 

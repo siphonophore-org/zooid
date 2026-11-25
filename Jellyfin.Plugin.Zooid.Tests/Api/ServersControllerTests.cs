@@ -256,7 +256,7 @@ public sealed class ServersControllerTests : IDisposable
         var action = controller.GetMethod(nameof(ServersController.ForgetRows))!;
 
         Assert.Equal("RequiresElevation", controller.GetCustomAttribute<AuthorizeAttribute>()!.Policy);
-        Assert.Equal("Zooid/Servers", controller.GetCustomAttribute<RouteAttribute>()!.Template);
+        Assert.Equal("Sync/Servers", controller.GetCustomAttribute<RouteAttribute>()!.Template);
         Assert.Null(action.GetCustomAttribute<AllowAnonymousAttribute>());
         Assert.Equal(new[] { "DELETE" }, action.GetCustomAttributes<HttpMethodAttribute>().SelectMany(a => a.HttpMethods).ToArray());
         Assert.Equal("{key}/Rows", action.GetCustomAttribute<HttpDeleteAttribute>()!.Template);
@@ -280,7 +280,7 @@ public sealed class ServersControllerTests : IDisposable
     private static string WriteLink(string path)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, "http://127.0.0.1:8096/Zooid/Link/link-1?k=secret");
+        File.WriteAllText(path, "http://127.0.0.1:8096/Sync/Link/link-1?k=secret");
         return path;
     }
 

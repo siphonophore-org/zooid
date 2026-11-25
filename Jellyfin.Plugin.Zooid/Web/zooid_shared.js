@@ -51,7 +51,7 @@ var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 
 // TRANSLATIONS_URL
 // The route that gives the pages their strings in the viewer's language.
-export var TRANSLATIONS_URL = 'Zooid/Translations';
+export var TRANSLATIONS_URL = 'Sync/Translations';
 
 // The strings once a page has loaded them, so the sidebar names follow the viewer's language.
 var tabStrings = null;
@@ -183,7 +183,7 @@ export function createZooidPage(view, opts) {
     var bound = null;
     var page = createConfigPage(view, {
         pluginId: PLUGIN_ID,
-        apiPrefix: 'Zooid',
+        apiPrefix: 'Sync',
         bind: function () {
             bound = bag.translations.then(function (t) {
                 t.apply(view);
@@ -280,7 +280,7 @@ export function createSaveBars(page) {
 // Output
 // [object]: The helper bag, with every Stolon helper and the Zooid helpers below.
 export function createZooidShared(view, bag) {
-    var shared = bag || baseCreateShared(view, PLUGIN_ID, 'Zooid');
+    var shared = bag || baseCreateShared(view, PLUGIN_ID, 'Sync');
 
     shared.SECRET_KEPT = SECRET_KEPT;
 
@@ -378,7 +378,7 @@ export function createZooidShared(view, bag) {
                 maxHeight: maxHeight || 80
             };
             if (serverKey) params.serverKey = serverKey;
-            var url = ApiClient.getUrl('Zooid/ImageProxy', params);
+            var url = ApiClient.getUrl('Sync/ImageProxy', params);
             ApiClient.fetch({ url: url, type: 'GET' }).then(function (response) {
                 if (!response || !response.ok) throw new Error('image fetch failed');
                 return response.blob();
@@ -409,7 +409,7 @@ export function createZooidShared(view, bag) {
         return function () {
             var params = { itemId: id, user: isUser ? 'true' : 'false', maxHeight: 80 };
             if (serverKey) params.serverKey = serverKey;
-            return ApiClient.fetch({ url: ApiClient.getUrl('Zooid/ImageProxy', params), type: 'GET' }).then(function (response) {
+            return ApiClient.fetch({ url: ApiClient.getUrl('Sync/ImageProxy', params), type: 'GET' }).then(function (response) {
                 if (!response || !response.ok) throw new Error('image fetch failed');
                 return response.blob();
             });
@@ -610,31 +610,6 @@ export function createZooidShared(view, bag) {
         });
     };
 
-    // showHealth
-    // Shows a banner at the top of the page while Zooid is held for a database an older release
-    // wrote, and removes it once the plugin is ready. A page cannot work while it is held, so each one
-    // says so instead of only failing to load its data.
-    //
-    // Output
-    // [Promise]: Resolves once the banner is in step with the health.
-    shared.showHealth = function () {
-        return shared.apiRequest('Health', 'GET').then(function (health) {
-            var host = view.querySelector('.content-primary');
-            var banner = view.querySelector('.zooid-health-banner');
-            if (!health || health.Ready || !host) {
-                if (banner) banner.remove();
-                return;
-            }
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.className = 'zooid-health-banner stolon-error';
-                banner.setAttribute('role', 'alert');
-                host.insertBefore(banner, host.firstChild);
-            }
-            banner.textContent = health.Message || shared.t.tr('ErrorDatabaseHeld');
-        }).catch(function () { });
-    };
-    shared.translations.then(shared.showHealth);
 
     return shared;
 }

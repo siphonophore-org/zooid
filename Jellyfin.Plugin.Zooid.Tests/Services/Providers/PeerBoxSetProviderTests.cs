@@ -59,6 +59,6 @@ public sealed class PeerBoxSetProviderTests
         Assert.True(result.HasMetadata);
         Assert.IsType<BoxSet>(result.Item);
         Assert.Equal("From The Source", result.Item.Name);
-        Assert.Contains("\"ItemType\":\"BoxSet\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"BoxSet\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 }

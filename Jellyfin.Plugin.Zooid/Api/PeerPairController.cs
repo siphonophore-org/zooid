@@ -16,7 +16,7 @@ namespace Jellyfin.Plugin.Zooid.Api;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("Zooid/Peer")]
+[Route("Sync/Peer")]
 [PeerCallerGuard]
 [RequestSizeLimit(64 * 1024)]
 [Produces(MediaTypeNames.Application.Json)]

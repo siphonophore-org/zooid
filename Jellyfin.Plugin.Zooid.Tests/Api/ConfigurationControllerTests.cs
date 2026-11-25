@@ -29,21 +29,6 @@ public sealed class ConfigurationControllerTests : IDisposable
     public void Dispose() => _harness.Dispose();
 
     /// <summary>
-    /// Health reads as ready with no message when no plugin instance holds Zooid.
-    /// True: the dashboard shows its pages instead of the held notice.
-    /// False: a running plugin would be shown as held with an empty reason.
-    /// </summary>
-    [Fact]
-    public void GetHealth_NotHeld_AnswersReadyWithNoMessage()
-    {
-        var result = _harness.Configuration().GetHealth();
-
-        var body = Assert.IsType<OkObjectResult>(result).Value!;
-        Assert.Equal(true, body.GetType().GetProperty("Ready")!.GetValue(body));
-        Assert.Null(body.GetType().GetProperty("Message")!.GetValue(body));
-    }
-
-    /// <summary>
     /// Each of the plugin's ten task keys starts its task at once.
     /// True: the Synchronization page's run buttons start the task they name, and no other.
     /// False: a button would do nothing, or start a different task.
@@ -214,17 +199,16 @@ public sealed class ConfigurationControllerTests : IDisposable
 
     /// <summary>
     /// Each shared route requires elevation and answers one verb at its own path under Sync.
-    /// True: only an administrator can read health, start a task, or reset a table.
+    /// True: only an administrator can start a task or reset a table.
     /// False: a signed in user without elevation could reset the sync database.
     /// </summary>
     [Theory]
-    [InlineData(nameof(ConfigurationController.GetHealth), "GET", "Health")]
     [InlineData(nameof(ConfigurationController.RunTask), "POST", "Tasks/{taskKey}/Run")]
     [InlineData(nameof(ConfigurationController.Reset), "POST", "Reset/{table}")]
     public void Route_RequiresElevation(string action, string verb, string template)
     {
         ControllerRouteAssert.Elevated(typeof(ConfigurationController), action, verb, template);
-        Assert.Equal("Zooid", Assert.Single(typeof(ConfigurationController).GetCustomAttributes(typeof(RouteAttribute), true).Cast<RouteAttribute>()).Template);
+        Assert.Equal("Sync", Assert.Single(typeof(ConfigurationController).GetCustomAttributes(typeof(RouteAttribute), true).Cast<RouteAttribute>()).Template);
     }
 
     private ServiceProvider Services() => _harness.Services(s => s.AddSingleton(_harness.PlaylistCopies));

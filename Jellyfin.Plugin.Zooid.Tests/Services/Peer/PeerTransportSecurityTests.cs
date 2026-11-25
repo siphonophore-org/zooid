@@ -109,7 +109,7 @@ public sealed class PeerTransportSecurityTests : IDisposable
     {
         using var handler = new RedirectRefusingHandler { InnerHandler = new StubHandler(_ => Redirect("https://elsewhere.example/steal?x=1")) };
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://peer.example/Zooid/Peer/Status");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://peer.example/Sync/Peer/Status");
 
         var ex = await Assert.ThrowsAsync<HttpRequestException>(() => invoker.SendAsync(request, CancellationToken.None));
 
@@ -169,7 +169,7 @@ public sealed class PeerTransportSecurityTests : IDisposable
 
         using var provider = RegisteredServices();
         var client = provider.GetRequiredService<IHttpClientFactory>().CreateClient(SourceServerClient.HttpClientName);
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/Zooid/Peer/Status");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{port}/Sync/Peer/Status");
         request.Headers.TryAddWithoutValidation(HintProtocol.PairingHeader, "secret");
 
         var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.SendAsync(request));
@@ -178,7 +178,7 @@ public sealed class PeerTransportSecurityTests : IDisposable
 
         Assert.Contains("/elsewhere", ex.Message, StringComparison.Ordinal);
         Assert.Single(seen);
-        Assert.Equal("/Zooid/Peer/Status", seen[0].Path);
+        Assert.Equal("/Sync/Peer/Status", seen[0].Path);
     }
 
     [Theory]

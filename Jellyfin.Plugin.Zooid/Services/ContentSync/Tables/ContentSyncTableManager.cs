@@ -225,18 +225,6 @@ public sealed class ContentSyncTableManager : SyncTableManagerBase<SyncItem, str
     }
 
     /// <summary>
-    /// Marks the database as readable only by builds that know links, so an older build sets it aside instead of downloading over a link.
-    /// </summary>
-    public void RequireLinkAwareReaders() => ExecuteWrite(conn =>
-    {
-        var floor = SyncSchema.MinReaderFor(conn);
-        if ((DatabaseSchema.GetMinReaderVersion(conn) ?? 0) < floor)
-        {
-            DatabaseSchema.Stamp(conn, Math.Max(floor, DatabaseSchema.GetVersion(conn)), floor);
-        }
-    });
-
-    /// <summary>
     /// Returns every link row with a local path, and throws when the table cannot be read, so the link cache never takes a failed read for no links.
     /// </summary>
     /// <returns>The link rows.</returns>

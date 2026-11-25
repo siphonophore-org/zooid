@@ -92,12 +92,12 @@ public sealed class ParentDirectoryTests
         var bad = _harness.AddSource("bad");
         _ = fault switch
         {
-            "not-installed" => bad.OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.NotFound),
-            "protocol-too-new" => bad.OnJson("/Zooid/Peer/Capabilities", "{\"ServerId\":\"bad-id\",\"ProtocolVersion\":99,\"MinProtocolVersion\":99}"),
-            "another-version-without-a-protocol" => bad.OnJson("/Zooid/Peer/Capabilities", "{\"ServerId\":\"bad-id\",\"PluginVersion\":\"1.0.0.0\"}"),
-            "this-server-itself" => bad.OnJson("/Zooid/Peer/Capabilities", ProviderTestHarness.Capabilities(ProviderTestHarness.ThisServerId.ToUpperInvariant())),
-            "server-error" => bad.OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.InternalServerError),
-            "connection-refused" => bad.OnThrow("/Zooid/Peer/Capabilities", new HttpRequestException("refused")),
+            "not-installed" => bad.OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.NotFound),
+            "protocol-too-new" => bad.OnJson("/Sync/Peer/Capabilities", "{\"ServerId\":\"bad-id\",\"ProtocolVersion\":99,\"MinProtocolVersion\":99}"),
+            "another-version-without-a-protocol" => bad.OnJson("/Sync/Peer/Capabilities", "{\"ServerId\":\"bad-id\",\"PluginVersion\":\"1.0.0.0\"}"),
+            "this-server-itself" => bad.OnJson("/Sync/Peer/Capabilities", ProviderTestHarness.Capabilities(ProviderTestHarness.ThisServerId.ToUpperInvariant())),
+            "server-error" => bad.OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.InternalServerError),
+            "connection-refused" => bad.OnThrow("/Sync/Peer/Capabilities", new HttpRequestException("refused")),
             _ => bad
         };
         if (fault == "url-refused")
@@ -120,7 +120,7 @@ public sealed class ParentDirectoryTests
     public async Task ParentsAsync_AskedAgain_UsesTheRememberedAnswer()
     {
         var server = _harness.AddSource("a");
-        var missing = _harness.AddSource("b").OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.NotFound);
+        var missing = _harness.AddSource("b").OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.NotFound);
 
         await _harness.Directory.ParentsAsync(CancellationToken.None);
         var parents = await _harness.Directory.ParentsAsync(CancellationToken.None);

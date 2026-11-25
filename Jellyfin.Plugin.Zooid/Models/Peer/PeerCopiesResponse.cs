@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Jellyfin.Plugin.Zooid.Models.Peer;
 
-/// <summary>The copies a peer downloaded from other servers, answered by <c>GET /Zooid/Peer/Copies</c>.</summary>
+/// <summary>The copies a peer downloaded from other servers, answered by <c>GET /Sync/Peer/Copies</c>.</summary>
 public class PeerCopiesResponse
 {
     /// <summary>Gets or sets the copies.</summary>

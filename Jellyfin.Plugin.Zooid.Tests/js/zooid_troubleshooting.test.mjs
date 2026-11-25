@@ -54,7 +54,7 @@ test('resetting the whole database posts the reset and reports it on the reset s
     await settle(20);
     assert.equal(clickDialogButton(opened.page.dom, 'Reset'), true);
     await settle(20);
-    assert.equal(posts(opened)[0].url, 'Zooid/Reset/All');
+    assert.equal(posts(opened)[0].url, 'Sync/Reset/All');
     var status = opened.view.querySelector('#resetStatus');
     assert.equal(statusText(status), 'Database reset.');
     assert.ok(status.classList.contains('stolon-status-ok'));
@@ -68,7 +68,7 @@ test('resetting one table names it in the title and in the result', async functi
     assert.match(dialogText(opened.page.dom).body, /next scan starts over/);
     clickDialogButton(opened.page.dom, 'Reset');
     await settle(20);
-    assert.equal(posts(opened)[0].url, 'Zooid/Reset/Content');
+    assert.equal(posts(opened)[0].url, 'Sync/Reset/Content');
     assert.equal(statusText(opened.view.querySelector('#resetStatus')), 'Content sync table reset.');
 });
 

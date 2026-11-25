@@ -15,7 +15,6 @@ namespace Jellyfin.Plugin.Zooid.Services.Database;
 /// </summary>
 public class SyncDatabase : IDisposable
 {
-    private static int _tooOldReported;
     private readonly ILogger<SyncDatabase> _logger;
     private readonly string _dbPath;
 
@@ -395,17 +394,6 @@ public class SyncDatabase : IDisposable
                 throw new InvalidOperationException("Unable to initialize or recover sync database", recreateEx);
             }
         }
-        catch (SchemaTooOldException ex)
-        {
-            // Logged once, since every later use fails the same way.
-            if (System.Threading.Interlocked.Exchange(ref _tooOldReported, 1) == 0)
-            {
-                _logger.LogError(ex, "Sync database is too old for this release to read");
-            }
-
-            CloseConnection();
-            throw;
-        }
         catch
         {
             // The connection is closed first, or its handle outlives the failed start.
@@ -415,19 +403,15 @@ public class SyncDatabase : IDisposable
     }
 
     /// <summary>
-    /// Opens the schema with an oldest reader that follows what the file holds, so a release that cannot read links never opens a database with links as usable.
+    /// Creates the schema in an empty database, or checks the version of one already there. The first schema has no version before it, so nothing is migrated.
     /// </summary>
-    private SchemaAction OpenSchema(SqliteConnection connection)
+    private static SchemaAction OpenSchema(SqliteConnection connection)
         => DatabaseSchema.Open(
             connection,
             SyncSchema.CurrentSchemaVersion,
-            SyncSchema.MinReaderFor(connection),
+            SyncSchema.MinReaderVersion,
             c => SyncSchema.Create((SqliteConnection)c),
-            (c, fromVersion) =>
-            {
-                SyncSchema.Upgrade((SqliteConnection)c, fromVersion);
-                return true;
-            });
+            (_, _) => false);
 
     /// <summary>
     /// Closes the database, moves it aside as a timestamped backup with its journal, and creates a fresh one.

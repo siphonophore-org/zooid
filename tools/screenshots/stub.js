@@ -10,21 +10,21 @@ window.addEventListener('unhandledrejection', function (e) { __errs.push('reject
     var real = window.fetch;
     window.fetch = function (url, options) {
         var text = String(url);
-        var at = text.indexOf('Zooid/Translations');
+        var at = text.indexOf('Sync/Translations');
         return real.call(window, at >= 0 ? '/' + text.slice(at) : url, options);
     };
 })();
 
 // The same strings for the answers the stub writes, such as the Check link rows the server builds.
 var STRINGS = {};
-var stringsReady = fetch('/Zooid/Translations?language=en-us').then(function (r) { return r.json(); }).then(function (j) { STRINGS = j.strings; });
+var stringsReady = fetch('/Sync/Translations?language=en-us').then(function (r) { return r.json(); }).then(function (j) { STRINGS = j.strings; });
 function tr(key) {
     var args = Array.prototype.slice.call(arguments, 1);
     return String(STRINGS[key] || key).replace(/\{(\d+)\}/g, function (m, i) { return args[i] === undefined ? m : args[i]; });
 }
 
 var KEPT = '__JPK_SECRET_KEPT__';
-var VERSION = '12.4.20.0';
+var VERSION = '12.4.0.0';
 var now = Date.now();
 function ago(min) { return new Date(now - min * 60000).toISOString(); }
 function ahead(min) { return new Date(now + min * 60000).toISOString(); }

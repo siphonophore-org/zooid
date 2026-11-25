@@ -48,7 +48,7 @@ internal sealed class StubPeerHandler : HttpMessageHandler
                 ? Json("{\"ServerName\":\"peer\",\"Id\":\"0123456789abcdef0123456789abcdef\"}")
                 : new HttpResponseMessage(SystemInfoStatus),
             "/Users/Me" => new HttpResponseMessage(HttpStatusCode.BadRequest),
-            "/Zooid/Peer/Playlists" => PlaylistsStatus == HttpStatusCode.OK
+            "/Sync/Peer/Playlists" => PlaylistsStatus == HttpStatusCode.OK
                 ? Json(JsonSerializer.Serialize(Playlists, PeerJson))
                 : new HttpResponseMessage(PlaylistsStatus) { Content = new StringContent("refused") },
             _ => new HttpResponseMessage(HttpStatusCode.NotFound)

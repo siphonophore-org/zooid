@@ -128,7 +128,7 @@ test('showObjectVersion says where and when an object was last edited', async fu
     kit.showObjectVersion('version', { kind: 'History', localItemId: 'i1', localUserId: '' });
     await flush();
     assert.equal(view.querySelector('#version').textContent, 'Just now here');
-    assert.equal(page.requests[page.requests.length - 1].url, 'Zooid/Hints/Version?kind=History&localItemId=i1');
+    assert.equal(page.requests[page.requests.length - 1].url, 'Sync/Hints/Version?kind=History&localItemId=i1');
 });
 
 test('showObjectVersion names the other server, and says Not recorded when nobody edited the object', async function () {
@@ -230,7 +230,7 @@ test('a bulk action posts the selected ids and reports how many were changed', a
     module.bulkIgnore();
     await flush();
     var post = page.requests.find(function (r) { return r.type === 'POST'; });
-    assert.equal(post.url, 'Zooid/HistoryItems/Ignore');
+    assert.equal(post.url, 'Sync/HistoryItems/Ignore');
     assert.deepEqual(JSON.parse(post.data), { Ids: ['a', 'b'] });
     assert.equal(statusText(view.querySelector('#syncStatus')), '2 items ignored.');
     assert.ok(module.table.log.includes('clear'));
@@ -264,7 +264,7 @@ test('retryErrors asks the server to requeue every errored row and says how many
     responses.push({ Updated: 2 });
     await module.retryErrors();
     var post = page.requests.find(function (r) { return r.type === 'POST'; });
-    assert.equal(post.url, 'Zooid/HistoryItems/Queue');
+    assert.equal(post.url, 'Sync/HistoryItems/Queue');
     assert.deepEqual(JSON.parse(post.data), { Ids: [], Status: 'Errored' });
     assert.equal(statusText(view.querySelector('#syncStatus')), '2 errored history items queued for retry.');
 });
@@ -299,7 +299,7 @@ test('setModalStatus posts the status change, closes the modal, and reports it',
     module.setModalStatus('Queued');
     await flush();
     var post = page.requests.find(function (r) { return r.type === 'POST'; });
-    assert.equal(post.url, 'Zooid/HistoryItems/Queue');
+    assert.equal(post.url, 'Sync/HistoryItems/Queue');
     assert.deepEqual(JSON.parse(post.data), { Ids: [9] });
     assert.equal(statusText(view.querySelector('#syncStatus')), 'Item status updated to Queued.');
     assert.equal(module.currentModalItem, null);

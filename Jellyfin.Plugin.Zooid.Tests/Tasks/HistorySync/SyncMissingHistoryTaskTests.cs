@@ -153,8 +153,8 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
 
     private TaskSourceHandler Peer(string historyAnswer)
         => _factory.HandlerFor(ServerKey)
-            .OnJson("/Zooid/Peer/Capabilities", "{\"ServerId\":\"peer\",\"PluginVersion\":\"" + _config.PluginVersion + "\"}")
-            .OnJson("/Zooid/Peer/History", historyAnswer);
+            .OnJson("/Sync/Peer/Capabilities", "{\"ServerId\":\"peer\",\"PluginVersion\":\"" + _config.PluginVersion + "\"}")
+            .OnJson("/Sync/Peer/History", historyAnswer);
 
     /// <summary>
     /// A queued row's merged state is written to the local user data, read back, and the row becomes Synced with the run stamped.
@@ -416,7 +416,7 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
         Assert.Equal(1, _saves);
         Assert.True(stored.HasNegotiatedBase);
         Assert.True(stored.SourceIsPlayed);
-        Assert.Equal(1, peer.CountOf("/Zooid/Peer/History"));
+        Assert.Equal(1, peer.CountOf("/Sync/Peer/History"));
         Assert.Contains(peer.Bodies, b => b.Contains("local-server-id", StringComparison.Ordinal) && b.Contains(SourceItem.ToString("N"), StringComparison.Ordinal));
     }
 
@@ -453,7 +453,7 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
     {
         Negotiate();
         Queue();
-        Peer("{}").On("/Zooid/Peer/History", _ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        Peer("{}").On("/Sync/Peer/History", _ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
         await Task().ExecuteAsync(new TaskProgress(), CancellationToken.None);
 
@@ -476,12 +476,12 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
             "{\"Items\":[{\"Outcome\":\"Stale\",\"Current\":{\"Played\":true,\"PlayCount\":5}}]}",
             "{\"Items\":[{\"Outcome\":\"Applied\"}]}"
         });
-        var peer = Peer("{}").On("/Zooid/Peer/History", _ => TaskSourceHandler.Json(answers.Dequeue()));
+        var peer = Peer("{}").On("/Sync/Peer/History", _ => TaskSourceHandler.Json(answers.Dequeue()));
 
         await Task().ExecuteAsync(new TaskProgress(), CancellationToken.None);
 
         Assert.Equal(SyncStatus.Synced, Stored().Status);
-        Assert.Equal(2, peer.CountOf("/Zooid/Peer/History"));
+        Assert.Equal(2, peer.CountOf("/Sync/Peer/History"));
         Assert.Equal(1, _saves);
     }
 
@@ -517,7 +517,7 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
     {
         Negotiate();
         Queue();
-        var peer = _factory.HandlerFor(ServerKey).On("/Zooid/Peer/Capabilities", _ => new HttpResponseMessage(refusal));
+        var peer = _factory.HandlerFor(ServerKey).On("/Sync/Peer/Capabilities", _ => new HttpResponseMessage(refusal));
 
         await Task().ExecuteAsync(new TaskProgress(), CancellationToken.None);
 
@@ -525,7 +525,7 @@ public sealed class SyncMissingHistoryTaskTests : IDisposable
         Assert.Equal(SyncStatus.Synced, stored.Status);
         Assert.Equal(1, _saves);
         Assert.False(stored.HasNegotiatedBase);
-        Assert.Equal(0, peer.CountOf("/Zooid/Peer/History"));
+        Assert.Equal(0, peer.CountOf("/Sync/Peer/History"));
     }
 
     /// <summary>

@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Jellyfin.Plugin.Zooid;
 
 /// <summary>
-/// Registers every class marked with <see cref="PluginServiceAttribute"/>, the gated background services, and the secret protector.
+/// Registers every class marked with <see cref="PluginServiceAttribute"/>, the background services, and the secret protector.
 /// It also registers the two HTTP clients for other servers, each with a connect timeout, the address check, the redirect refusal, retries, and the limit on how long an answer may take to start.
 /// </summary>
 public class PluginServiceRegistrator : IPluginServiceRegistrator
@@ -36,16 +36,16 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddActivityLogger();
 
         serviceCollection.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(o => o.Filters.AddService<Services.Links.LinkPlaybackFilter>());
-        serviceCollection.AddHostedService<Gate<Services.Links.LinkProbe>>();
-        serviceCollection.AddHostedService<Gate<Services.Links.LinkPlaybackReporter>>();
-        serviceCollection.AddHostedService<Gate<Services.Links.LinkSessionSweeper>>();
-        serviceCollection.AddHostedService<Gate<Services.Links.LinkCacheFiller>>();
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Links.LinkProbe>());
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Links.LinkPlaybackReporter>());
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Links.LinkSessionSweeper>());
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Links.LinkCacheFiller>());
 
-        serviceCollection.AddHostedService<Gate<Services.Queue.OutboundHintWorker>>();
-        serviceCollection.AddHostedService<Gate<Services.Queue.InboundHintWorker>>();
-        serviceCollection.AddHostedService<Gate<Services.Queue.LocalChangeObserver>>();
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Queue.OutboundHintWorker>());
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Queue.InboundHintWorker>());
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Queue.LocalChangeObserver>());
         serviceCollection.AddHostedService<Tasks.HiddenTaskScheduleCleaner>();
-        serviceCollection.AddHostedService<Gate<Services.Queue.QueueMaintenanceService>>();
+        serviceCollection.AddHostedService(sp => sp.GetRequiredService<Services.Queue.QueueMaintenanceService>());
 
         serviceCollection
             .AddHttpClient(SourceServerClient.HttpClientName, c =>
@@ -98,37 +98,5 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
 
             yield return (type, attr);
         }
-    }
-
-    /// <summary>
-    /// Starts one of the plugin's background services unless Zooid is held, since a hosted service that cannot be built stops Jellyfin itself.
-    /// The wrapped service is the one instance the controllers and the publisher use.
-    /// </summary>
-    /// <typeparam name="T">The wrapped hosted service.</typeparam>
-    private sealed class Gate<T> : Microsoft.Extensions.Hosting.IHostedService
-        where T : class, Microsoft.Extensions.Hosting.IHostedService
-    {
-        private readonly IServiceProvider _services;
-        private T? _inner;
-
-        /// <summary>Initializes a new instance of the <see cref="Gate{T}"/> class.</summary>
-        /// <param name="services">Resolves the wrapped service.</param>
-        public Gate(IServiceProvider services) => _services = services;
-
-        /// <inheritdoc/>
-        public System.Threading.Tasks.Task StartAsync(System.Threading.CancellationToken cancellationToken)
-        {
-            if (Plugin.Held)
-            {
-                return System.Threading.Tasks.Task.CompletedTask;
-            }
-
-            _inner = _services.GetRequiredService<T>();
-            return _inner.StartAsync(cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public System.Threading.Tasks.Task StopAsync(System.Threading.CancellationToken cancellationToken)
-            => _inner?.StopAsync(cancellationToken) ?? System.Threading.Tasks.Task.CompletedTask;
     }
 }

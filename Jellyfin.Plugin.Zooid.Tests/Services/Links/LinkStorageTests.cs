@@ -138,7 +138,7 @@ public sealed class LinkStorageTests : IDisposable
         var url = _files.UrlFor("abc");
         var key = url[(url.IndexOf("?k=", StringComparison.Ordinal) + 3)..];
 
-        Assert.StartsWith("http://127.0.0.1:8096/Zooid/Link/abc?k=", url, StringComparison.Ordinal);
+        Assert.StartsWith("http://127.0.0.1:8096/Sync/Link/abc?k=", url, StringComparison.Ordinal);
         Assert.True(_files.SecretMatches("abc", key));
         Assert.False(_files.SecretMatches("abd", key));
         Assert.False(_files.SecretMatches("abc", key + "x"));
@@ -376,49 +376,6 @@ public sealed class LinkStorageTests : IDisposable
             LibraryMappings = { new LibraryMapping { SourceLibraryId = "s", LocalLibraryId = "l", LocalRootPath = Path.Combine(_dir, "media"), SourceRootPath = "/src" } }
         });
         return config;
-    }
-
-    /// <summary>
-    /// A database names v28 as its oldest reader until it holds a link, and v32 once it does.
-    /// True: an older build that would download media over a .strm sets a database with links aside.
-    /// False: a downgrade with links in place would overwrite every link with a copy's bytes.
-    /// </summary>
-    [Fact]
-    public void ReaderFloor_RisesWithTheFirstLink()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        SyncSchema.Create(conn);
-        Siphonophore.Stolon.DatabaseSchema.Stamp(conn, SyncSchema.CurrentSchemaVersion, SyncSchema.MinReaderVersion);
-        Assert.Equal(SyncSchema.MinReaderVersion, SyncSchema.MinReaderFor(conn));
-
-        using (var insert = conn.CreateCommand())
-        {
-            insert.CommandText = @"INSERT INTO SyncItems (SourceLibraryId, LocalLibraryId, SourceItemId, SourcePath, SourceSize, SourceCreateDate, Status, StatusDate, StorageMode)
-                VALUES ('s', 'l', 'id', '/src/A.mkv', 1, '2026-01-01', 1, '2026-01-01', 1)";
-            insert.ExecuteNonQuery();
-        }
-
-        Assert.Equal(SyncSchema.LinkReaderVersion, SyncSchema.MinReaderFor(conn));
-    }
-
-    /// <summary>
-    /// Writing the first link raises the floor in the database itself.
-    /// True: the database a running server holds is protected from the moment it has a link.
-    /// False: the floor would only rise at the next upgrade, too late for a downgrade before then.
-    /// </summary>
-    [Fact]
-    public void Writer_FirstLink_RaisesTheReaderFloor()
-    {
-        var writer = new LinkWriter(_files, _registry, NullLogger<LinkWriter>.Instance);
-        var row = Row("a", Media("A.strm"), StorageMode.Link, sourcePath: "/src/A.mkv");
-        _table.Upsert(row);
-
-        writer.Write(row, _table, Config());
-
-        using var reader = new SqliteConnection($"Data Source={Path.Combine(_dir, "zooid", "sync.db")};Mode=ReadOnly");
-        reader.Open();
-        Assert.Equal(SyncSchema.LinkReaderVersion, Siphonophore.Stolon.DatabaseSchema.GetMinReaderVersion(reader));
     }
 
     /// <summary>

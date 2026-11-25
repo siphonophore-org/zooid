@@ -31,7 +31,7 @@ namespace Jellyfin.Plugin.Zooid.Api;
 /// </summary>
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
-[Route("Zooid")]
+[Route("Sync")]
 [Produces(MediaTypeNames.Application.Json)]
 public partial class ConfigurationController : ControllerBase
 {
@@ -185,19 +185,6 @@ public partial class ConfigurationController : ControllerBase
             response.LastFailureReason = failure.Reason;
             response.LastFailureTime = failure.Timestamp;
         }
-    }
-
-    /// <summary>
-    /// Reports whether Zooid can run here, which it cannot while its database is one an older release wrote.
-    /// </summary>
-    /// <returns>Ready, or the reason it is held.</returns>
-    [HttpGet("Health")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult GetHealth()
-    {
-        var held = Plugin.Instance?.HeldReason;
-        var version = Plugin.Instance?.HeldVersion;
-        return Ok(new { Ready = held is null, Message = version is { } found ? SchemaTooOldException.Describe(found, StolonTranslations.RequestLanguage(Request)) : held });
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ public class PeerSegmentsItem
 
     /// <summary>
     /// Gets or sets the Jellyfin id of the server the copied segments were first made on, or null when all were made on the peer itself.
-    /// A release that reads <see cref="PeerSegment.OriginServerId"/> goes by each segment's origin instead.
+    /// A reader goes by each segment's own <see cref="PeerSegment.OriginServerId"/> when the answer carries them.
     /// </summary>
     public string? OriginServerId { get; set; }
 

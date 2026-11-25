@@ -7,97 +7,19 @@ namespace Jellyfin.Plugin.Zooid.Services.Database;
 
 /// <summary>
 /// Holds the sync database's schema, every table as this release reads and writes it, and the version that names it.
-/// It has no upgrade steps, so a database written before <see cref="OldestUpgradableRelease"/> is refused until that release has opened it.
 /// </summary>
 public static class SyncSchema
 {
     /// <summary>
-    /// The schema version. Raise it when the schema changes.
+    /// The schema version. Raise it when the schema changes, and add the step that brings the version before it forward.
     /// </summary>
-    public const int CurrentSchemaVersion = 40;
-
-    /// <summary>
-    /// The oldest schema version this release brings forward itself, which is the one <see cref="OldestUpgradableRelease"/> writes.
-    /// Each version since then only added tables and nullable columns, so <see cref="Upgrade"/> adds what is missing and changes nothing else.
-    /// </summary>
-    public const int OldestUpgradableSchema = 36;
-
-    /// <summary>
-    /// The release whose database this one opens as it is. Anything older has to be started once on
-    /// this release first, which is the last one that converts older databases and settings.
-    /// </summary>
-    public const string OldestUpgradableRelease = "12.4.13.0";
-
-    /// <summary>
-    /// Reads the schema version of the database under a data folder without changing the file.
-    /// </summary>
-    /// <param name="dataPath">Jellyfin's data folder, which holds the database's own folder.</param>
-    /// <returns>The version, or null when there is no database or it cannot be read.</returns>
-    public static int? StoredVersion(string dataPath)
-    {
-        ArgumentNullException.ThrowIfNull(dataPath);
-        var path = System.IO.Path.Combine(dataPath, "zooid", "sync.db");
-        if (!System.IO.File.Exists(path))
-        {
-            return null;
-        }
-
-        try
-        {
-            using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = "PRAGMA user_version";
-            return Convert.ToInt32(cmd.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
-        }
-        catch (SqliteException)
-        {
-            return null;
-        }
-    }
-
-    /// <summary>Whether a stored version is one an older release wrote and this release cannot read.</summary>
-    /// <param name="storedVersion">The version read from the database, or null.</param>
-    /// <returns><c>true</c> when the database needs <see cref="OldestUpgradableRelease"/> first.</returns>
-    public static bool IsTooOld(int? storedVersion) => storedVersion is > 0 and < OldestUpgradableSchema;
+    public const int CurrentSchemaVersion = 1;
 
     /// <summary>
     /// The oldest schema version whose code can still use a database at <see cref="CurrentSchemaVersion"/>, written into the database so an older build can tell.
     /// Raise it only when a change alters or removes something older code relies on, never for added tables, nullable or defaulted columns, or indexes.
     /// </summary>
-    public const int MinReaderVersion = 28;
-
-    /// <summary>
-    /// The oldest schema whose code knows links. A database that holds links names this as its oldest
-    /// reader, so an older build sets it aside rather than taking a .strm for a copy whose size is wrong
-    /// and downloading the media over it.
-    /// </summary>
-    public const int LinkReaderVersion = 32;
-
-    /// <summary>
-    /// The oldest schema whose code knows a permanent copy turning back into a link. A database holding one names
-    /// this as its oldest reader, so an older build never takes that row for a copy still to download.
-    /// </summary>
-    public const int UnkeepReaderVersion = 33;
-
-    /// <summary>Finds the oldest reader a database with these contents allows, which is <see cref="LinkReaderVersion"/> once it holds a link.</summary>
-    /// <param name="connection">The open database whose rows are checked.</param>
-    /// <returns>The oldest schema version that may use the database.</returns>
-    public static int MinReaderFor(SqliteConnection connection)
-    {
-        ArgumentNullException.ThrowIfNull(connection);
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'SyncItems'";
-        if (Convert.ToInt64(cmd.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) == 0)
-        {
-            return MinReaderVersion;
-        }
-
-        cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM SyncItems WHERE StorageMode <> 0)";
-        var reader = Convert.ToInt64(cmd.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) == 1 ? Math.Max(MinReaderVersion, LinkReaderVersion) : MinReaderVersion;
-        cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM SyncItems WHERE StorageMode = 3)";
-        return Convert.ToInt64(cmd.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) == 1 ? Math.Max(reader, UnkeepReaderVersion) : reader;
-    }
+    public const int MinReaderVersion = 1;
 
     /// <summary>
     /// Creates every table of the schema in an empty database.
@@ -114,50 +36,6 @@ public static class SyncSchema
         CreateSharedTables(connection);
         CreateStatisticsTables(connection);
         CreateMediaSegmentTable(connection);
-    }
-
-    /// <summary>
-    /// Brings a database from <see cref="OldestUpgradableSchema"/> or later up to <see cref="CurrentSchemaVersion"/> by creating the tables added since. No stored row is changed.
-    /// </summary>
-    /// <param name="connection">The open database to bring forward.</param>
-    /// <param name="fromVersion">The schema version the database holds.</param>
-    /// <exception cref="SchemaTooOldException">Thrown when the database is older than <see cref="OldestUpgradableSchema"/>.</exception>
-    public static void Upgrade(SqliteConnection connection, int fromVersion)
-    {
-        ArgumentNullException.ThrowIfNull(connection);
-        if (fromVersion < OldestUpgradableSchema)
-        {
-            throw new SchemaTooOldException(fromVersion);
-        }
-
-        CreateStatisticsTables(connection);
-        CreateMediaSegmentTable(connection);
-        AddColumnIfMissing(connection, "MetadataSyncItems", "SourceSegmentsValue");
-        AddColumnIfMissing(connection, "MetadataSyncItems", "LocalSegmentsValue");
-        AddColumnIfMissing(connection, "MetadataSyncItems", "SourceSegmentsHash");
-        AddColumnIfMissing(connection, "MetadataSyncItems", "SyncedSegmentsHash");
-        AddColumnIfMissing(connection, "SourceMediaSegments", "HeldTypes");
-    }
-
-    /// <summary>
-    /// Adds a nullable text column to a table unless the table already has it, so an older database gains a column added in a later schema.
-    /// </summary>
-    /// <param name="connection">The open database.</param>
-    /// <param name="table">The table, one of the schema's own names.</param>
-    /// <param name="column">The column, one of the schema's own names.</param>
-    private static void AddColumnIfMissing(SqliteConnection connection, string table, string column)
-    {
-        using var check = connection.CreateCommand();
-        check.CommandText = $"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name = @column";
-        check.Parameters.AddWithValue("@column", column);
-        if (Convert.ToInt64(check.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) > 0)
-        {
-            return;
-        }
-
-        using var add = connection.CreateCommand();
-        add.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} TEXT";
-        add.ExecuteNonQuery();
     }
 
     /// <summary>
@@ -334,7 +212,7 @@ public static class SyncSchema
     }
 
     /// <summary>
-    /// Creates the Metadata sync table, one row for each item, holding Metadata, Images, People, Studios, and media segments, the last added in schema 39.
+    /// Creates the Metadata sync table, one row for each item, holding Metadata, Images, People, Studios, and media segments.
     /// Each category has its own hashes, so a scan skips the categories that match what was synced.
     /// </summary>
     private static void CreateMetadataTable(SqliteConnection connection)
@@ -511,7 +389,7 @@ public static class SyncSchema
     }
 
     /// <summary>
-    /// Creates the tables the Statistics page reads, added in schema 37: the last scans of each sync type, and the link streams started for each server on each day.
+    /// Creates the tables the Statistics page reads: the last scans of each sync type, and the link streams started for each server on each day.
     /// Both hold counts only, and each write trims them to what the charts show.
     /// </summary>
     private static void CreateStatisticsTables(SqliteConnection connection)
@@ -538,9 +416,9 @@ public static class SyncSchema
     }
 
     /// <summary>
-    /// Creates the table the media segment provider answers from, added in schema 38: for each local item, the segments its source holds
+    /// Creates the table the media segment provider answers from: for each local item, the segments its source holds
     /// with the size and runtime of the source's file, so they are used only for the same file, and the server they were first made on.
-    /// HeldTypes, added in schema 40, names the segment types this server made itself, whose own segments are kept.
+    /// HeldTypes names the segment types this server made itself, whose own segments are kept.
     /// </summary>
     private static void CreateMediaSegmentTable(SqliteConnection connection)
     {

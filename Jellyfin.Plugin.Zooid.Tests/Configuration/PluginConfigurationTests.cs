@@ -97,9 +97,7 @@ public class PluginConfigurationTests
             ScheduledStartHour = 3,
             ScheduledEndHour = 3,
             ScheduledDownloadSpeed = 5,
-            ScheduledDownloadSpeedUnit = "Mbps",
-            MaxDownloadSpeed = 50,
-            DownloadSpeedUnit = "Mbps"
+            MaxDownloadSpeed = 50
         };
 
         Assert.Equal(5L * 125_000, config.GetEffectiveDownloadSpeedBytes());
@@ -127,9 +125,7 @@ public class PluginConfigurationTests
             ScheduledStartHour = start,
             ScheduledEndHour = end,
             ScheduledDownloadSpeed = 5,
-            ScheduledDownloadSpeedUnit = "Mbps",
-            MaxDownloadSpeed = 50,
-            DownloadSpeedUnit = "Mbps"
+            MaxDownloadSpeed = 50
         };
 
         Assert.Equal((scheduled ? 5L : 50L) * 125_000, config.GetEffectiveDownloadSpeedBytes(hour));
@@ -171,34 +167,6 @@ public class PluginConfigurationTests
         Assert.Equal("BoxSet", items[0].Type);
         Assert.Equal("Playlist", items[1].Type);
         Assert.Null(items[2].Type);
-    }
-
-    /// <summary>
-    /// A download speed kept in KB, MB, or GB per second before 12.4.12.0 becomes Mbps on load,
-    /// rounded up so a limit never turns into no limit, and 0 stays no limit.
-    /// True: an updated server downloads at the speed it did before.
-    /// False: a limit could become eight times faster, or vanish.
-    /// </summary>
-    [Fact]
-    public void SanitizeValues_ConvertsOldDownloadSpeedsToMbps()
-    {
-        var config = new PluginConfiguration
-        {
-            MaxDownloadSpeed = 10,
-            DownloadSpeedUnit = "MB",
-            ScheduledDownloadSpeed = 1,
-            ScheduledDownloadSpeedUnit = "KB"
-        };
-
-        config.SanitizeValues();
-
-        Assert.Equal(84, config.MaxDownloadSpeed);
-        Assert.Equal(1, config.ScheduledDownloadSpeed);
-        Assert.Equal("Mbps", config.DownloadSpeedUnit);
-        Assert.Equal("Mbps", config.ScheduledDownloadSpeedUnit);
-
-        config.SanitizeValues();
-        Assert.Equal(84, config.MaxDownloadSpeed);
     }
 
     /// <summary>

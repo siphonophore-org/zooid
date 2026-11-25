@@ -190,7 +190,7 @@ public sealed class PeerMetadataSource
         ArgumentNullException.ThrowIfNull(keys);
         var matches = new List<PeerMatch>();
         // A provider switched off asks no server and says nothing.
-        if (Plugin.Held || !Answers(keys.ItemType))
+        if (!Answers(keys.ItemType))
         {
             return matches;
         }

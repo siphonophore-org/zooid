@@ -189,7 +189,7 @@ public sealed class LinkAccessTests
 
     /// <summary>
     /// A download is asked for with the download flag, and is allowed only when the source says it checked the download.
-    /// True: a source on an older build, which ignores the flag, cannot let a user download.
+    /// True: a source that ignores the flag cannot let a user download.
     /// False: a user barred from downloading on the source could download through a link.
     /// </summary>
     /// <param name="checkedHere">Whether the source answers that it checked the download.</param>

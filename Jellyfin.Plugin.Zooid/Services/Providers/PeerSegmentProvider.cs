@@ -80,7 +80,6 @@ public sealed class PeerSegmentProvider : IMediaSegmentProvider, IHasOrder
         var config = _configManager.Configuration;
         return ValueTask.FromResult(
             item is Video or MediaBrowser.Controller.Entities.Audio.Audio
-            && !Plugin.Held
             && config.EnableMetadataSync
             && config.MetadataSyncSegmentProvider);
     }

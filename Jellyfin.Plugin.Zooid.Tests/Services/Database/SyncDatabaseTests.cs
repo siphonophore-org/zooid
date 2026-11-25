@@ -46,7 +46,9 @@ public sealed class SyncDatabaseTests : IDisposable
         }
 
         Assert.True(File.Exists(_folder.DatabaseFile));
-        Assert.Equal(SyncSchema.CurrentSchemaVersion, SyncSchema.StoredVersion(_folder.DataPath));
+        using var conn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_folder.DatabaseFile};Mode=ReadOnly;Pooling=False");
+        conn.Open();
+        Assert.Equal(SyncSchema.CurrentSchemaVersion, Siphonophore.Stolon.DatabaseSchema.GetVersion(conn));
     }
 
     /// <summary>

@@ -59,6 +59,6 @@ public sealed class PeerSongProviderTests
         Assert.True(result.HasMetadata);
         Assert.IsType<Audio>(result.Item);
         Assert.Equal("From The Source", result.Item.Name);
-        Assert.Contains("\"ItemType\":\"Audio\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"Audio\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 }

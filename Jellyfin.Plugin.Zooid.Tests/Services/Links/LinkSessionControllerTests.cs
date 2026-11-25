@@ -179,7 +179,7 @@ public sealed class LinkSessionControllerTests
 
         Assert.Equal(new[] { "peer" }, factory.Created);
         Assert.Equal(HttpMethod.Post, sent!.Method);
-        Assert.Equal("/Zooid/Peer/Control", sent.RequestUri!.AbsolutePath);
+        Assert.Equal("/Sync/Peer/Control", sent.RequestUri!.AbsolutePath);
         using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
         Assert.Equal("this-server", body.RootElement.GetProperty("ServerId").GetString());
         Assert.Equal("viewer-session", body.RootElement.GetProperty("SessionKey").GetString());

@@ -267,14 +267,12 @@ export default function (view) {
         });
         return saveSection(function (config) {
             config.MaxDownloadSpeed = getIntValue('txtMaxDownloadSpeed', 0);
-            config.DownloadSpeedUnit = 'Mbps';
             config.EnableBandwidthScheduling = getChecked('chkEnableBandwidthScheduling');
             var hours = scheduleHours();
             var span = hours ? hours.getValue() : { start: '00:00', end: '06:00' };
             config.ScheduledStartHour = Math.floor(zooidModule.toHours(span.start) || 0);
             config.ScheduledEndHour = Math.floor(zooidModule.toHours(span.end) || 0);
             config.ScheduledDownloadSpeed = getIntValue('txtScheduledDownloadSpeed', 0);
-            config.ScheduledDownloadSpeedUnit = 'Mbps';
             (config.Servers || []).forEach(function (server) {
                 var speed = speeds[server.Key];
                 if (speed) {

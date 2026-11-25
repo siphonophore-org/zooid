@@ -296,7 +296,7 @@ test('discarding a change deletes it from its lane and reports it', async functi
     queue._onDiscard({ target: button });
     await flush();
     var del = env.page.requests.find(function (r) { return r.type === 'DELETE'; });
-    assert.equal(del.url, 'Zooid/Hints/Outbound/5');
+    assert.equal(del.url, 'Sync/Hints/Outbound/5');
     assert.equal(statusText(env.view.querySelector('#syncStatus')), 'Hint discarded.');
 });
 
@@ -338,7 +338,7 @@ test('failedAction posts to its route and says how many changes it handled', asy
     queue.failedAction('Hints/Failed/Retry', 'POST', 'Retried', 'ToastFailedRetriedOne', 'ToastFailedRetriedMany');
     assert.equal(buttons[0].disabled, true);
     await flush();
-    assert.equal(env.page.requests.find(function (r) { return r.url === 'Zooid/Hints/Failed/Retry'; }).type, 'POST');
+    assert.equal(env.page.requests.find(function (r) { return r.url === 'Sync/Hints/Failed/Retry'; }).type, 'POST');
     assert.equal(statusText(env.view.querySelector('#syncStatus')), '2 failed changes tried again.');
     assert.equal(buttons[0].disabled, false);
 });
@@ -372,7 +372,7 @@ test('the Dismiss failed button asks first and sends nothing when the question i
     confirmAnswer = true;
     env.view.querySelector('#btnQueueDismissFailed').click();
     await flush();
-    assert.equal(env.page.requests.filter(function (r) { return r.url === 'Zooid/Hints/Failed' && r.type === 'DELETE'; }).length, 1);
+    assert.equal(env.page.requests.filter(function (r) { return r.url === 'Sync/Hints/Failed' && r.type === 'DELETE'; }).length, 1);
 });
 
 test('startAutoRefresh and stopAutoRefresh start and stop both timers', function () {

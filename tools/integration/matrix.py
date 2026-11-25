@@ -295,7 +295,7 @@ def clean(creds, apis):
         it.configure_server(creds, apis[name], name, [])
     # A removal still held from the last round goes out now, to no one, rather than land while the next round is set up.
     for name in NODES:
-        apis[name].post("/Zooid/Hints/Run", None)
+        apis[name].post("/Sync/Hints/Run", None)
     for name in NODES:
         root = movies_dir(name)
         os.makedirs(root, exist_ok=True)
@@ -305,7 +305,7 @@ def clean(creds, apis):
         # Jellyfin leaves a library alone while its folder is empty, so something always sits in it.
         with open(os.path.join(root, "placeholder.txt"), "w", encoding="utf-8") as f:
             f.write("keeps the folder from being empty\n")
-        apis[name].post("/Zooid/Reset/Content", None)
+        apis[name].post("/Sync/Reset/Content", None)
     for name in NODES:
         rescan(apis[name], lambda n=name: not apis[n].get("/Items?IncludeItemTypes=Movie&Recursive=true")["Items"], f"{name} emptied its library")
     quiet(apis, NODES, 60)
@@ -656,7 +656,7 @@ def interrupt_round(creds, apis, storage):
         except AssertionError:
             pass
     if storage == "link":
-        from_route = lambda path: os.path.exists(path) and "/Zooid/Link/" in open(path, encoding="utf-8").read()
+        from_route = lambda path: os.path.exists(path) and "/Sync/Link/" in open(path, encoding="utf-8").read()
         expect(from_route(strm("Small")) and from_route(strm("Big")), "n2 with n1 down: the removed link and the emptied link were written again")
     held_rows = [r for r in rows(child, tag) if "Small" in (r.get("SourcePath") or "")]
     on_disk = lambda r: os.path.exists(os.path.join(movies_dir("n2"), os.path.relpath(r["LocalPath"], "/media/Movies")))
@@ -1025,7 +1025,7 @@ def clash_round(creds, apis):
 
     log("   -- n2 takes n1's file by hand")
     clash = next(r for r in rows(apis["n2"], tag) if "Clash" in (r.get("LocalPath") or ""))
-    apis["n2"].post("/Zooid/QueueItems", {"SourceItemIds": [clash["SourceItemId"]]}, expect=200)
+    apis["n2"].post("/Sync/QueueItems", {"SourceItemIds": [clash["SourceItemId"]]}, expect=200)
     both_scan_then_both_sync()
     both_scan_then_both_sync()
     expect(read(on("n2", "Clash")) == own["n1"], "n2 now holds n1's file for the title")

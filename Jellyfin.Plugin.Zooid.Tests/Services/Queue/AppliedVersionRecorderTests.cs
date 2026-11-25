@@ -45,8 +45,8 @@ public sealed class AppliedVersionRecorderTests : IDisposable
 
     private void PeerKeepsStamps(params ObjectVersion[] held)
     {
-        _peer.OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion });
-        _peer.OnJson("/Zooid/Peer/Versions", new VersionsResponse { Items = new List<ObjectVersion>(held) });
+        _peer.OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion });
+        _peer.OnJson("/Sync/Peer/Versions", new VersionsResponse { Items = new List<ObjectVersion>(held) });
     }
 
     /// <summary>
@@ -202,7 +202,7 @@ public sealed class AppliedVersionRecorderTests : IDisposable
         await _recorder.RecordAsync(HintKind.Users, "local", "peer-key", source, CancellationToken.None);
 
         Assert.Null(_versions.Get(HintKind.Users, "local"));
-        Assert.Equal(1, _peer.CountOf("/Zooid/Peer/Versions"));
+        Assert.Equal(1, _peer.CountOf("/Sync/Peer/Versions"));
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public sealed class AppliedVersionRecorderTests : IDisposable
         await _recorder.RecordAsync(HintKind.Users, "local", "peer-key", source, CancellationToken.None);
 
         Assert.Null(_versions.Get(HintKind.Users, "local"));
-        Assert.Equal(0, _peer.CountOf("/Zooid/Peer/Versions"));
+        Assert.Equal(0, _peer.CountOf("/Sync/Peer/Versions"));
     }
 
     /// <summary>
@@ -231,14 +231,14 @@ public sealed class AppliedVersionRecorderTests : IDisposable
     [InlineData(false)]
     public async Task RecordAsync_PeerFailsTheStampRead_DoesNotThrow(bool answersWithAnError)
     {
-        _peer.OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion });
+        _peer.OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = PluginVersion });
         if (answersWithAnError)
         {
-            _peer.OnStatus("/Zooid/Peer/Versions", HttpStatusCode.InternalServerError);
+            _peer.OnStatus("/Sync/Peer/Versions", HttpStatusCode.InternalServerError);
         }
         else
         {
-            _peer.OnUnreachable("/Zooid/Peer/Versions");
+            _peer.OnUnreachable("/Sync/Peer/Versions");
         }
 
         using var source = Source();

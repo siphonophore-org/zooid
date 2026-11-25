@@ -65,22 +65,22 @@ public sealed class PluginServiceRegistratorTests
     }
 
     /// <summary>
-    /// Nine background services are registered, and only the schedule cleaner is registered ungated.
-    /// True: every worker that needs the database starts through the gate that skips it while Zooid is held.
-    /// False: a worker registered directly would stop Jellyfin from starting on an older database.
+    /// Nine background services are registered. The schedule cleaner is built for itself, and the other eight are each the one
+    /// singleton instance the controllers and the publisher use.
+    /// True: a worker the pages talk to is the same object Jellyfin started.
+    /// False: a second copy would run beside it, each with its own queue and timers.
     /// </summary>
     [Fact]
-    public void RegisterServices_BackgroundServices_AreGatedExceptTheScheduleCleaner()
+    public void RegisterServices_BackgroundServices_ShareTheirSingletons()
     {
-        var hosted = Registered().Where(d => d.ServiceType == typeof(IHostedService)).Select(d => d.ImplementationType!).ToList();
+        var services = Registered();
+        var hosted = services.Where(d => d.ServiceType == typeof(IHostedService)).ToList();
 
-        var ungated = hosted.Where(t => !t.IsGenericType).ToList();
-        var gated = hosted.Where(t => t.IsGenericType).Select(t => t.GetGenericArguments()[0].Name).OrderBy(n => n, StringComparer.Ordinal).ToArray();
-
-        Assert.Equal(new[] { typeof(HiddenTaskScheduleCleaner) }, ungated);
-        Assert.Equal(
-            new[] { "InboundHintWorker", "LinkCacheFiller", "LinkPlaybackReporter", "LinkProbe", "LinkSessionSweeper", "LocalChangeObserver", "OutboundHintWorker", "QueueMaintenanceService" },
-            gated);
+        Assert.Equal(9, hosted.Count);
+        Assert.Equal(new[] { typeof(HiddenTaskScheduleCleaner) }, hosted.Where(d => d.ImplementationType is not null).Select(d => d.ImplementationType!).ToArray());
+        Assert.Equal(8, hosted.Count(d => d.ImplementationFactory is not null));
+        var workers = new[] { "InboundHintWorker", "LinkCacheFiller", "LinkPlaybackReporter", "LinkProbe", "LinkSessionSweeper", "LocalChangeObserver", "OutboundHintWorker", "QueueMaintenanceService" };
+        Assert.All(workers, name => Assert.Contains(services, d => d.ServiceType.Name == name && d.Lifetime == ServiceLifetime.Singleton));
     }
 
     /// <summary>

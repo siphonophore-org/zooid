@@ -833,12 +833,3 @@ div:not(.zooid-form-row) + .zooid-form-row {
     margin-bottom: 0;
     padding-bottom: 0;
 }
-
-/* zooid-health-banner */
-/* Red notice at the top of a page when Zooid cannot run on the database it found. */
-/* Example: <div class="zooid-health-banner stolon-error" role="alert">Install 12.4.13.0 first.</div> */
-.zooid-health-banner {
-    margin: 1em 0 !important;
-    font-size: 1em;
-    line-height: 1.5;
-}

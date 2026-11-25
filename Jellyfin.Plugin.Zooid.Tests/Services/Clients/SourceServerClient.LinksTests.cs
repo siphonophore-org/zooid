@@ -14,8 +14,8 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Clients;
 /// </summary>
 public sealed class SourceServerClientLinksTests
 {
-    private const string LinksPath = "/Zooid/Peer/Links";
-    private const string CopiesPath = "/Zooid/Peer/Copies";
+    private const string LinksPath = "/Sync/Peer/Links";
+    private const string CopiesPath = "/Sync/Peer/Copies";
     private static readonly Guid Library = Guid.Parse("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
     private static readonly BaseItemKind[] Movies = { BaseItemKind.Movie };
 

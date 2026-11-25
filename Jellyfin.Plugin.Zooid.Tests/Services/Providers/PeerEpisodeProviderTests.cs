@@ -59,6 +59,6 @@ public sealed class PeerEpisodeProviderTests
         Assert.True(result.HasMetadata);
         Assert.IsType<Episode>(result.Item);
         Assert.Equal("From The Source", result.Item.Name);
-        Assert.Contains("\"ItemType\":\"Episode\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"Episode\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 }

@@ -22,7 +22,7 @@ namespace Jellyfin.Plugin.Zooid.Api;
 /// </summary>
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
-[Route("Zooid/Servers")]
+[Route("Sync/Servers")]
 [Produces(MediaTypeNames.Application.Json)]
 public class ServersController : ControllerBase
 {

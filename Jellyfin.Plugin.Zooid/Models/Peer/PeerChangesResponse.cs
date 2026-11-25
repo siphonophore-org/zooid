@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Jellyfin.Plugin.Zooid.Models.Peer;
 
-/// <summary>What left a peer's library since a time, answered by <c>GET /Zooid/Peer/Changes</c>.</summary>
+/// <summary>What left a peer's library since a time, answered by <c>GET /Sync/Peer/Changes</c>.</summary>
 public class PeerChangesResponse
 {
     /// <summary>Gets or sets the time the peer's record of removals reaches back to.</summary>

@@ -68,7 +68,7 @@ internal sealed class ProviderTestHarness
     /// <returns>The stub server behind the entry, for the test to add routes to.</returns>
     public ClientStubServer AddSource(string key, string? name = null)
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Capabilities", Capabilities(key + "-id"));
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Capabilities", Capabilities(key + "-id"));
         Factory.Handlers[key] = server;
         Config.Configuration.Servers.Add(new SourceServer
         {
@@ -93,7 +93,7 @@ internal sealed class ProviderTestHarness
     /// <returns>The stub server behind the entry.</returns>
     public ClientStubServer AddSourceHolding(string key, Guid itemId, string itemType, string itemName)
         => AddSource(key)
-            .OnJson("/Zooid/Peer/Lookup", FoundItem(itemId))
+            .OnJson("/Sync/Peer/Lookup", FoundItem(itemId))
             .OnJson("/Items", ClientJson.Page(1, ClientJson.Item(itemId, itemType, name: itemName)));
 
     /// <summary>Finds the server entry added under a key.</summary>

@@ -59,6 +59,6 @@ public sealed class PeerTrailerProviderTests
         Assert.True(result.HasMetadata);
         Assert.IsType<Trailer>(result.Item);
         Assert.Equal("From The Source", result.Item.Name);
-        Assert.Contains("\"ItemType\":\"Trailer\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"Trailer\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 }

@@ -144,7 +144,7 @@ export function createQueueModule(ctx) {
         // Fetches a poster through the image proxy once per page and remembers it.
         _loadProxy: function(imgId, cacheKey, itemId, peerKey) {
             var self = this;
-            var url = ApiClient.getUrl('Zooid/ImageProxy', { itemId: itemId, user: 'false', maxHeight: 128, serverKey: peerKey });
+            var url = ApiClient.getUrl('Sync/ImageProxy', { itemId: itemId, user: 'false', maxHeight: 128, serverKey: peerKey });
             ApiClient.fetch({ url: url, type: 'GET' }).then(function(response) {
                 if (!response || !response.ok) throw new Error('image fetch failed');
                 return response.blob();

@@ -256,7 +256,7 @@ public sealed class FileDeletionServiceTests : IDisposable
         var season = Path.Combine(show, "Season 01");
         Directory.CreateDirectory(season);
         var link = Path.Combine(season, "Show - S01E01.strm");
-        File.WriteAllText(link, "http://localhost/Zooid/Link/x");
+        File.WriteAllText(link, "http://localhost/Sync/Link/x");
         File.WriteAllText(Path.Combine(season, "Show - S01E01.nfo"), "<episodedetails/>");
         var poster = Path.Combine(show, "poster.jpg");
         File.WriteAllText(poster, "x");

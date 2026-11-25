@@ -37,7 +37,7 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Links;
 /// </summary>
 public sealed class LinkRouteTests : IDisposable
 {
-    private const string LinkUrl = "http://127.0.0.1:8096/Zooid/Link/abc?k=secret";
+    private const string LinkUrl = "http://127.0.0.1:8096/Sync/Link/abc?k=secret";
 
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "zooid-linkroutes-" + Guid.NewGuid().ToString("N"));
 
@@ -787,7 +787,7 @@ public sealed class LinkRouteTests : IDisposable
     public void Policy_LinkHere_IsNeverStreamedOn(string name, bool allowed)
     {
         var path = Path.Combine(_dir, name);
-        File.WriteAllText(path, "http://127.0.0.1:8096/Zooid/Link/x?k=y");
+        File.WriteAllText(path, "http://127.0.0.1:8096/Sync/Link/x?k=y");
         var (library, stub) = InterfaceStub.Create<ILibraryManager>();
         stub.Answer(nameof(ILibraryManager.GetItemById), _ => new Movie { Path = path });
         var (users, _) = InterfaceStub.Create<IUserManager>();
@@ -930,7 +930,7 @@ public sealed class LinkRouteTests : IDisposable
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var isLinks = request.RequestUri!.AbsolutePath.EndsWith("/Zooid/Peer/Links", StringComparison.Ordinal);
+            var isLinks = request.RequestUri!.AbsolutePath.EndsWith("/Sync/Peer/Links", StringComparison.Ordinal);
             if (isLinks)
             {
                 LinkCalls++;

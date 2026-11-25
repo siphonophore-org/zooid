@@ -33,7 +33,7 @@ public partial class SourceServerClient
     /// <returns>The peer's capabilities, or null when the source answers 404 because Zooid is not installed there.</returns>
     public async Task<PeerCapabilities?> GetPeerCapabilitiesAsync(CancellationToken cancellationToken = default)
     {
-        var (status, parsed, body) = await PeerRequestAsync<PeerCapabilities>(HttpMethod.Get, "/Zooid/Peer/Capabilities", null, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerCapabilities>(HttpMethod.Get, "/Sync/Peer/Capabilities", null, cancellationToken).ConfigureAwait(false);
         if (status == 404)
         {
             return null;
@@ -67,7 +67,7 @@ public partial class SourceServerClient
         string? body;
         try
         {
-            (status, _, body) = await PeerRequestAsync<PeerCapabilities>(HttpMethod.Get, "/Zooid/Peer/Capabilities", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+            (status, _, body) = await PeerRequestAsync<PeerCapabilities>(HttpMethod.Get, "/Sync/Peer/Capabilities", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         }
         // Any failure to reach the peer is a result to show, not an error.
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
@@ -121,7 +121,7 @@ public partial class SourceServerClient
     /// <returns>The playlists, or null when the peer's Zooid does not list them.</returns>
     public async Task<PeerPlaylistsResponse?> GetPeerPlaylistsAsync(string callerServerId, Guid? onlyId = null, CancellationToken cancellationToken = default)
     {
-        var path = "/Zooid/Peer/Playlists?serverId=" + Uri.EscapeDataString(callerServerId ?? string.Empty)
+        var path = "/Sync/Peer/Playlists?serverId=" + Uri.EscapeDataString(callerServerId ?? string.Empty)
             + (onlyId is null ? string.Empty : "&id=" + onlyId.Value.ToString("N", System.Globalization.CultureInfo.InvariantCulture));
         var (status, parsed, body) = await PeerRequestAsync<PeerPlaylistsResponse>(HttpMethod.Get, path, null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         if (status == 426)
@@ -186,7 +186,7 @@ public partial class SourceServerClient
     public async Task<PeerHistoryResponse> NegotiateHistoryAsync(PeerHistoryRequest peerRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(peerRequest);
-        var (status, parsed, body) = await PeerRequestAsync<PeerHistoryResponse>(HttpMethod.Post, "/Zooid/Peer/History", peerRequest, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerHistoryResponse>(HttpMethod.Post, "/Sync/Peer/History", peerRequest, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             throw new Peer.PeerRefusedException((System.Net.HttpStatusCode)status, $"Source server refused the history negotiation with {status}: {body}");
@@ -205,7 +205,7 @@ public partial class SourceServerClient
     public async Task<(int StatusCode, Models.Queue.QueueResponse? Response, string? Body)> SendHintsAsync(Models.Queue.QueueRequest queueRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(queueRequest);
-        var (status, parsed, body) = await PeerRequestAsync<Models.Queue.QueueResponse>(HttpMethod.Post, "/Zooid/Peer/Queue", queueRequest, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<Models.Queue.QueueResponse>(HttpMethod.Post, "/Sync/Peer/Queue", queueRequest, cancellationToken).ConfigureAwait(false);
         return status == 200 ? (status, parsed ?? new Models.Queue.QueueResponse(), null) : (status, null, body);
     }
 
@@ -218,7 +218,7 @@ public partial class SourceServerClient
     public async Task<Models.Peer.PeerLinkResponse?> GetPeerLinkAsync(string thisServerId, CancellationToken cancellationToken = default)
     {
         using var expecting = Pairing?.Expect();
-        var (_, parsed, _) = await PeerRequestAsync<Models.Peer.PeerLinkResponse>(HttpMethod.Get, "/Zooid/Peer/Link?serverId=" + Uri.EscapeDataString(thisServerId ?? string.Empty), null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (_, parsed, _) = await PeerRequestAsync<Models.Peer.PeerLinkResponse>(HttpMethod.Get, "/Sync/Peer/Link?serverId=" + Uri.EscapeDataString(thisServerId ?? string.Empty), null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         return parsed;
     }
 
@@ -231,7 +231,7 @@ public partial class SourceServerClient
     public async Task<(int StatusCode, string? Body)> PairAsync(Models.Peer.PairRequest pairRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pairRequest);
-        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Zooid/Peer/Pair", pairRequest, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Sync/Peer/Pair", pairRequest, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         return (status, body);
     }
 
@@ -268,7 +268,7 @@ public partial class SourceServerClient
     public async Task<Dictionary<string, Models.Queue.ObjectVersion>?> GetPeerVersionsAsync(Models.Queue.VersionsRequest versionsRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(versionsRequest);
-        var (status, parsed, _) = await PeerRequestAsync<Models.Queue.VersionsResponse>(HttpMethod.Post, "/Zooid/Peer/Versions", versionsRequest, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, _) = await PeerRequestAsync<Models.Queue.VersionsResponse>(HttpMethod.Post, "/Sync/Peer/Versions", versionsRequest, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             return null;
@@ -292,7 +292,7 @@ public partial class SourceServerClient
     public async Task<bool> CompleteHintsAsync(Models.Queue.CompleteRequest completeRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(completeRequest);
-        var (status, _, _) = await PeerRequestAsync<object>(HttpMethod.Post, "/Zooid/Peer/Complete", completeRequest, cancellationToken).ConfigureAwait(false);
+        var (status, _, _) = await PeerRequestAsync<object>(HttpMethod.Post, "/Sync/Peer/Complete", completeRequest, cancellationToken).ConfigureAwait(false);
         return status is >= 200 and < 300;
     }
 
@@ -305,7 +305,7 @@ public partial class SourceServerClient
     public async Task<PeerInterest?> GetPeerInterestAsync(string thisServerId, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(thisServerId);
-        var (status, parsed, body) = await PeerRequestAsync<PeerInterest>(HttpMethod.Get, "/Zooid/Peer/Interest?serverId=" + Uri.EscapeDataString(thisServerId), null, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerInterest>(HttpMethod.Get, "/Sync/Peer/Interest?serverId=" + Uri.EscapeDataString(thisServerId), null, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             throw new HttpRequestException($"The peer answered {status} to the interest request: {body}", null, (System.Net.HttpStatusCode)status);
@@ -323,7 +323,7 @@ public partial class SourceServerClient
     public async Task<PeerLookupResponse?> LookupPeerItemAsync(PeerLookupRequest lookupRequest, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(lookupRequest);
-        var (status, parsed, body) = await PeerRequestAsync<PeerLookupResponse>(HttpMethod.Post, "/Zooid/Peer/Lookup", lookupRequest, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerLookupResponse>(HttpMethod.Post, "/Sync/Peer/Lookup", lookupRequest, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             throw new HttpRequestException($"The peer answered {status} to the lookup: {body}", null, (System.Net.HttpStatusCode)status);
@@ -342,7 +342,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(itemIds);
         var request = new PeerSegmentsRequest { ItemIds = itemIds.ToList() };
-        var (status, parsed, body) = await PeerRequestAsync<PeerSegmentsResponse>(HttpMethod.Post, "/Zooid/Peer/Segments", request, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerSegmentsResponse>(HttpMethod.Post, "/Sync/Peer/Segments", request, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         if (status is < 200 or >= 300 || parsed is null)
         {
             throw new HttpRequestException($"The peer answered {status} to the media segment read: {body}", null, (System.Net.HttpStatusCode)status);
@@ -384,7 +384,7 @@ public partial class SourceServerClient
     public async Task<Models.Queue.QueueStatusResponse?> GetPeerQueueStatusAsync(string fromServerId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fromServerId);
-        var (_, parsed, _) = await PeerRequestAsync<Models.Queue.QueueStatusResponse>(HttpMethod.Get, "/Zooid/Peer/Status?serverId=" + Uri.EscapeDataString(fromServerId), null, cancellationToken).ConfigureAwait(false);
+        var (_, parsed, _) = await PeerRequestAsync<Models.Queue.QueueStatusResponse>(HttpMethod.Get, "/Sync/Peer/Status?serverId=" + Uri.EscapeDataString(fromServerId), null, cancellationToken).ConfigureAwait(false);
         return parsed;
     }
 
@@ -405,7 +405,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(sourceItemId);
         ArgumentNullException.ThrowIfNull(grant);
-        var path = "/Zooid/Peer/Stream/" + Uri.EscapeDataString(sourceItemId)
+        var path = "/Sync/Peer/Stream/" + Uri.EscapeDataString(sourceItemId)
             + "?serverId=" + Uri.EscapeDataString(callerServerId ?? string.Empty)
             + (grant.UserId is { } user ? "&userId=" + user.ToString("N", System.Globalization.CultureInfo.InvariantCulture) : string.Empty)
             + (string.IsNullOrEmpty(sourceUserId) ? string.Empty : "&sourceUserId=" + Uri.EscapeDataString(sourceUserId))
@@ -434,7 +434,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (status, parsed, body) = await PeerRequestAsync<LinkStreamCheckResponse>(HttpMethod.Post, "/Zooid/Peer/Stream/Check", request, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<LinkStreamCheckResponse>(HttpMethod.Post, "/Sync/Peer/Stream/Check", request, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300 || parsed is null)
         {
             return new LinkStreamCheckResponse { Allowed = false, Reason = $"the source answered {status}: {body}" };
@@ -453,7 +453,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(report);
 
-        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Zooid/Peer/Playback", report, cancellationToken).ConfigureAwait(false);
+        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Sync/Peer/Playback", report, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             throw new HttpRequestException($"The peer answered {status} to a playback report: {body}", null, (System.Net.HttpStatusCode)status);
@@ -470,7 +470,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Zooid/Peer/Control", request, cancellationToken).ConfigureAwait(false);
+        var (status, _, body) = await PeerRequestAsync<object>(HttpMethod.Post, "/Sync/Peer/Control", request, cancellationToken).ConfigureAwait(false);
         if (status is < 200 or >= 300)
         {
             throw new HttpRequestException($"The peer answered {status} to a remote control command: {body}", null, (System.Net.HttpStatusCode)status);
@@ -488,7 +488,7 @@ public partial class SourceServerClient
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (status, parsed, body) = await PeerRequestAsync<PeerLinkDescribeResponse>(HttpMethod.Post, "/Zooid/Peer/Links/Describe", request, cancellationToken).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerLinkDescribeResponse>(HttpMethod.Post, "/Sync/Peer/Links/Describe", request, cancellationToken).ConfigureAwait(false);
         if (status is 404 or 405)
         {
             return null;
@@ -518,7 +518,7 @@ public partial class SourceServerClient
         ArgumentNullException.ThrowIfNull(kind);
 
         return SendPeerStreamAsync(
-            "/Zooid/Peer/Links/" + Uri.EscapeDataString(sourceItemId) + "/Images/" + Uri.EscapeDataString(kind) + "/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            "/Sync/Peer/Links/" + Uri.EscapeDataString(sourceItemId) + "/Images/" + Uri.EscapeDataString(kind) + "/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture)
                 + "?serverId=" + Uri.EscapeDataString(callerServerId ?? string.Empty) + "&width=" + width.ToString(System.Globalization.CultureInfo.InvariantCulture),
             null,
             false,
@@ -558,7 +558,7 @@ public partial class SourceServerClient
     /// <returns>The peer's links, or null when the peer has no links route.</returns>
     public async Task<PeerLinksResponse?> GetPeerLinksAsync(CancellationToken cancellationToken = default)
     {
-        var (status, parsed, body) = await PeerRequestAsync<PeerLinksResponse>(HttpMethod.Get, "/Zooid/Peer/Links", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerLinksResponse>(HttpMethod.Get, "/Sync/Peer/Links", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
 
         // Only a missing route says the peer has no links.
         if (status == 404)
@@ -583,7 +583,7 @@ public partial class SourceServerClient
     /// <returns>The peer's removals, or null when the peer has no such route or refuses, so a full listing finds them.</returns>
     public async Task<PeerChangesResponse?> GetPeerChangesAsync(DateTime since, CancellationToken cancellationToken = default)
     {
-        var path = "/Zooid/Peer/Changes?since=" + Uri.EscapeDataString(since.ToUniversalTime().ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        var path = "/Sync/Peer/Changes?since=" + Uri.EscapeDataString(since.ToUniversalTime().ToString("o", System.Globalization.CultureInfo.InvariantCulture));
         var (status, parsed, body) = await PeerRequestAsync<PeerChangesResponse>(HttpMethod.Get, path, null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         if (status is >= 400 and < 500)
         {
@@ -606,7 +606,7 @@ public partial class SourceServerClient
     /// <returns>The peer's copies, or null when the peer has no such route or refuses, so every file is taken as its own.</returns>
     public async Task<PeerCopiesResponse?> GetPeerCopiesAsync(CancellationToken cancellationToken = default)
     {
-        var (status, parsed, body) = await PeerRequestAsync<PeerCopiesResponse>(HttpMethod.Get, "/Zooid/Peer/Copies", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
+        var (status, parsed, body) = await PeerRequestAsync<PeerCopiesResponse>(HttpMethod.Get, "/Sync/Peer/Copies", null, cancellationToken, pairOnRefusal: false).ConfigureAwait(false);
         if (status is >= 400 and < 500)
         {
             _logger.LogDebug("The peer does not say where its copies came from ({Status}): {Body}", status, FormatUtilities.SanitizeForLog(body));

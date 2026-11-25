@@ -121,7 +121,7 @@ public sealed class UpdateSyncTablesTaskTests : IDisposable
     }
 
     /// <summary>Writes a tracked link row with its .strm, this plugin's own unless <paramref name="url"/> says otherwise.</summary>
-    private SyncItem TrackLink(string id, string title = "Title", string? folder = null, SyncStatus status = SyncStatus.Synced, PendingType? pendingType = null, string url = "http://localhost:8096/Zooid/Link/id?s=secret", StorageMode storage = StorageMode.Link)
+    private SyncItem TrackLink(string id, string title = "Title", string? folder = null, SyncStatus status = SyncStatus.Synced, PendingType? pendingType = null, string url = "http://localhost:8096/Sync/Link/id?s=secret", StorageMode storage = StorageMode.Link)
     {
         var localPath = Path.Combine(folder ?? Path.Combine(_localRoot, title), id + ".strm");
         Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);

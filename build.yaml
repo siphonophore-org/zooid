@@ -23,4 +23,4 @@ artifacts:
 - "Std.UriTemplate.dll"
 changelog:
   added:
-  - Zooid, from Server Sync 12.4.21.0, built on Stolon
+  - The first release of Zooid

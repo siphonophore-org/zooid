@@ -113,7 +113,7 @@ public class JsonBlobComparatorTests
 
     /// <summary>
     /// The hash of a value is the full SHA256 of its text in lowercase hex.
-    /// True: hashes stored by earlier releases still match, so nothing looks changed.
+    /// True: stored hashes keep matching, so nothing looks changed.
     /// False: every tracked row would read as changed and be synced again.
     /// </summary>
     [Fact]

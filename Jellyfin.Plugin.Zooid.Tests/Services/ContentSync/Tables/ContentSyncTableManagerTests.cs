@@ -333,42 +333,6 @@ public sealed class ContentSyncTableManagerTests : IDisposable
     }
 
     /// <summary>
-    /// The reader floor rises to the build that knows the storage in use, and stays where it is for copies.
-    /// True: an older build sets a database with links aside instead of downloading over them.
-    /// False: a downgrade would treat links as copies and replace them with full downloads.
-    /// </summary>
-    [Theory]
-    [InlineData(StorageMode.Copy, SyncSchema.MinReaderVersion)]
-    [InlineData(StorageMode.Link, SyncSchema.LinkReaderVersion)]
-    [InlineData(StorageMode.Promoting, SyncSchema.LinkReaderVersion)]
-    [InlineData(StorageMode.Unkeeping, SyncSchema.UnkeepReaderVersion)]
-    public void RequireLinkAwareReaders_StorageInUse_SetsTheReaderFloor(StorageMode storage, int expectedFloor)
-    {
-        Add("a", "/local/a", storage: storage);
-
-        _table.RequireLinkAwareReaders();
-
-        Assert.Equal(expectedFloor, ReaderFloor());
-    }
-
-    /// <summary>
-    /// The reader floor does not drop once the rows that raised it are gone.
-    /// True: the floor is only ever raised by this call.
-    /// False: removing the last link would reopen the database to builds that misread it.
-    /// </summary>
-    [Fact]
-    public void RequireLinkAwareReaders_LinksRemoved_KeepsTheRaisedFloor()
-    {
-        Add("a", "/local/a", storage: StorageMode.Unkeeping);
-        _table.RequireLinkAwareReaders();
-        _table.Delete("a");
-
-        _table.RequireLinkAwareReaders();
-
-        Assert.Equal(SyncSchema.UnkeepReaderVersion, ReaderFloor());
-    }
-
-    /// <summary>
     /// A removed copy is recorded with its path and origin.
     /// True: the origin can later be told its copy is gone.
     /// False: a removed copy would leave no trace and the origin would never hear of it.
@@ -782,12 +746,5 @@ public sealed class ContentSyncTableManagerTests : IDisposable
 
         Assert.Null(_table.GetBySourceItemId("a"));
         Assert.NotNull(_table.GetBySourceItemId("ab"));
-    }
-
-    private int? ReaderFloor()
-    {
-        using var connection = new SqliteConnection($"Data Source={_db.FilePath};Mode=ReadOnly;Pooling=False");
-        connection.Open();
-        return DatabaseSchema.GetMinReaderVersion(connection);
     }
 }

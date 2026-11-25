@@ -57,7 +57,7 @@ public sealed class LinkFilesTests : IDisposable
 
         var url = files.UrlFor("abc123");
 
-        Assert.StartsWith(LinkTestFiles.Address + "/Zooid/Link/abc123?k=", url, StringComparison.Ordinal);
+        Assert.StartsWith(LinkTestFiles.Address + "/Sync/Link/abc123?k=", url, StringComparison.Ordinal);
         var secret = url[(url.IndexOf("?k=", StringComparison.Ordinal) + 3)..];
         Assert.Equal(43, secret.Length);
         Assert.DoesNotContain(secret, c => c is '=' or '+' or '/');
@@ -234,7 +234,7 @@ public sealed class LinkFilesTests : IDisposable
     /// <param name="content">The file's text.</param>
     /// <param name="expected">The URL read, or null.</param>
     [Theory]
-    [InlineData("http://a/Zooid/Link/x?k=y\n", "http://a/Zooid/Link/x?k=y")]
+    [InlineData("http://a/Sync/Link/x?k=y\n", "http://a/Sync/Link/x?k=y")]
     [InlineData("\n\n# a note\n  http://a/one  \nhttp://a/two\n", "http://a/one")]
     [InlineData("\thttp://a/\ttabbed\r\n", "http://a/tabbed")]
     [InlineData("", null)]
@@ -259,10 +259,10 @@ public sealed class LinkFilesTests : IDisposable
     [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]
-    [InlineData("http://127.0.0.1:8096/Zooid/Link/abc?k=s", true)]
-    [InlineData("http://127.0.0.1:8096/zooid/link/abc?k=s", true)]
-    [InlineData("http://127.0.0.1:8096/Zooid/Linker/abc", false)]
-    [InlineData("http://127.0.0.1:8096/Zooid/Link", false)]
+    [InlineData("http://127.0.0.1:8096/Sync/Link/abc?k=s", true)]
+    [InlineData("http://127.0.0.1:8096/sync/link/abc?k=s", true)]
+    [InlineData("http://127.0.0.1:8096/Sync/Linker/abc", false)]
+    [InlineData("http://127.0.0.1:8096/Sync/Link", false)]
     [InlineData("http://example.invalid/stream.m3u8", false)]
     public void PointsAtLinkRoute_NeedsTheRouteSegment(string? url, bool expected)
     {
@@ -280,11 +280,11 @@ public sealed class LinkFilesTests : IDisposable
     /// <param name="content">The file's text, or null for no file.</param>
     /// <param name="expected">Whether it is this plugin's link.</param>
     [Theory]
-    [InlineData("Own.strm", "http://127.0.0.1:8096/Zooid/Link/abc?k=s", true)]
-    [InlineData("Own.STRM", "http://127.0.0.1:8096/Zooid/Link/abc?k=s", true)]
+    [InlineData("Own.strm", "http://127.0.0.1:8096/Sync/Link/abc?k=s", true)]
+    [InlineData("Own.STRM", "http://127.0.0.1:8096/Sync/Link/abc?k=s", true)]
     [InlineData("Users.strm", "http://example.invalid/stream", false)]
     [InlineData("Empty.strm", "", false)]
-    [InlineData("Video.mkv", "http://127.0.0.1:8096/Zooid/Link/abc?k=s", false)]
+    [InlineData("Video.mkv", "http://127.0.0.1:8096/Sync/Link/abc?k=s", false)]
     [InlineData("Missing.strm", null, false)]
     public void IsOwnLink_OnlyAStrmAtTheLinkRoute(string name, string? content, bool expected)
     {

@@ -94,8 +94,8 @@ public class SourceServerTests
 
     /// <summary>
     /// An entry of unknown access level keeps every mapping and its mode.
-    /// True: an older entry is not narrowed by a save.
-    /// False: saving would drop mappings or change the mode of an entry that predates access levels.
+    /// True: an entry whose access was never checked is not narrowed by a save.
+    /// False: saving would drop mappings or change the mode of an entry with no access level.
     /// </summary>
     [Fact]
     public void UnknownAccess_KeepsEveryMappingAndMode()

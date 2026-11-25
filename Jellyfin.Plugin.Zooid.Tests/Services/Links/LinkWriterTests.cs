@@ -149,7 +149,7 @@ public sealed class LinkWriterTests : IDisposable
     [Theory]
     [InlineData("")]
     [InlineData("# nothing here\n")]
-    [InlineData("http://127.0.0.1:8096/Zooid/Link/old?k=stale\n")]
+    [InlineData("http://127.0.0.1:8096/Sync/Link/old?k=stale\n")]
     public void Write_EmptyOrOwnStaleStrm_IsReplaced(string existing)
     {
         var row = LinkTestTable.Row("aaaa", _store.Media("Film.strm"));

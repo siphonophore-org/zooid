@@ -40,7 +40,7 @@ public sealed class ConfigurationControllerConfigurationTests : IDisposable
             {
                 "/System/Info" => ControllerTestHarness.Json("{\"ServerName\":\"Peer\",\"Id\":\"" + ControllerTestHarness.PeerId + "\"}"),
                 "/Users/Me" => new HttpResponseMessage(HttpStatusCode.BadRequest),
-                "/Zooid/Peer/Capabilities" => ControllerTestHarness.Json("{\"PluginVersion\":\"0.0.0-test\"}"),
+                "/Sync/Peer/Capabilities" => ControllerTestHarness.Json("{\"PluginVersion\":\"0.0.0-test\"}"),
                 "/Library/VirtualFolders" => ControllerTestHarness.Json("[{\"Name\":\"Movies\",\"ItemId\":\"lib-1\",\"Locations\":[\"/media/movies\"]},{\"Name\":null,\"ItemId\":null,\"Locations\":null}]"),
                 "/Users" => ControllerTestHarness.Json("[{\"Id\":\"" + UserId + "\",\"Name\":\"alice\"}]"),
                 "/Items" => ControllerTestHarness.Json("{\"Items\":[{\"Id\":\"" + ItemId + "\",\"Name\":\"Film\",\"ProductionYear\":2020,\"Overview\":\"About\",\"Path\":\"/media/movies/Film\",\"Type\":\"Movie\"}],\"TotalRecordCount\":7,\"StartIndex\":0}"),
@@ -178,7 +178,7 @@ public sealed class ConfigurationControllerConfigurationTests : IDisposable
         Assert.False(body.Success);
         Assert.False(string.IsNullOrEmpty(body.Message));
         Assert.Null(body.SyncAccess);
-        Assert.DoesNotContain("/Zooid/Peer/Capabilities", _harness.PeerPaths);
+        Assert.DoesNotContain("/Sync/Peer/Capabilities", _harness.PeerPaths);
     }
 
     /// <summary>

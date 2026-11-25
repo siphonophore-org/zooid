@@ -62,7 +62,7 @@ public sealed class PeerMetadataProviderTests
         var results = (await provider.GetSearchResults(new SeriesInfo { Path = ProviderTestHarness.LocalRoot + "/Show" }, CancellationToken.None)).ToList();
 
         Assert.Equal("The Show on Server a", Assert.Single(results).Name);
-        Assert.Contains("\"ItemType\":\"Series\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"Series\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 
     /// <summary>

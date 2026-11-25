@@ -63,7 +63,7 @@ function casingList() {
 
 // The pages load their strings with fetch, which answers here as StolonTranslations.Serve does, in US English.
 globalThis.fetch = function (url) {
-    if (String(url).indexOf('Zooid/Translations') < 0) return Promise.reject(new Error('No route for ' + url));
+    if (String(url).indexOf('Sync/Translations') < 0) return Promise.reject(new Error('No route for ' + url));
     var body = { language: 'en-us', strings: strings, casing: casingList() };
     return Promise.resolve({ ok: true, json: function () { return Promise.resolve(body); } });
 };

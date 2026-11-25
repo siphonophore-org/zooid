@@ -116,7 +116,7 @@ public sealed class PeerImageProviderTests
     public async Task GetImages_SourceHoldsTheItem_ListsItsImages()
     {
         _harness.AddSource("a")
-            .OnJson("/Zooid/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnSource))
+            .OnJson("/Sync/Peer/Lookup", ProviderTestHarness.FoundItem(ItemOnSource))
             .OnJson("/Items/" + ItemOnSource + "/Images", "[{\"ImageType\":\"Logo\",\"ImageIndex\":0}]");
         var provider = new PeerImageProvider(_harness.Source);
 

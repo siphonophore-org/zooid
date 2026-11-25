@@ -31,7 +31,7 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Links;
 public sealed class LinkPlaybackFilterTests
 {
     private const string LinkPath = "/media/Film.strm";
-    private const string LinkUrl = "http://127.0.0.1:8096/Zooid/Link/aaaa?k=secret";
+    private const string LinkUrl = "http://127.0.0.1:8096/Sync/Link/aaaa?k=secret";
     private static readonly Guid User = Guid.Parse("11111111111111111111111111111111");
     private readonly Movie _movie = new() { Id = Guid.NewGuid(), Path = LinkPath };
     private readonly LinkFakeRegistry _registry = new LinkFakeRegistry().Add(new LinkEntry(LinkPath, "/media/Film.mkv", "aaaa", "a"));

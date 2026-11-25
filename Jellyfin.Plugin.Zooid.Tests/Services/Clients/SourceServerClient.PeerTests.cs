@@ -60,8 +60,8 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task GetPeerCapabilitiesAsync_Answers_AreToldApart()
     {
         using var missing = new ClientStubServer().Client();
-        using var running = new ClientStubServer().OnJson("/Zooid/Peer/Capabilities", "{\"serverId\":\"abc\",\"PluginVersion\":\"9.9\",\"protocolVersion\":3,\"Accepts\":[\"History\"]}").Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Capabilities", HttpStatusCode.Unauthorized, "bad key").Client();
+        using var running = new ClientStubServer().OnJson("/Sync/Peer/Capabilities", "{\"serverId\":\"abc\",\"PluginVersion\":\"9.9\",\"protocolVersion\":3,\"Accepts\":[\"History\"]}").Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Capabilities", HttpStatusCode.Unauthorized, "bad key").Client();
 
         var none = await missing.GetPeerCapabilitiesAsync();
         var capabilities = await running.GetPeerCapabilitiesAsync();
@@ -95,7 +95,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(500, "boom", "Refused", "Zooid there refused this key (500)")]
     public async Task CheckSyncAccessAsync_Answer_MapsToACode(int status, string? body, string expectedCode, string expectedMessage)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Capabilities", (HttpStatusCode)status, body).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Capabilities", (HttpStatusCode)status, body).Client();
 
         var (code, message) = await client.CheckSyncAccessAsync();
 
@@ -111,7 +111,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task CheckSyncAccessAsync_Unreachable_IsUnknown()
     {
-        using var broken = new ClientStubServer().OnThrow("/Zooid/Peer/Capabilities", new HttpRequestException("no route")).Client();
+        using var broken = new ClientStubServer().OnThrow("/Sync/Peer/Capabilities", new HttpRequestException("no route")).Client();
         using var cancelled = new CancellationTokenSource();
         await cancelled.CancelAsync();
 
@@ -131,7 +131,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task GetPeerPlaylistsAsync_Request_NamesThisServerAndThePlaylist()
     {
         var id = Guid.Parse("0123456789abcdef0123456789abcdef");
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Playlists", "{\"Playlists\":[]}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Playlists", "{\"Playlists\":[]}");
         using var client = server.Client();
 
         await client.GetPeerPlaylistsAsync("this server&1");
@@ -155,7 +155,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(200, false, false)]
     public async Task GetPeerPlaylistsAsync_Answer_IsNullEmptyOrThrown(int status, bool expectNull, bool expectThrow)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Playlists", (HttpStatusCode)status).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Playlists", (HttpStatusCode)status).Client();
 
         if (expectThrow)
         {
@@ -219,7 +219,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task NegotiateHistoryAsync_Accepted_ReturnsThePeersResults()
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/History", "{\"Items\":[{\"UserId\":\"u\",\"ItemId\":\"i\",\"Outcome\":\"Stale\",\"Current\":{\"Played\":true,\"PlayCount\":2}}]}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/History", "{\"Items\":[{\"UserId\":\"u\",\"ItemId\":\"i\",\"Outcome\":\"Stale\",\"Current\":{\"Played\":true,\"PlayCount\":2}}]}");
         using var client = server.Client();
         var request = new PeerHistoryRequest { SenderServerId = ThisServer, Items = { new PeerHistoryEntry { UserId = "u", ItemId = "i", Proposed = new PeerHistoryState { Played = true } } } };
 
@@ -247,7 +247,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(503, false)]
     public async Task NegotiateHistoryAsync_Refused_ThrowsWithTheStatus(int status, bool keyRefused)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/History", (HttpStatusCode)status, "why").Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/History", (HttpStatusCode)status, "why").Client();
 
         var failure = await Assert.ThrowsAsync<PeerRefusedException>(() => client.NegotiateHistoryAsync(new PeerHistoryRequest()));
 
@@ -264,7 +264,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task NegotiateHistoryAsync_EmptyAnswer_IsEmpty()
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/History", HttpStatusCode.OK).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/History", HttpStatusCode.OK).Client();
 
         var response = await client.NegotiateHistoryAsync(new PeerHistoryRequest());
 
@@ -284,7 +284,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(503, "busy", -1, "busy")]
     public async Task SendHintsAsync_AnyAnswer_ReturnsItsStatus(int status, string? body, int expectedItems, string? expectedBody)
     {
-        var server = new ClientStubServer().OnStatus("/Zooid/Peer/Queue", (HttpStatusCode)status, body);
+        var server = new ClientStubServer().OnStatus("/Sync/Peer/Queue", (HttpStatusCode)status, body);
         using var client = server.Client();
         var request = new QueueRequest { SenderServerId = ThisServer, Items = { new SyncHint() } };
 
@@ -306,7 +306,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     {
         var store = NewPairings();
         var expectingDuringCall = false;
-        var server = new ClientStubServer().On("/Zooid/Peer/Link", _ =>
+        var server = new ClientStubServer().On("/Sync/Peer/Link", _ =>
         {
             expectingDuringCall = store.Expecting(PeerKey);
             return ClientStubServer.Json("{\"ServerId\":\"peer\",\"Listed\":true,\"Paired\":true}");
@@ -346,7 +346,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(403, "not listed", "not listed")]
     public async Task PairAsync_Answer_ReturnsStatusAndBody(int status, string? body, string? expectedBody)
     {
-        var server = new ClientStubServer().OnStatus("/Zooid/Peer/Pair", (HttpStatusCode)status, body);
+        var server = new ClientStubServer().OnStatus("/Sync/Peer/Pair", (HttpStatusCode)status, body);
         using var client = server.Client();
 
         var (statusCode, text) = await client.PairAsync(new PairRequest { ServerId = ThisServer, Secret = "s3cret" });
@@ -386,11 +386,11 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task GetPeerVersionsAsync_AnswerOrRefusal_IsAMapOrNull()
     {
         var server = new ClientStubServer().OnJson(
-            "/Zooid/Peer/Versions",
+            "/Sync/Peer/Versions",
             "{\"Items\":[{\"Kind\":\"Metadata\",\"Key\":\"a\",\"ServerId\":\"s1\",\"Timestamp\":\"2026-01-02T03:04:05Z\"},{\"Kind\":\"Metadata\",\"Key\":\"a\",\"ServerId\":\"s2\",\"Timestamp\":\"2026-01-03T00:00:00Z\"}]}");
         using var client = server.Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Versions", HttpStatusCode.Forbidden).Client();
-        using var silent = new ClientStubServer().OnStatus("/Zooid/Peer/Versions", HttpStatusCode.OK).Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Versions", HttpStatusCode.Forbidden).Client();
+        using var silent = new ClientStubServer().OnStatus("/Sync/Peer/Versions", HttpStatusCode.OK).Client();
         var request = new VersionsRequest { Kind = HintKind.Metadata, Keys = { "a" } };
 
         var versions = await client.GetPeerVersionsAsync(request);
@@ -413,7 +413,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(500, false)]
     public async Task CompleteHintsAsync_Status_SaysWhetherItWasAccepted(int status, bool expected)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Complete", (HttpStatusCode)status).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Complete", (HttpStatusCode)status).Client();
 
         var accepted = await client.CompleteHintsAsync(new CompleteRequest { SenderServerId = ThisServer });
 
@@ -428,9 +428,9 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task GetPeerInterestAsync_AnswerOrRefusal_ParsesOrThrows()
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Interest", "{\"Kinds\":[\"History\",\"Playlists\"],\"Users\":[\"u1\"],\"Revision\":\"r1\"}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Interest", "{\"Kinds\":[\"History\",\"Playlists\"],\"Users\":[\"u1\"],\"Revision\":\"r1\"}");
         using var client = server.Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Interest", HttpStatusCode.Forbidden, "no").Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Interest", HttpStatusCode.Forbidden, "no").Client();
 
         var interest = await client.GetPeerInterestAsync("this/server");
         var refused = await Assert.ThrowsAsync<HttpRequestException>(() => refusing.GetPeerInterestAsync(ThisServer));
@@ -450,9 +450,9 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task LookupPeerItemAsync_AnswerOrRefusal_ParsesOrThrows()
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Lookup", "{\"Found\":true,\"ItemId\":\"abc\",\"ItemType\":\"Movie\"}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Lookup", "{\"Found\":true,\"ItemId\":\"abc\",\"ItemType\":\"Movie\"}");
         using var client = server.Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Lookup", HttpStatusCode.BadGateway).Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Lookup", HttpStatusCode.BadGateway).Client();
 
         var found = await client.LookupPeerItemAsync(new PeerLookupRequest { Path = "/m/a.mkv", ItemType = "Movie" });
         var refused = await Assert.ThrowsAsync<HttpRequestException>(() => refusing.LookupPeerItemAsync(new PeerLookupRequest()));
@@ -471,9 +471,9 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task GetPeerSegmentsAsync_AnswerOrRefusal_ParsesOrThrows()
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Segments", "{\"Items\":[{\"ItemId\":\"abc\",\"Found\":true,\"Size\":5,\"RunTimeTicks\":9,\"Segments\":[{\"Type\":\"Intro\",\"StartTicks\":1,\"EndTicks\":2}]}]}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Segments", "{\"Items\":[{\"ItemId\":\"abc\",\"Found\":true,\"Size\":5,\"RunTimeTicks\":9,\"Segments\":[{\"Type\":\"Intro\",\"StartTicks\":1,\"EndTicks\":2}]}]}");
         using var client = server.Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Segments", HttpStatusCode.NotFound).Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Segments", HttpStatusCode.NotFound).Client();
 
         var answer = await client.GetPeerSegmentsAsync(new[] { "abc" });
         var refused = await Assert.ThrowsAsync<HttpRequestException>(() => refusing.GetPeerSegmentsAsync(new[] { "abc" }));
@@ -533,9 +533,9 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task GetPeerQueueStatusAsync_AnswerOrNone_ParsesOrNull()
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Status", "{\"ServerId\":\"peer\",\"CompletedHints\":[{}]}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Status", "{\"ServerId\":\"peer\",\"CompletedHints\":[{}]}");
         using var client = server.Client();
-        using var refusing = new ClientStubServer().OnStatus("/Zooid/Peer/Status", HttpStatusCode.Forbidden).Client();
+        using var refusing = new ClientStubServer().OnStatus("/Sync/Peer/Status", HttpStatusCode.Forbidden).Client();
 
         var status = await client.GetPeerQueueStatusAsync(ThisServer, CancellationToken.None);
 
@@ -555,7 +555,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task OpenPeerStreamAsync_Request_CarriesCallerUserRangeAndNoRetry()
     {
         var user = Guid.Parse("0123456789abcdef0123456789abcdef");
-        var server = new ClientStubServer().OnStatus("/Zooid/Peer/Stream/item%201", HttpStatusCode.PartialContent, "bytes");
+        var server = new ClientStubServer().OnStatus("/Sync/Peer/Stream/item%201", HttpStatusCode.PartialContent, "bytes");
         using var client = server.Client(pluginVersion: "7.7");
 
         using var response = await client.OpenPeerStreamAsync("item 1", ThisServer, new LinkGrant(user, true), "src user", "bytes=10-", head: false, fill: true);
@@ -579,7 +579,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task OpenPeerStreamAsync_Download_SaysSo()
     {
         var user = Guid.Parse("0123456789abcdef0123456789abcdef");
-        var server = new ClientStubServer().OnStatus("/Zooid/Peer/Stream/abc", HttpStatusCode.OK, "bytes");
+        var server = new ClientStubServer().OnStatus("/Sync/Peer/Stream/abc", HttpStatusCode.OK, "bytes");
         using var client = server.Client();
 
         using var response = await client.OpenPeerStreamAsync("abc", ThisServer, new LinkGrant(user, false, Download: true), null, null, head: false, fill: false);
@@ -616,8 +616,8 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(false, 1, 0, 428)]
     public async Task OpenPeerStreamAsync_Unpaired_PairsOnceWhenPaired(bool hasPairing, int expectedStreamCalls, int expectedLinkCalls, int expectedStatus)
     {
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Link", "{\"Listed\":true}");
-        server.On("/Zooid/Peer/Stream/abc", _ => new HttpResponseMessage(server.To("/Zooid/Peer/Link").Count == 0 ? (HttpStatusCode)HintProtocol.UnpairedStatus : HttpStatusCode.OK));
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Link", "{\"Listed\":true}");
+        server.On("/Sync/Peer/Stream/abc", _ => new HttpResponseMessage(server.To("/Sync/Peer/Link").Count == 0 ? (HttpStatusCode)HintProtocol.UnpairedStatus : HttpStatusCode.OK));
         using var client = server.Client();
         if (hasPairing)
         {
@@ -627,8 +627,8 @@ public sealed class SourceServerClientPeerTests : IDisposable
         using var response = await client.OpenPeerStreamAsync("abc", ThisServer, new LinkGrant(null, false), null, null, head: false, fill: false);
 
         Assert.Equal(expectedStatus, (int)response.StatusCode);
-        Assert.Equal(expectedStreamCalls, server.To("/Zooid/Peer/Stream/abc").Count);
-        Assert.Equal(expectedLinkCalls, server.To("/Zooid/Peer/Link").Count);
+        Assert.Equal(expectedStreamCalls, server.To("/Sync/Peer/Stream/abc").Count);
+        Assert.Equal(expectedLinkCalls, server.To("/Sync/Peer/Link").Count);
     }
 
     /// <summary>
@@ -642,7 +642,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(200, null, false, "the source answered 200: ")]
     public async Task CheckLinkStreamAsync_Answer_IsAllowedOnlyOnAParsedSuccess(int status, string? body, bool expectedAllowed, string? expectedReason)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Stream/Check", (HttpStatusCode)status, body).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Stream/Check", (HttpStatusCode)status, body).Client();
 
         var result = await client.CheckLinkStreamAsync(new LinkStreamCheckRequest { ServerId = ThisServer, ItemId = "abc" });
 
@@ -662,8 +662,8 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task ReportAndControl_Answer_ThrowOnlyWhenRefused(int status, bool expectThrow)
     {
         var server = new ClientStubServer()
-            .OnStatus("/Zooid/Peer/Playback", (HttpStatusCode)status, "p")
-            .OnStatus("/Zooid/Peer/Control", (HttpStatusCode)status, "c");
+            .OnStatus("/Sync/Peer/Playback", (HttpStatusCode)status, "p")
+            .OnStatus("/Sync/Peer/Control", (HttpStatusCode)status, "c");
         using var client = server.Client();
         var report = new PeerPlaybackReport { ServerId = ThisServer, Event = LinkPlaybackEvent.Stop, ItemId = "abc" };
         var control = new PeerControlRequest { ServerId = ThisServer, Command = "Pause" };
@@ -673,8 +673,8 @@ public sealed class SourceServerClientPeerTests : IDisposable
 
         Assert.Equal(expectThrow, reportFailure is HttpRequestException);
         Assert.Equal(expectThrow, controlFailure is HttpRequestException);
-        Assert.Contains("\"Event\":\"Stop\"", server.To("/Zooid/Peer/Playback")[0].Body, StringComparison.Ordinal);
-        Assert.Contains("\"Command\":\"Pause\"", server.To("/Zooid/Peer/Control")[0].Body, StringComparison.Ordinal);
+        Assert.Contains("\"Event\":\"Stop\"", server.To("/Sync/Peer/Playback")[0].Body, StringComparison.Ordinal);
+        Assert.Contains("\"Command\":\"Pause\"", server.To("/Sync/Peer/Control")[0].Body, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -690,7 +690,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(500, null, false, "the source answered 500")]
     public async Task DescribeLinksAsync_Answer_IsNullEmptyOrThePeersReason(int status, string? body, bool expectNull, string? expectedFailure)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Links/Describe", (HttpStatusCode)status, body).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Links/Describe", (HttpStatusCode)status, body).Client();
         var request = new PeerLinkDescribeRequest { ServerId = ThisServer, ItemIds = { "abc" } };
 
         if (expectedFailure is not null)
@@ -719,7 +719,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
         using var response = await client.OpenLinkImageAsync("abc", "Trickplay", 12, 320, ThisServer);
 
         var sent = Assert.Single(server.Seen);
-        Assert.Equal("/Zooid/Peer/Links/abc/Images/Trickplay/12", sent.Path);
+        Assert.Equal("/Sync/Peer/Links/abc/Images/Trickplay/12", sent.Path);
         Assert.Equal("?serverId=" + ThisServer + "&width=320", sent.Query);
         Assert.True(sent.NoRetry);
     }
@@ -736,7 +736,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(500, false, true)]
     public async Task GetPeerLinksAsync_Answer_IsNullEmptyOrThrown(int status, bool expectNull, bool expectThrow)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Links", (HttpStatusCode)status).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Links", (HttpStatusCode)status).Client();
 
         if (expectThrow)
         {
@@ -762,7 +762,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(500, false, true)]
     public async Task GetPeerChangesAsync_Answer_IsParsedNullOrThrown(int status, bool expectNull, bool expectThrow)
     {
-        var server = new ClientStubServer().OnStatus("/Zooid/Peer/Changes", (HttpStatusCode)status, status == 200 ? "{\"TooOld\":true,\"RemovedItemIds\":[\"a\",\"b\"]}" : null);
+        var server = new ClientStubServer().OnStatus("/Sync/Peer/Changes", (HttpStatusCode)status, status == 200 ? "{\"TooOld\":true,\"RemovedItemIds\":[\"a\",\"b\"]}" : null);
         using var client = server.Client();
         var since = new DateTime(2026, 5, 6, 7, 8, 9, DateTimeKind.Utc);
 
@@ -795,7 +795,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData(502, false, true)]
     public async Task GetPeerCopiesAsync_Answer_IsParsedNullOrThrown(int status, bool expectNull, bool expectThrow)
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Copies", (HttpStatusCode)status).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Copies", (HttpStatusCode)status).Client();
 
         if (expectThrow)
         {
@@ -821,7 +821,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task PeerCalls_PairingSecret_IsSentOnlyWhenHeld(bool hasPairing, bool hasSecret)
     {
         var secret = PeerPairingStore.NewSecret();
-        var server = new ClientStubServer().OnJson("/Zooid/Peer/Capabilities", "{}");
+        var server = new ClientStubServer().OnJson("/Sync/Peer/Capabilities", "{}");
         using var client = server.Client();
         if (hasPairing)
         {
@@ -848,16 +848,16 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task PeerCalls_Unpaired_PairAndRetryOnce()
     {
         var server = new ClientStubServer()
-            .OnJson("/Zooid/Peer/Link", "{\"Listed\":true}")
-            .OnStatus("/Zooid/Peer/Complete", (HttpStatusCode)HintProtocol.UnpairedStatus, "not paired");
+            .OnJson("/Sync/Peer/Link", "{\"Listed\":true}")
+            .OnStatus("/Sync/Peer/Complete", (HttpStatusCode)HintProtocol.UnpairedStatus, "not paired");
         using var client = server.Client();
         client.Pairing = new PeerPairing(NewPairings(), PeerKey, ThisServer);
 
         var accepted = await client.CompleteHintsAsync(new CompleteRequest());
 
         Assert.False(accepted);
-        Assert.Equal(2, server.To("/Zooid/Peer/Complete").Count);
-        Assert.Equal("?serverId=" + ThisServer, Assert.Single(server.To("/Zooid/Peer/Link")).Query);
+        Assert.Equal(2, server.To("/Sync/Peer/Complete").Count);
+        Assert.Equal("?serverId=" + ThisServer, Assert.Single(server.To("/Sync/Peer/Link")).Query);
     }
 
     /// <summary>
@@ -871,11 +871,11 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [InlineData("call-does-not-pair")]
     public async Task PeerCalls_UnpairedWithoutAWayToPair_AnswerOnce(string scenario)
     {
-        var path = scenario == "call-does-not-pair" ? "/Zooid/Peer/Lookup" : "/Zooid/Peer/Complete";
+        var path = scenario == "call-does-not-pair" ? "/Sync/Peer/Lookup" : "/Sync/Peer/Complete";
         var server = new ClientStubServer().OnStatus(path, (HttpStatusCode)HintProtocol.UnpairedStatus);
         if (scenario == "call-does-not-pair")
         {
-            server.OnJson("/Zooid/Peer/Link", "{\"Listed\":true}");
+            server.OnJson("/Sync/Peer/Link", "{\"Listed\":true}");
         }
 
         using var client = server.Client();
@@ -894,7 +894,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
         }
 
         Assert.Single(server.To(path));
-        Assert.Equal(scenario == "no-link-answer" ? 1 : 0, server.To("/Zooid/Peer/Link").Count);
+        Assert.Equal(scenario == "no-link-answer" ? 1 : 0, server.To("/Sync/Peer/Link").Count);
     }
 
     /// <summary>
@@ -905,7 +905,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     [Fact]
     public async Task PeerCalls_RefusalBody_IsCutToOneShortLine()
     {
-        using var client = new ClientStubServer().OnStatus("/Zooid/Peer/Queue", HttpStatusCode.BadRequest, "line one\r\nline\ttwo" + new string('x', 5000)).Client();
+        using var client = new ClientStubServer().OnStatus("/Sync/Peer/Queue", HttpStatusCode.BadRequest, "line one\r\nline\ttwo" + new string('x', 5000)).Client();
 
         var (_, _, body) = await client.SendHintsAsync(new QueueRequest());
 
@@ -923,7 +923,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task PeerCalls_DeclaredLengthOverTheCap_IsRefusedUnread()
     {
         var body = new ClientEndlessStream(long.MaxValue);
-        using var client = new ClientStubServer().On("/Zooid/Peer/Capabilities", _ =>
+        using var client = new ClientStubServer().On("/Sync/Peer/Capabilities", _ =>
         {
             var content = new StreamContent(body);
             content.Headers.ContentLength = HintProtocol.MaxPeerResponseBytes + 1;
@@ -945,7 +945,7 @@ public sealed class SourceServerClientPeerTests : IDisposable
     public async Task PeerCalls_UndeclaredLengthPastTheCap_IsCutOff()
     {
         var body = new ClientEndlessStream(long.MaxValue);
-        using var client = new ClientStubServer().On("/Zooid/Peer/Capabilities", _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) }).Client();
+        using var client = new ClientStubServer().On("/Sync/Peer/Capabilities", _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) }).Client();
 
         var failure = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetPeerCapabilitiesAsync());
 

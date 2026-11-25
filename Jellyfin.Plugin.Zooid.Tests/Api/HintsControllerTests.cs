@@ -44,8 +44,8 @@ public sealed class HintsControllerTests : IDisposable
         {
             "/System/Info" => ControllerTestHarness.Json("{\"ServerName\":\"Peer\",\"Id\":\"" + ControllerTestHarness.PeerId + "\"}"),
             "/Users/Me" => new HttpResponseMessage(HttpStatusCode.BadRequest),
-            "/Zooid/Peer/Capabilities" => _capabilities is null ? new HttpResponseMessage(HttpStatusCode.NotFound) : ControllerTestHarness.Json(JsonSerializer.Serialize(_capabilities)),
-            "/Zooid/Peer/Link" => _link is null ? new HttpResponseMessage(HttpStatusCode.NotFound) : ControllerTestHarness.Json(JsonSerializer.Serialize(_link)),
+            "/Sync/Peer/Capabilities" => _capabilities is null ? new HttpResponseMessage(HttpStatusCode.NotFound) : ControllerTestHarness.Json(JsonSerializer.Serialize(_capabilities)),
+            "/Sync/Peer/Link" => _link is null ? new HttpResponseMessage(HttpStatusCode.NotFound) : ControllerTestHarness.Json(JsonSerializer.Serialize(_link)),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound)
         };
     }
@@ -107,7 +107,7 @@ public sealed class HintsControllerTests : IDisposable
         Assert.False(result.Reachable);
         Assert.False(string.IsNullOrEmpty(result.Message));
         Assert.Equal("error", result.Severity);
-        Assert.DoesNotContain("/Zooid/Peer/Capabilities", _harness.PeerPaths);
+        Assert.DoesNotContain("/Sync/Peer/Capabilities", _harness.PeerPaths);
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public sealed class HintsControllerTests : IDisposable
     public async Task CheckPeer_ZooidRefusesTheKey_PointsToTheWhitelist(HttpStatusCode status)
     {
         var answer = _harness.Peer;
-        _harness.Peer = request => request.RequestUri!.AbsolutePath == "/Zooid/Peer/Capabilities"
+        _harness.Peer = request => request.RequestUri!.AbsolutePath == "/Sync/Peer/Capabilities"
             ? ControllerTestHarness.Json("{\"Code\":\"IpNotWhitelisted\",\"Message\":\"that address is not listed\"}", status)
             : answer(request);
 
@@ -172,7 +172,7 @@ public sealed class HintsControllerTests : IDisposable
 
         Assert.Equal((true, true, "error"), (result.HasPlugin, result.Incompatible, result.Severity));
         Assert.StartsWith("Connected, but ", result.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain("/Zooid/Peer/Link", _harness.PeerPaths);
+        Assert.DoesNotContain("/Sync/Peer/Link", _harness.PeerPaths);
     }
 
     /// <summary>
@@ -316,7 +316,7 @@ public sealed class HintsControllerTests : IDisposable
     public async Task CheckPeer_ListingCannotBeRead_SaysSo()
     {
         var answer = _harness.Peer;
-        _harness.Peer = request => request.RequestUri!.AbsolutePath == "/Zooid/Peer/Link" ? throw new HttpRequestException("connection reset") : answer(request);
+        _harness.Peer = request => request.RequestUri!.AbsolutePath == "/Sync/Peer/Link" ? throw new HttpRequestException("connection reset") : answer(request);
 
         var result = await Check(Request("Sync"));
 
@@ -337,7 +337,7 @@ public sealed class HintsControllerTests : IDisposable
         var answer = _harness.Peer;
         _harness.Peer = request =>
         {
-            query = request.RequestUri!.AbsolutePath == "/Zooid/Peer/Link" ? request.RequestUri.Query : query;
+            query = request.RequestUri!.AbsolutePath == "/Sync/Peer/Link" ? request.RequestUri.Query : query;
             return answer(request);
         };
 
@@ -716,7 +716,7 @@ public sealed class HintsControllerTests : IDisposable
     public void Route_RequiresElevation(string action, string verb, string? template)
     {
         ControllerRouteAssert.Elevated(typeof(HintsController), action, verb, template);
-        Assert.Equal("Zooid/Hints", Assert.Single(typeof(HintsController).GetCustomAttributes(typeof(RouteAttribute), true).Cast<RouteAttribute>()).Template);
+        Assert.Equal("Sync/Hints", Assert.Single(typeof(HintsController).GetCustomAttributes(typeof(RouteAttribute), true).Cast<RouteAttribute>()).Template);
     }
 
     private static TestConnectionRequest Request(string? mode) => new() { ServerUrl = Url, ApiKey = "key", Mode = mode };

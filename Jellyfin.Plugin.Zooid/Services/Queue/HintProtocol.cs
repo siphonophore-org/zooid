@@ -110,7 +110,7 @@ public static class HintProtocol
     public const long MaxPeerResponseBytes = 32L * 1024 * 1024;
 
     /// <summary>The header a server presents on requests that name it as the sender, holding the secret the receiver issued to it.</summary>
-    public const string PairingHeader = "X-Zooid-Pairing";
+    public const string PairingHeader = "X-Sync-Pairing";
 
     /// <summary>The status a receiver answers when the sender is not paired with it, so the sender pairs and tries again.</summary>
     public const int UnpairedStatus = 428;
@@ -122,17 +122,17 @@ public static class HintProtocol
     public static readonly TimeSpan ParkWindow = TimeSpan.FromHours(6);
 
     /// <summary>The header carrying the caller's plugin version.</summary>
-    public const string VersionHeader = "X-Zooid-Version";
+    public const string VersionHeader = "X-Sync-Version";
 
     /// <summary>The header carrying the protocol the caller speaks.</summary>
-    public const string ProtocolHeader = "X-Zooid-Protocol";
+    public const string ProtocolHeader = "X-Sync-Protocol";
 
     /// <summary>The header carrying the oldest protocol the caller still speaks.</summary>
-    public const string MinProtocolHeader = "X-Zooid-Min-Protocol";
+    public const string MinProtocolHeader = "X-Sync-Min-Protocol";
 
     /// <summary>
     /// The protocol this build speaks, kept apart from the plugin version so a patch release does not cut a pool off.
-    /// Raise it only when a hint, a peer route, or a decision rule changes in a way an older peer would misread.
+    /// Raise it only when a hint, a peer route, or a decision rule changes in a way a peer on another version would misread.
     /// </summary>
     public const int ProtocolVersion = 1;
 

@@ -276,8 +276,8 @@ test('proxyImage asks the image proxy for the item on its server, and for a user
     await shared.proxyImage('user-1', true, '')();
 
     assert.equal(item, 'picture');
-    assert.deepEqual(asked[0], { path: 'Zooid/ImageProxy', params: { itemId: 'item-1', user: 'false', maxHeight: 80, serverKey: 'k' } });
-    assert.deepEqual(asked[1], { path: 'Zooid/ImageProxy', params: { itemId: 'user-1', user: 'true', maxHeight: 80 } });
+    assert.deepEqual(asked[0], { path: 'Sync/ImageProxy', params: { itemId: 'item-1', user: 'false', maxHeight: 80, serverKey: 'k' } });
+    assert.deepEqual(asked[1], { path: 'Sync/ImageProxy', params: { itemId: 'user-1', user: 'true', maxHeight: 80 } });
 });
 
 test('proxyImage fails its loader when the proxy answers with an error, so the placeholder stays', async function () {
@@ -307,24 +307,6 @@ test('fetchLocalServerName reads the name once and falls back to Local', async f
     assert.equal(shared.localServerName, 'Test Server');
     globalThis.ApiClient.getPublicSystemInfo = function () { return Promise.reject(new Error('down')); };
     assert.equal(await shared.fetchLocalServerName(), 'Local');
-});
-
-test('showHealth adds a banner while the plugin is held and removes it once it is ready', async function () {
-    globalThis.ApiClient.fetch = function () { return Promise.resolve({ Ready: false, Message: 'Install 12.4.13.0 first.' }); };
-    await shared.showHealth();
-    var banner = view.querySelector('.zooid-health-banner');
-    assert.ok(banner);
-    assert.equal(banner.textContent, 'Install 12.4.13.0 first.');
-    assert.equal(banner.getAttribute('role'), 'alert');
-    globalThis.ApiClient.fetch = function () { return Promise.resolve({ Ready: true }); };
-    await shared.showHealth();
-    assert.equal(view.querySelector('.zooid-health-banner'), null);
-});
-
-test('showHealth gives a default message when the plugin is held and says nothing', async function () {
-    globalThis.ApiClient.fetch = function () { return Promise.resolve({ Ready: false }); };
-    await shared.showHealth();
-    assert.equal(view.querySelector('.zooid-health-banner').textContent, 'Zooid cannot run on this database.');
 });
 
 test('the shared module re-exports Stolon builders and the kept secret sentinel', function () {

@@ -73,7 +73,7 @@ test('deleting the cached files asks a destructive question and posts only when 
     await settle(20);
     clickDialogButton(opened.page.dom, 'Delete');
     await settle(20);
-    assert.equal(posts(opened)[0].url, 'Zooid/LinkCache/Clear');
+    assert.equal(posts(opened)[0].url, 'Sync/LinkCache/Clear');
 });
 
 test('the bandwidth rows list each server that may link, with its name and speeds escaped', async function () {
@@ -100,7 +100,7 @@ test('saving the bandwidth posts the changed fields and reports it on the Save B
     saveButton(opened.view, 'bandwidthConfigContent').click();
     await settle(20);
     assert.equal(saved.MaxDownloadSpeed, 12);
-    assert.equal(saved.DownloadSpeedUnit, 'Mbps');
+    assert.equal(saved.DownloadSpeedUnit, undefined);
     assert.equal(saved.Untouched, 'kept');
     var status = barStatus(opened.view, 'bandwidthConfigContent');
     assert.equal(statusText(status), 'Bandwidth saved.');

@@ -153,7 +153,7 @@ public sealed class PeerPairControllerTests : IDisposable
         Assert.NotNull(controller.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
         Assert.NotNull(controller.GetCustomAttribute<PeerCallerGuardAttribute>());
         Assert.NotNull(controller.GetCustomAttribute<ApiControllerAttribute>());
-        Assert.Equal("Zooid/Peer", controller.GetCustomAttribute<RouteAttribute>()!.Template);
+        Assert.Equal("Sync/Peer", controller.GetCustomAttribute<RouteAttribute>()!.Template);
         Assert.NotNull(controller.GetCustomAttribute<RequestSizeLimitAttribute>());
         Assert.NotNull(action.GetCustomAttribute<RequireCompatibleProtocolAttribute>());
         Assert.Equal("Pair", action.GetCustomAttribute<HttpPostAttribute>()!.Template);

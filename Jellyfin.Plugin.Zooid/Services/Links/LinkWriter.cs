@@ -20,7 +20,6 @@ public sealed class LinkWriter
     private readonly LinkFiles _files;
     private readonly ILinkRegistry _links;
     private readonly ILogger<LinkWriter> _logger;
-    private bool _floorRaised;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LinkWriter"/> class.
@@ -111,13 +110,6 @@ public sealed class LinkWriter
 
         _files.Write(path, row.SourceItemId, replace);
         _links.Invalidate();
-
-        // The first link raises the minimum reader past builds that mistake a .strm.
-        if (!_floorRaised)
-        {
-            table.RequireLinkAwareReaders();
-            _floorRaised = true;
-        }
 
         _logger.LogDebug("Linked {FileName} at {LocalPath}", FormatUtilities.SanitizeForLog(Path.GetFileName(row.SourcePath)), FormatUtilities.SanitizeForLog(path));
     }

@@ -27,7 +27,7 @@ namespace Jellyfin.Plugin.Zooid.Api;
 /// </summary>
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
-[Route("Zooid/Hints")]
+[Route("Sync/Hints")]
 [Produces(MediaTypeNames.Application.Json)]
 public class HintsController : ControllerBase
 {

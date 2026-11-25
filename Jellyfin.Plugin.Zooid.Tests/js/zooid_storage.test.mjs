@@ -72,7 +72,7 @@ var MAPPED = { Key: 'a b', Name: 'A', Url: 'u', ApiKey: 'k', LibraryMappings: [{
 function countsAnswer(copies, links, cached, cache) {
     return function (options) {
         var url = String(options.url);
-        if (url === 'Zooid/LinkCache') return Promise.resolve(cache || { Enabled: false });
+        if (url === 'Sync/LinkCache') return Promise.resolve(cache || { Enabled: false });
         if (url.indexOf('Items?') < 0) return Promise.resolve({});
         var total = url.indexOf('cached=true') >= 0 ? cached : url.indexOf('storage=Link') >= 0 ? links : copies;
         return Promise.resolve({ Items: [], TotalCount: total });

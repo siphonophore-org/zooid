@@ -16,8 +16,8 @@ public class PeerCapabilities
     public string PluginVersion { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the wire protocol the peer speaks. Null from a peer that predates protocol
-    /// versions, which is then only compatible with exactly its own plugin version.
+    /// Gets or sets the wire protocol the peer speaks. Null when the peer does not say, which is then only
+    /// compatible with exactly its own plugin version.
     /// </summary>
     public int? ProtocolVersion { get; set; }
 
@@ -32,7 +32,7 @@ public class PeerCapabilities
 
     /// <summary>
     /// Gets or sets the optional features this server offers, by name, such as <c>Link</c>. Kept apart
-    /// from <see cref="Accepts"/>, which older peers read as hint kinds, and ignored by peers that predate it.
+    /// from <see cref="Accepts"/>, which holds hint kinds only.
     /// </summary>
     public List<string> Features { get; set; } = new();
 

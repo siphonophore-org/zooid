@@ -124,14 +124,6 @@ public class PluginConfiguration : BasePluginConfiguration
     public int MaxDownloadSpeed { get; set; } = 0;
 
     /// <summary>
-    /// Gets or sets the unit <see cref="MaxDownloadSpeed"/> is in, which <see cref="SanitizeValues"/> always converts to <see cref="Mbps"/>.
-    /// </summary>
-    public string DownloadSpeedUnit { get; set; } = Mbps;
-
-    /// <summary>The unit every speed is kept in.</summary>
-    public const string Mbps = "Mbps";
-
-    /// <summary>
     /// Reads the download speed limit in bytes per second.
     /// </summary>
     /// <returns>The speed in bytes per second, or 0 for no limit.</returns>
@@ -252,9 +244,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the download speed during scheduled hours, in Mbps. 0 is no limit.
     /// </summary>
     public int ScheduledDownloadSpeed { get; set; } = 0;
-
-    /// <summary>Gets or sets the unit of <see cref="ScheduledDownloadSpeed"/>, as <see cref="DownloadSpeedUnit"/>.</summary>
-    public string ScheduledDownloadSpeedUnit { get; set; } = Mbps;
 
     /// <summary>
     /// Minimum free disk space required before downloads (in GB).
@@ -634,10 +623,8 @@ public class PluginConfiguration : BasePluginConfiguration
         LastRunFailures ??= new List<SyncRunFailure>();
         WatchedFilterUserIds ??= new List<string>();
 
-        MaxDownloadSpeed = RateUtilities.ToMbps(MaxDownloadSpeed, DownloadSpeedUnit);
-        ScheduledDownloadSpeed = RateUtilities.ToMbps(ScheduledDownloadSpeed, ScheduledDownloadSpeedUnit);
-        DownloadSpeedUnit = Mbps;
-        ScheduledDownloadSpeedUnit = Mbps;
+        MaxDownloadSpeed = Math.Max(0, MaxDownloadSpeed);
+        ScheduledDownloadSpeed = Math.Max(0, ScheduledDownloadSpeed);
 
         // Skipping watched items is on exactly while users are picked.
         if (!SkipWatchedByAllUsers)

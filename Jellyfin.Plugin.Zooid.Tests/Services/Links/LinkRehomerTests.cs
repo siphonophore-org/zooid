@@ -96,7 +96,7 @@ public sealed class LinkRehomerTests : IDisposable
         await Rehomer(new LinkStubClientFactory(handler)).SettleGoneAsync(Link(), CancellationToken.None);
 
         using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
-        Assert.Equal("/Zooid/Peer/Stream/Check", sent!.RequestUri!.AbsolutePath);
+        Assert.Equal("/Sync/Peer/Stream/Check", sent!.RequestUri!.AbsolutePath);
         Assert.Equal("this-server", body.RootElement.GetProperty("ServerId").GetString());
         Assert.Equal("/b/movies/Film.mkv", body.RootElement.GetProperty("Path").GetString());
         Assert.True(body.RootElement.GetProperty("Probe").GetBoolean());
@@ -197,7 +197,7 @@ public sealed class LinkRehomerTests : IDisposable
     private SyncItem Link()
     {
         var path = _store.Media("Film.strm");
-        File.WriteAllText(path, "http://127.0.0.1:8096/Zooid/Link/" + OldId + "?k=s");
+        File.WriteAllText(path, "http://127.0.0.1:8096/Sync/Link/" + OldId + "?k=s");
         var row = LinkTestTable.Row(OldId, path, sourcePath: "/a/movies/Film.mkv", serverKey: "a");
         row.SourceLibraryId = "lib-a";
         row.Reason = "stale";

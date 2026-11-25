@@ -652,7 +652,7 @@ public sealed class PeerControllerLinksTests : IDisposable
         if (scenario == "is-a-link")
         {
             var link = Path.Combine(_harness.TempDir, "Film.strm");
-            File.WriteAllText(link, "http://127.0.0.1:8096/Zooid/Link/abc?k=secret");
+            File.WriteAllText(link, "http://127.0.0.1:8096/Sync/Link/abc?k=secret");
             _harness.LibraryStub.Answer(nameof(ILibraryManager.GetItemById), _ => new Movie { Id = ItemId, Path = link });
         }
     }

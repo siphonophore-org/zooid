@@ -19,7 +19,7 @@ namespace Jellyfin.Plugin.Zooid.Services.Links;
 public sealed class LinkFiles
 {
     /// <summary>The route the URL in every link points at.</summary>
-    public const string Route = "Zooid/Link";
+    public const string Route = "Sync/Link";
 
     private const string KeyFile = "zooid-link.key";
 

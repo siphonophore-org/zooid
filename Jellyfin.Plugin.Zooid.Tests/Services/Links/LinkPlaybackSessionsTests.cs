@@ -222,8 +222,8 @@ public sealed class LinkPlaybackSessionsTests
     /// <param name="sent">The version the linking server sends.</param>
     /// <param name="shown">The version the session shows.</param>
     [Theory]
-    [InlineData("12.4.16.2", "12.4.16.2")]
-    [InlineData(" 12.4.16.2\n", "12.4.16.2")]
+    [InlineData("12.4.0.0", "12.4.0.0")]
+    [InlineData(" 12.4.0.0\n", "12.4.0.0")]
     [InlineData("", "9.9.9")]
     [InlineData(null, "9.9.9")]
     public async Task ApplyAsync_ShowsTheLinkingServersVersion(string? sent, string shown)

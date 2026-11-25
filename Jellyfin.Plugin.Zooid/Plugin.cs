@@ -27,24 +27,6 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
     private readonly ILogger<Plugin> _logger;
     /// <summary>Protects API Keys with the same key ring as the protector registered for injection.</summary>
     private readonly Lazy<SecretProtector> _secrets;
-    /// <summary>Set to 1 once a refused save has been logged.</summary>
-    private int _refusedSaveLogged;
-
-    /// <summary>
-    /// Gets why Zooid is held, when its database was written by a release this one cannot read, or null.
-    /// While it is set nothing is saved, so that release's settings stay for it to convert.
-    /// </summary>
-    public string? HeldReason { get; }
-
-    /// <summary>
-    /// Gets the schema version of the database Zooid is held for, or <c>null</c> when it is not held.
-    /// </summary>
-    public int? HeldVersion { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether Zooid is held for a database an older release wrote. While it is, nothing of the plugin runs.
-    /// </summary>
-    public static bool Held => Instance?.HeldReason is not null;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -59,10 +41,6 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
         : base(applicationPaths, xmlSerializer)
     {
         _logger = logger;
-
-        // The hold comes first, since a failed settings read saves defaults over the file.
-        HeldReason = HoldIfOlderDatabase(applicationPaths.DataPath, ConfigurationFilePath, logger);
-        HeldVersion = HeldReason is null ? null : SyncSchema.StoredVersion(applicationPaths.DataPath);
 
         _secrets = new Lazy<SecretProtector>(() => StableSecretProtection.CreateProtector(applicationPaths, SecretsName, logger));
 
@@ -107,57 +85,6 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
     }
 
     /// <summary>
-    /// Holds the plugin when the database is from a release this one cannot read, copying that release's settings aside once.
-    /// The reason is returned so every save is turned away.
-    /// </summary>
-    private static string? HoldIfOlderDatabase(string dataPath, string settingsPath, ILogger logger)
-    {
-        var stored = SyncSchema.StoredVersion(dataPath);
-        if (!SyncSchema.IsTooOld(stored))
-        {
-            return null;
-        }
-
-        var reason = new SchemaTooOldException(stored!.Value).Message;
-        try
-        {
-            var copy = settingsPath + ".before-" + SyncSchema.OldestUpgradableRelease;
-            if (File.Exists(settingsPath) && !File.Exists(copy))
-            {
-                File.Copy(settingsPath, copy);
-                logger.LogWarning("The Zooid settings were copied to {Copy} before anything could change them", FormatUtilities.SanitizeForLog(copy));
-            }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not copy the Zooid settings aside");
-        }
-
-        logger.LogError("{Reason} Its settings are not saved until then", reason);
-        return reason;
-    }
-
-    /// <summary>
-    /// Writes the settings, unless Zooid is held for an older database.
-    /// Jellyfin also calls this with defaults when the settings file cannot be read, which is the write the hold stops.
-    /// </summary>
-    /// <param name="config">The settings to write.</param>
-    public override void SaveConfiguration(PluginConfiguration config)
-    {
-        if (HeldReason is not null)
-        {
-            if (System.Threading.Interlocked.Exchange(ref _refusedSaveLogged, 1) == 0)
-            {
-                _logger.LogWarning("Zooid settings were not saved. {Reason}", HeldReason);
-            }
-
-            return;
-        }
-
-        base.SaveConfiguration(config);
-    }
-
-    /// <summary>
     /// Sanitizes the settings and protects each API Key on every save from the settings page, which reaches no other server side check.
     /// A key the page posts as kept resolves to the stored secret.
     /// </summary>
@@ -167,11 +94,6 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
     {
         ArgumentNullException.ThrowIfNull(incoming);
         ArgumentNullException.ThrowIfNull(stored);
-        if (HeldReason is not null)
-        {
-            throw new InvalidOperationException(HeldReason);
-        }
-
         incoming.SanitizeValues();
 
         var before = LinkCacheRoot(stored);

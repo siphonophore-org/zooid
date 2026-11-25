@@ -108,12 +108,6 @@ public sealed class LinkPlaybackFilter : IAsyncActionFilter, IAsyncResultFilter
             return;
         }
 
-        // While the plugin is held the link table cannot be read.
-        if (Plugin.Held)
-        {
-            await next().ConfigureAwait(false);
-            return;
-        }
 
         var links = FindLinks(context, out var controller, out var versions);
         if (links.Count > 0)
@@ -205,11 +199,6 @@ public sealed class LinkPlaybackFilter : IAsyncActionFilter, IAsyncResultFilter
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(next);
-        if (Plugin.Held)
-        {
-            await next().ConfigureAwait(false);
-            return;
-        }
 
         // A failure here must never break one of Jellyfin's own responses.
         try
@@ -433,7 +422,6 @@ public sealed class LinkPlaybackFilter : IAsyncActionFilter, IAsyncResultFilter
     private async Task<IActionResult?> DownloadLinkAsync(ActionExecutingContext context)
     {
         if (_streamer is null
-            || Plugin.Held
             || context.ActionDescriptor is not ControllerActionDescriptor { ControllerName: "Library", ActionName: "GetDownload" }
             || RouteItemId(context) is not { } itemId)
         {

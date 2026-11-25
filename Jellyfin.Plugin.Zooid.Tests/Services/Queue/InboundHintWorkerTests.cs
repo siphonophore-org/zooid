@@ -20,7 +20,7 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Queue;
 public sealed class InboundHintWorkerTests : IDisposable
 {
     private const string Me = "this-server";
-    private const string CompletePath = "/Zooid/Peer/Complete";
+    private const string CompletePath = "/Sync/Peer/Complete";
 
     private readonly QueueTestDatabase _db = new();
     private readonly FakeConfigManager _config = QueueSamples.Config();
@@ -481,7 +481,7 @@ public sealed class InboundHintWorkerTests : IDisposable
 
     /// <summary>
     /// Starting moves rows parked past the current window into it, and stopping ends both lanes.
-    /// True: hints parked under a longer window by an older build are tried again, and shutdown does not hang.
+    /// True: hints parked under a longer window are tried again, and shutdown does not hang.
     /// False: old parked rows wait for days, or the server cannot stop.
     /// </summary>
     [Fact]

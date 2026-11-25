@@ -143,7 +143,7 @@ class Api:
         auth = f'MediaBrowser Client="ZooidIT", Device="runner", DeviceId="{self.device}", Version="1.0"'
         if self.token:
             auth += f', Token="{self.token}"'
-        return {"Authorization": auth, "Content-Type": "application/json", "Accept": "application/json", "X-Zooid-Version": self.version, "X-Zooid-Protocol": self.protocol, "X-Zooid-Min-Protocol": self.protocol}
+        return {"Authorization": auth, "Content-Type": "application/json", "Accept": "application/json", "X-Sync-Version": self.version, "X-Sync-Protocol": self.protocol, "X-Sync-Min-Protocol": self.protocol}
 
     def call(self, method, path, body=None, expect=None, raw=False):
         """Sends a request and returns the status and parsed body, retrying a dropped connection."""
@@ -469,7 +469,7 @@ def save_plugin_config(api, config):
     # that, so every server is asked to re-read now, the way Run now on the dashboard does.
     for other in POOL_APIS.values():
         try:
-            other.post("/Zooid/Hints/Run", None, expect=204)
+            other.post("/Sync/Hints/Run", None, expect=204)
         except Exception:
             pass
 
@@ -585,7 +585,7 @@ def all_rows(api):
     """Every content sync row, read a page at a time, since the route answers at most 200 per request and a reused pool can hold more."""
     rows, skip = [], 0
     while True:
-        page = api.get(f"/Zooid/Items?skip={skip}&take=200")["Items"]
+        page = api.get(f"/Sync/Items?skip={skip}&take=200")["Items"]
         rows.extend(page)
         if len(page) < 200:
             return rows
@@ -735,7 +735,7 @@ def scenario_history_field_off(creds, apis):
 
     # A second pass finds nothing to do: the favorite that differs is not work.
     run_task(local, "ZooidRefreshHistoryTable")
-    status = local.get("/Zooid/HistoryStatus")
+    status = local.get("/Sync/HistoryStatus")
     expect(status.get("Queued", 0) == 0, f"with Favorites off, a favorite that differs alone queues nothing ({status.get('Queued')})")
 
     # The other way: the source drops its favorite and local gains one. Neither crosses.
@@ -813,7 +813,7 @@ def scenario_user_sync(creds, apis):
 
 def hints(api):
     """Returns a server's hint overview, with parked inbound rows split out."""
-    overview = api.get("/Zooid/Hints")
+    overview = api.get("/Sync/Hints")
     rows = overview.get("Inbound") or []
     overview["Parked"] = [r for r in rows if r.get("Parked")]
     overview["Inbound"] = [r for r in rows if not r.get("Parked")]
@@ -986,7 +986,7 @@ def scenario_playlist_pull(creds, apis):
 
 def peer_playlists(api, name):
     """Returns the playlists a server offers to peers under a name."""
-    return [p for p in api.get("/Zooid/Peer/Playlists")["Playlists"] if p["Name"] == name]
+    return [p for p in api.get("/Sync/Peer/Playlists")["Playlists"] if p["Name"] == name]
 
 
 def clear_playlists(apis, names, title):
@@ -1120,7 +1120,7 @@ def scenario_whitelist(creds, apis):
 
     def capabilities():
         """Returns the status of the Capabilities route and its body when the caller is refused."""
-        status, body = api.call("GET", "/Zooid/Peer/Capabilities", raw=True)
+        status, body = api.call("GET", "/Sync/Peer/Capabilities", raw=True)
         return status, json.loads(body) if status == 403 and body else None
 
     def grants(value):
@@ -1145,10 +1145,10 @@ def scenario_whitelist(creds, apis):
     local = apis["local"]
     entry = next(s for s in plugin_config(local)["Servers"] if s["Name"] == "source-a")
     grants([])
-    _, t = local.post("/Zooid/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
+    _, t = local.post("/Sync/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
     expect(t.get("SyncAccess") == "IpNotWhitelisted", "Test connection reports that this server is not whitelisted there")
     grants(open_grants(creds, "source-a"))
-    _, t = local.post("/Zooid/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
+    _, t = local.post("/Sync/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
     expect(t.get("SyncAccess") == "Allowed", "Test connection reports access once whitelisted")
 
 
@@ -1229,7 +1229,7 @@ def scenario_item_hints(creds, apis):
     wait_until(lambda: overview(apis["local"], "Movie", "Only A") == "Edited on source-a", 60, "a metadata edit on source-a reached local without a scan")
     wait_until(queues_empty, 60, "every queue drained after the metadata edit")
     only_a = find_item(apis["local"], "Movie", "Only A")
-    status, version = apis["local"].call("GET", f"/Zooid/Hints/Version?kind=Metadata&localItemId={only_a['Id']}")
+    status, version = apis["local"].call("GET", f"/Sync/Hints/Version?kind=Metadata&localItemId={only_a['Id']}")
     expect(status == 200 and version and version["ServerId"] == creds["servers"]["source-a"]["serverId"] and not version["IsThisServer"],
            "local records source-a as the editor of the hinted overview")
 
@@ -1237,9 +1237,9 @@ def scenario_item_hints(creds, apis):
     set_overview(apis["local"], "Movie", "Shared Movie", "First, from local")
     wait_until(lambda: all(overview(apis[n], "Movie", "Shared Movie") == "First, from local" for n in ("source-a", "source-b")), 60, "an edit on local reached both sources")
     shared = find_item(apis["local"], "Movie", "Shared Movie")
-    status, version = apis["local"].call("GET", f"/Zooid/Hints/Version?kind=Metadata&localItemId={shared['Id']}")
+    status, version = apis["local"].call("GET", f"/Sync/Hints/Version?kind=Metadata&localItemId={shared['Id']}")
     expect(status == 200 and version and version["IsThisServer"], "local records itself as the editor of its own overview")
-    status, version = apis["source-a"].call("GET", f"/Zooid/Hints/Version?kind=Metadata&localItemId={find_item(apis['source-a'], 'Movie', 'Shared Movie')['Id']}")
+    status, version = apis["source-a"].call("GET", f"/Sync/Hints/Version?kind=Metadata&localItemId={find_item(apis['source-a'], 'Movie', 'Shared Movie')['Id']}")
     expect(status == 200 and version and version["ServerId"] == creds["servers"]["local"]["serverId"], "source-a records local as the editor of the copy it pulled")
     wait_until(queues_empty, 60, "every queue drained after the first shared edit")
     set_overview(apis["source-b"], "Movie", "Shared Movie", "Second, from source-b")
@@ -1394,7 +1394,7 @@ class PoolProbe:
 
     def editor(self, n):
         """Returns the server that last edited the shared film's metadata."""
-        status, version = self.apis[n].call("GET", f"/Zooid/Hints/Version?kind=Metadata&localItemId={self.film[n]}")
+        status, version = self.apis[n].call("GET", f"/Sync/Hints/Version?kind=Metadata&localItemId={self.film[n]}")
         return (version or {}).get("ServerId") if status == 200 else None
 
     def history(self, n):
@@ -1770,15 +1770,15 @@ def scenario_peer_endpoint_auth(creds, apis):
     local = apis["local"]
     e = creds["servers"]["local"]
     anon = Api("local", SERVERS["local"]["port"], "it-anon")
-    routes = (("GET", "/Zooid/Peer/Capabilities"), ("GET", "/Zooid/Peer/Link?serverId=x"), ("POST", "/Zooid/Peer/Queue"),
-              ("POST", "/Zooid/Peer/Complete"), ("GET", "/Zooid/Peer/Status"), ("POST", "/Zooid/Peer/Versions"), ("POST", "/Zooid/Peer/History"),
-              ("GET", "/Zooid/Peer/Interest?serverId=x"), ("POST", "/Zooid/Peer/Lookup"),
-              ("GET", "/Zooid/Hints"), ("POST", "/Zooid/Hints/Run"), ("POST", "/Zooid/Hints/CheckPeer"),
-              ("GET", "/Zooid/Hints/Version?kind=People&name=x"), ("DELETE", "/Zooid/Hints/Outbound/1"), ("DELETE", "/Zooid/Hints/Inbound/1"),
-              ("DELETE", "/Zooid/Servers/x/Rows"),
-              ("GET", "/Zooid/Items"), ("GET", "/Zooid/ImageProxy?itemId=00000000000000000000000000000000"), ("GET", "/Zooid/MetadataItems"),
-              ("GET", "/Zooid/HistoryItems"), ("GET", "/Zooid/PeopleItems"), ("GET", "/Zooid/UserSyncUsers"), ("POST", "/Zooid/TestConnection"),
-              ("POST", "/Zooid/Tasks/ZooidDownloadContent/Run"), ("POST", "/Zooid/Reset/All"))
+    routes = (("GET", "/Sync/Peer/Capabilities"), ("GET", "/Sync/Peer/Link?serverId=x"), ("POST", "/Sync/Peer/Queue"),
+              ("POST", "/Sync/Peer/Complete"), ("GET", "/Sync/Peer/Status"), ("POST", "/Sync/Peer/Versions"), ("POST", "/Sync/Peer/History"),
+              ("GET", "/Sync/Peer/Interest?serverId=x"), ("POST", "/Sync/Peer/Lookup"),
+              ("GET", "/Sync/Hints"), ("POST", "/Sync/Hints/Run"), ("POST", "/Sync/Hints/CheckPeer"),
+              ("GET", "/Sync/Hints/Version?kind=People&name=x"), ("DELETE", "/Sync/Hints/Outbound/1"), ("DELETE", "/Sync/Hints/Inbound/1"),
+              ("DELETE", "/Sync/Servers/x/Rows"),
+              ("GET", "/Sync/Items"), ("GET", "/Sync/ImageProxy?itemId=00000000000000000000000000000000"), ("GET", "/Sync/MetadataItems"),
+              ("GET", "/Sync/HistoryItems"), ("GET", "/Sync/PeopleItems"), ("GET", "/Sync/UserSyncUsers"), ("POST", "/Sync/TestConnection"),
+              ("POST", "/Sync/Tasks/ZooidDownloadContent/Run"), ("POST", "/Sync/Reset/All"))
     refused = 0
     for method, path in routes:
         status, _ = anon.call(method, path, {} if method == "POST" else None)
@@ -1790,16 +1790,16 @@ def scenario_peer_endpoint_auth(creds, apis):
     status, auth = local.post("/Users/AuthenticateByName", {"Username": "viewer", "Pw": ""}, expect=200)
     viewer = Api("local", SERVERS["local"]["port"], "it-viewer")
     viewer.token = auth["AccessToken"]
-    for method, path in (("POST", "/Zooid/Peer/Queue"), ("GET", "/Zooid/Peer/Status"), ("GET", "/Zooid/Peer/Capabilities"), ("GET", "/Zooid/Hints")):
+    for method, path in (("POST", "/Sync/Peer/Queue"), ("GET", "/Sync/Peer/Status"), ("GET", "/Sync/Peer/Capabilities"), ("GET", "/Sync/Hints")):
         status, _ = viewer.call(method, path, {} if method == "POST" else None)
         expect(status == 403, f"{method} {path} with a standard user's token is refused ({status})")
     admin = Api("local", SERVERS["local"]["port"], "it-key")
     admin.token = e["apiKey"]
-    status, caps = admin.call("GET", "/Zooid/Peer/Capabilities")
+    status, caps = admin.call("GET", "/Sync/Peer/Capabilities")
     expect(status == 200, "an administrator's API key reaches the peer endpoints")
     expect(isinstance(caps.get("Accepts"), list) and "ServerTime" in caps, "capabilities list the kinds this server applies and its clock")
-    expect(admin.call("GET", "/Zooid/Hints")[0] == 200, "an administrator's API key reaches the operator endpoint")
-    status, removed = admin.call("DELETE", "/Zooid/Servers/no-such-key/Rows")
+    expect(admin.call("GET", "/Sync/Hints")[0] == 200, "an administrator's API key reaches the operator endpoint")
+    status, removed = admin.call("DELETE", "/Sync/Servers/no-such-key/Rows")
     expect(status == 200 and removed and all(v == 0 for v in removed.values()), "forgetting an unknown server removes nothing and answers with the counts")
 
     # An administrator's key alone does not make a caller a peer. A request that names a configured
@@ -1807,17 +1807,17 @@ def scenario_peer_endpoint_auth(creds, apis):
     # completion, and a forged history negotiation are refused with 428 until the real server pairs.
     configure_server(creds, local, "local", ["source-a"], {"source-a": "Sync"})
     a_id = creds["servers"]["source-a"]["serverId"]
-    status, body = admin.call("POST", "/Zooid/Peer/Queue", {"SenderServerId": a_id, "Items": []})
+    status, body = admin.call("POST", "/Sync/Peer/Queue", {"SenderServerId": a_id, "Items": []})
     expect(status == 428, f"a batch naming source-a as sender without its pairing secret is refused with 428 ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Complete", {"SenderServerId": a_id, "Items": [{"HintId": f"{a_id}:1", "VersionTimestamp": "2999-01-01T00:00:00Z"}]})
+    status, body = admin.call("POST", "/Sync/Peer/Complete", {"SenderServerId": a_id, "Items": [{"HintId": f"{a_id}:1", "VersionTimestamp": "2999-01-01T00:00:00Z"}]})
     expect(status == 428, f"a completion naming source-a as sender without its pairing secret is refused with 428 ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Complete", {"Items": []})
+    status, body = admin.call("POST", "/Sync/Peer/Complete", {"Items": []})
     expect(status == 400, f"a completion with no sender is malformed ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/History", {"SenderServerId": a_id, "Items": []})
+    status, body = admin.call("POST", "/Sync/Peer/History", {"SenderServerId": a_id, "Items": []})
     expect(status == 428, f"a history negotiation naming source-a as sender without its pairing secret is refused with 428 ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/History", {"SenderServerId": "not-a-configured-server", "Items": []})
+    status, body = admin.call("POST", "/Sync/Peer/History", {"SenderServerId": "not-a-configured-server", "Items": []})
     expect(status == 200, f"a history negotiation from a server this one does not list still negotiates, with nothing recorded ({status})")
-    status, body = admin.call("GET", "/Zooid/Peer/Status")
+    status, body = admin.call("GET", "/Sync/Peer/Status")
     expect(status == 400, f"a status read that does not name the asking server is malformed ({status})")
     other = Api("local", SERVERS["local"]["port"], "it-key")
     other.token = e["apiKey"]
@@ -1825,33 +1825,33 @@ def scenario_peer_endpoint_auth(creds, apis):
     # protocol older than this build's oldest.
     other.version = "0.0.0.0"
     other.protocol = "0"
-    status, body = other.call("POST", "/Zooid/Peer/Queue", {"SenderServerId": a_id, "Items": []})
+    status, body = other.call("POST", "/Sync/Peer/Queue", {"SenderServerId": a_id, "Items": []})
     expect(status == 426, f"a peer call speaking an older protocol is refused with 426 ({status})")
-    status, body = other.call("POST", "/Zooid/Peer/Pair", {"ServerId": a_id, "Secret": "x"})
+    status, body = other.call("POST", "/Sync/Peer/Pair", {"ServerId": a_id, "Secret": "x"})
     expect(status == 426, f"a pairing speaking an older protocol is refused with 426 ({status})")
     other.protocol = "1"
-    status, body = admin.call("GET", f"/Zooid/Peer/Interest?serverId={a_id}")
+    status, body = admin.call("GET", f"/Sync/Peer/Interest?serverId={a_id}")
     expect(status == 428, f"an interest read naming source-a without its pairing secret is refused with 428 ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Lookup", {"Path": "/no/such/file.mkv"})
+    status, body = admin.call("POST", "/Sync/Peer/Lookup", {"Path": "/no/such/file.mkv"})
     expect(status == 200 and body and body.get("Found") is False, f"a lookup for a path this server does not hold answers not found ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Lookup", {})
+    status, body = admin.call("POST", "/Sync/Peer/Lookup", {})
     expect(status == 400, f"a lookup with neither a path nor a name is malformed ({status})")
-    status, caps = other.call("GET", "/Zooid/Peer/Capabilities")
+    status, caps = other.call("GET", "/Sync/Peer/Capabilities")
     expect(status == 200 and caps.get("PluginVersion") == PLUGIN_VERSION, "capabilities still answer another version, so Check link can name both versions")
     secret = "A" * 43
-    status, body = admin.call("POST", "/Zooid/Peer/Pair", {"ServerId": "not-a-configured-server", "Secret": secret})
+    status, body = admin.call("POST", "/Sync/Peer/Pair", {"ServerId": "not-a-configured-server", "Secret": secret})
     expect(status == 409, f"a pairing from a server this one does not list is refused ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Pair", {"ServerId": a_id, "Secret": secret})
+    status, body = admin.call("POST", "/Sync/Peer/Pair", {"ServerId": a_id, "Secret": secret})
     expect(status == 409, f"a pairing secret this server did not ask source-a for is refused ({status})")
-    status, body = admin.call("POST", "/Zooid/Peer/Pair", {"ServerId": a_id, "Secret": "x"})
+    status, body = admin.call("POST", "/Sync/Peer/Pair", {"ServerId": a_id, "Secret": "x"})
     expect(status == 400, f"a malformed pairing secret is refused ({status})")
 
     # A name is held to the same rule as an address when private networks are disallowed.
-    status, v = admin.call("POST", "/Zooid/TestConnection", {"ServerUrl": "https://localhost:8096", "ApiKey": "x", "AllowPrivateNetwork": False})
+    status, v = admin.call("POST", "/Sync/TestConnection", {"ServerUrl": "https://localhost:8096", "ApiKey": "x", "AllowPrivateNetwork": False})
     expect(status == 200 and not v["Success"] and "resolves" in v["Message"], "a name that resolves to loopback is refused when private networks are disallowed")
-    status, v = admin.call("POST", "/Zooid/TestConnection", {"ServerUrl": "https://source-a:8096", "ApiKey": "x", "AllowPrivateNetwork": False})
+    status, v = admin.call("POST", "/Sync/TestConnection", {"ServerUrl": "https://source-a:8096", "ApiKey": "x", "AllowPrivateNetwork": False})
     expect(status == 200 and not v["Success"] and "resolves" in v["Message"], "a pool name that resolves to a private address is refused when private networks are disallowed")
-    status, v = admin.call("POST", "/Zooid/TestConnection", {"ServerUrl": "http://source-a:8096", "ApiKey": "x", "AllowPrivateNetwork": True})
+    status, v = admin.call("POST", "/Sync/TestConnection", {"ServerUrl": "http://source-a:8096", "ApiKey": "x", "AllowPrivateNetwork": True})
     message = (v or {}).get("Message") or ""
     expect(status == 200 and "resolves" not in message and "Plain HTTP" not in message, f"the same name over plain HTTP passes the URL check when private networks are allowed ({message})")
 
@@ -1873,9 +1873,9 @@ def scenario_push_responses(creds, apis):
     save_plugin_config(local, config)
 
     set_overview(local, "Movie", "Shared Movie", f"Push response test {time.strftime('%H:%M:%S')}")
-    local.post("/Zooid/Hints/Run", None, expect=204)
+    local.post("/Sync/Hints/Run", None, expect=204)
     time.sleep(8)
-    local.post("/Zooid/Hints/Run", None, expect=204)
+    local.post("/Sync/Hints/Run", None, expect=204)
     h = hints(local)
     peers = {p["Name"]: p for p in h["Peers"]}
     expect("does not list this server" in (peers.get("source-b", {}).get("Reason") or ""), "a peer that does not list this server pauses with that reason (409)")
@@ -1892,7 +1892,7 @@ def scenario_push_responses(creds, apis):
     configure_server(creds, local, "local", ["source-a", "source-b"], {"source-a": "Sync", "source-b": "Sync"}, **INFO_FLAGS)
     # The rows deferred by the pauses above wait fifteen minutes; discard them so only the new hint counts.
     for r in hints(local)["Outbound"]:
-        local.call("DELETE", f"/Zooid/Hints/Outbound/{r['Id']}", expect=204)
+        local.call("DELETE", f"/Sync/Hints/Outbound/{r['Id']}", expect=204)
     declined = f"Declined test {time.strftime('%H:%M:%S')}"
     set_overview(local, "Movie", "Shared Movie", declined)
     wait_until(lambda: not [r for r in hints(local)["Outbound"] if r["PeerName"] == "source-a"], 60, "a hint for a module the receiver has off is never owed to it, or is dropped once it declines")
@@ -1912,11 +1912,11 @@ def scenario_queue_failed_rows(creds, apis):
 
     def failing():
         """Returns how many inbound changes are failing."""
-        return local.get("/Zooid/Hints").get("InboundFailingCount", 0)
+        return local.get("/Sync/Hints").get("InboundFailingCount", 0)
 
     def failed():
         """Returns how many outbound changes failed."""
-        return (local.get("/Zooid/Hints").get("OutboundCounts") or {}).get("Failed", 0)
+        return (local.get("/Sync/Hints").get("OutboundCounts") or {}).get("Failed", 0)
 
     def cut_off(**flags):
         """Forbids private network addresses for source-a on local and sets the given flags."""
@@ -1930,37 +1930,37 @@ def scenario_queue_failed_rows(creds, apis):
     configure_server(creds, a, "source-a", ["local"], {"local": "Sync"}, **INFO_FLAGS)
     configure_server(creds, local, "local", ["source-a"], {"source-a": "Sync"}, **INFO_FLAGS)
     set_overview(a, "Movie", "Shared Movie", f"Queue test one {time.strftime('%H:%M:%S')}")
-    a.post("/Zooid/Hints/Run", None, expect=204)
+    a.post("/Sync/Hints/Run", None, expect=204)
     wait_until(lambda: not hints(a)["Outbound"] and not hints(local)["Inbound"], 90, "a change from source-a is applied while local can reach it")
 
     # Received: local still accepts source-a's changes, and can no longer reach it to pull them.
     cut_off()
     set_overview(a, "Movie", "Shared Movie", f"Queue test two {time.strftime('%H:%M:%S')}")
-    a.post("/Zooid/Hints/Run", None, expect=204)
+    a.post("/Sync/Hints/Run", None, expect=204)
     wait_until(lambda: failing() >= 1, 90, "a received change that cannot be applied is counted as failing")
-    status, body = local.call("POST", "/Zooid/Hints/Failed/Retry")
+    status, body = local.call("POST", "/Sync/Hints/Failed/Retry")
     expect(status == 200 and body and body.get("Inbound", 0) >= 1, f"Retry failed tries the received change again ({status}, {body})")
     wait_until(lambda: failing() >= 1, 60, "the change fails again while the server is still out of reach, and is counted again")
-    status, body = local.call("DELETE", "/Zooid/Hints/Failed")
+    status, body = local.call("DELETE", "/Sync/Hints/Failed")
     expect(status == 200 and body and body.get("Inbound", 0) >= 1, f"Dismiss failed discards the received change ({status}, {body})")
     expect(failing() == 0 and not hints(local)["Inbound"], "no received change is left failing")
 
     # Sent: with one try allowed, a change local cannot deliver is given up on.
     cut_off(HintMaxRetries=1, HintRefusedMaxRetries=1)
     set_overview(local, "Movie", "Shared Movie", f"Queue test three {time.strftime('%H:%M:%S')}")
-    local.post("/Zooid/Hints/Run", None, expect=204)
+    local.post("/Sync/Hints/Run", None, expect=204)
     time.sleep(3)
-    local.post("/Zooid/Hints/Run", None, expect=204)
+    local.post("/Sync/Hints/Run", None, expect=204)
     wait_until(lambda: failed() >= 1, 90, "a sent change out of tries is marked failed")
-    status, body = local.call("POST", "/Zooid/Hints/Failed/Retry")
+    status, body = local.call("POST", "/Sync/Hints/Failed/Retry")
     expect(status == 200 and body and body.get("Outbound", 0) >= 1, f"Retry failed sends the failed change again ({status}, {body})")
     wait_until(lambda: failed() >= 1, 30, "the retry is tried at once, pause or not, and fails again while the server is still out of reach")
-    status, body = local.call("DELETE", "/Zooid/Hints/Failed")
+    status, body = local.call("DELETE", "/Sync/Hints/Failed")
     expect(status == 200 and body and body.get("Outbound", 0) >= 1, f"Dismiss failed discards the failed change ({status}, {body})")
     expect(failed() == 0, "no sent change is left failed")
 
     for r in hints(a)["Outbound"]:
-        a.call("DELETE", f"/Zooid/Hints/Outbound/{r['Id']}", expect=204)
+        a.call("DELETE", f"/Sync/Hints/Outbound/{r['Id']}", expect=204)
     configure_server(creds, a, "source-a", [])
     configure_local(creds, local, ["source-a", "source-b"], HintMaxRetries=0, HintRefusedMaxRetries=0)
 
@@ -1973,7 +1973,7 @@ def scenario_check_link_by_direction(creds, apis):
 
     def check(entry, mode):
         """Asks local to check a server entry in a direction and returns the verdict."""
-        status, r = local.post("/Zooid/Hints/CheckPeer", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__",
+        status, r = local.post("/Sync/Hints/CheckPeer", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__",
                                                             "ServerKey": entry["Key"], "AllowPrivateNetwork": True, "Mode": mode}, expect=200)
         return r["Severity"], r["Message"]
 
@@ -1994,14 +1994,14 @@ def scenario_check_link_by_direction(creds, apis):
     expect(sev == "ok", "Sync is ready once the peer lists us as Sync")
     sev, msg = check(entry_a, "Pull")
     expect(sev == "ok" and "also arrive as they happen" in msg, "Pull against a server that pushes to us is ready with live changes")
-    _, full = local.post("/Zooid/Hints/CheckPeer", {"ServerUrl": entry_a["Url"], "ApiKey": "__JPK_SECRET_KEPT__",
+    _, full = local.post("/Sync/Hints/CheckPeer", {"ServerUrl": entry_a["Url"], "ApiKey": "__JPK_SECRET_KEPT__",
                                                       "ServerKey": entry_a["Key"], "AllowPrivateNetwork": True, "Mode": "Pull"}, expect=200)
     expect(abs(full.get("ClockSkewSeconds", 999)) < 30 and "clock" not in full["Message"], "Check link reads the peer's clock and finds it in step")
     expect(full.get("Paired") is True and "could not pair" not in full["Message"], "Check link pairs the two servers, since the peer lists this one and holds an administrator's key for it")
-    _, moved = local.post("/Zooid/Hints/CheckPeer", {"ServerUrl": "http://source-b:8096", "ApiKey": "__JPK_SECRET_KEPT__",
+    _, moved = local.post("/Sync/Hints/CheckPeer", {"ServerUrl": "http://source-b:8096", "ApiKey": "__JPK_SECRET_KEPT__",
                                                        "ServerKey": entry_a["Key"], "AllowPrivateNetwork": True, "Mode": "Pull"}, expect=200)
     expect(not moved.get("Reachable") and "only sent to the address saved" in moved["Message"], "the stored key is never sent to an address other than the one saved on the entry")
-    status, t = local.post("/Zooid/TestConnection", {"ServerUrl": "http://source-b:8096", "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry_a["Key"], "AllowPrivateNetwork": True}, expect=200)
+    status, t = local.post("/Sync/TestConnection", {"ServerUrl": "http://source-b:8096", "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry_a["Key"], "AllowPrivateNetwork": True}, expect=200)
     expect(not t["Success"] and "only sent to the address saved" in (t.get("Message") or ""), "the connection test refuses the stored key for an edited address too")
     configure_server(creds, apis["source-a"], "source-a", [])
     configure_local(creds, local, ["source-a", "source-b"])
@@ -2026,16 +2026,16 @@ def scenario_non_admin_peer_key(creds, apis):
     save_plugin_config(local, config)
     configure_server(creds, a, "source-a", ["local"], {"local": "Sync"}, EnableHistorySync=True, HistorySyncNegotiate=True, **INFO_FLAGS, **user_flags)
 
-    status, t = local.post("/Zooid/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
+    status, t = local.post("/Sync/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
     expect(t["Success"] and t.get("IsAdministrator") is False, "the connection test reports the key as a standard user's")
     expect(t.get("SyncAccess") == "UserNotWhitelisted", "the connection test reports that the viewer is not whitelisted on source-a")
 
     config = plugin_config(a)
     config["PeerCallerGrants"] = open_grants(creds, "source-a") + [{"UserId": ea["viewerId"], "UserName": "viewer", "Locations": []}]
     save_plugin_config(a, config)
-    status, t = local.post("/Zooid/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
+    status, t = local.post("/Sync/TestConnection", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True}, expect=200)
     expect(t.get("SyncAccess") == "Allowed", "once source-a whitelists the viewer, the connection test reports access")
-    status, r = local.post("/Zooid/Hints/CheckPeer", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True, "Mode": "Sync"}, expect=200)
+    status, r = local.post("/Sync/Hints/CheckPeer", {"ServerUrl": entry["Url"], "ApiKey": "__JPK_SECRET_KEPT__", "ServerKey": entry["Key"], "AllowPrivateNetwork": True, "Mode": "Sync"}, expect=200)
     expect(r["Severity"] in ("ok", "warn"), "Check link accepts Sync with a whitelisted standard user's key")
 
     def queues_empty():
@@ -2084,11 +2084,11 @@ def scenario_dashboard_endpoints(creds, apis):
     """The dashboard's bulk and status endpoints answer as the pages expect: every module's Retry errors queues errored rows without listing them, an unknown status is refused, a peer reads only its own queue, and the queue overview answers with its parts."""
     local = apis["local"]
     for route in ("HistoryItems/Queue", "MetadataItems/Queue", "PeopleItems/Queue", "UserItems/Queue"):
-        status, body = local.call("POST", f"/Zooid/{route}", {"Ids": [], "Status": "Errored"})
+        status, body = local.call("POST", f"/Sync/{route}", {"Ids": [], "Status": "Errored"})
         expect(status == 200 and isinstance((body or {}).get("Updated"), int), f"{route} queues every errored row from a status alone ({status})")
-        status, _ = local.call("POST", f"/Zooid/{route}", {"Ids": [], "Status": "NotAStatus"})
+        status, _ = local.call("POST", f"/Sync/{route}", {"Ids": [], "Status": "NotAStatus"})
         expect(status == 400, f"{route} refuses a status it does not know ({status})")
-    status, st = local.call("GET", "/Zooid/Peer/Status?serverId=no-such-server")
+    status, st = local.call("GET", "/Sync/Peer/Status?serverId=no-such-server")
     expect(status == 409, f"a status read for a server this one does not list is refused ({status})")
     overview = hints(local)
     expect(all(k in overview for k in ("Gathering", "Outbound", "Inbound", "Peers", "OutboundCounts")), "the queue overview answers with gathering, both queues, peers, and counts")
@@ -2128,7 +2128,7 @@ def scenario_removed_files_ignore(creds, apis):
 
     run_task(local, "ZooidUpdateTables")
     if (row() or {}).get("Status") != "Queued":
-        local.post("/Zooid/QueueItems", {"SourceItemIds": [row()["SourceItemId"]]}, expect=200)
+        local.post("/Sync/QueueItems", {"SourceItemIds": [row()["SourceItemId"]]}, expect=200)
     run_task(local, "ZooidDownloadContent")
     expect(os.path.exists(os.path.join(copy, file_name)), "local downloaded the film")
 
@@ -2237,12 +2237,12 @@ def scenario_older_database_refused(creds, apis):
 
     current, rows_before = stamp(35)
     try:
-        status, _ = local.call("GET", "/Zooid/Status")
+        status, _ = local.call("GET", "/Sync/Status")
         expect(status >= 500, f"the Sync tab's routes fail instead of reading an older database ({status})")
         logs = run(["docker", "logs", "--since", since + "Z", container], capture=True, check=False)
         expect("written by a release before 12.4.13.0" in logs.stdout + logs.stderr, "the log names the release to install first")
         wait_until(lambda: bool(activity(local, "earlier update")), 30, "the Activity page says an earlier update is needed first")
-        status, health = local.call("GET", "/Zooid/Health")
+        status, health = local.call("GET", "/Sync/Health")
         expect(status == 200 and health.get("Ready") is False and "12.4.13.0" in (health.get("Message") or ""), "every page is told why Zooid is held")
         expect(healthy(local) and local.call("GET", f"/Items?userId={creds['servers']['local']['userId']}&limit=1")[0] == 200, "Jellyfin itself starts and answers as usual")
         settings = os.path.join(STATE, "local", "config", "plugins", "configurations", "Jellyfin.Plugin.Zooid.xml")
@@ -2259,9 +2259,9 @@ def scenario_older_database_refused(creds, apis):
         found, rows_after = stamp(current)
     expect(found == 35, f"the refused database kept its version ({found})")
     expect(rows_after == rows_before, f"the refused database kept its rows ({rows_before} before, {rows_after} after)")
-    status, _ = local.call("GET", "/Zooid/Status")
+    status, _ = local.call("GET", "/Sync/Status")
     expect(status == 200 and len(content_rows(local)) == held, "back at this release's version it is used as it was")
-    expect(local.call("GET", "/Zooid/Health")[1].get("Ready") is True, "and Zooid is no longer held")
+    expect(local.call("GET", "/Sync/Health")[1].get("Ready") is True, "and Zooid is no longer held")
     held_copy = os.path.join(STATE, "local", "config", "plugins", "configurations", "Jellyfin.Plugin.Zooid.xml.before-12.4.13.0")
     if os.path.exists(held_copy):
         os.remove(held_copy)
@@ -2332,7 +2332,7 @@ def scenario_links(creds, apis):
         expect(content_rows(local)["Only A (2021).mp4"]["StorageMode"] == "Copy", "a copy already here stays a copy under a Link mapping")
 
         set_linking(a, "local", True)
-        expect(a.get("/Zooid/Peer/Capabilities").get("Features") == ["Link"], "source-a offers Link once linking is allowed")
+        expect(a.get("/Sync/Peer/Capabilities").get("Features") == ["Link"], "source-a offers Link once linking is allowed")
         run_task(local, "ZooidUpdateTables")
         expect((row() or {}).get("StorageMode") == "Link" and (row() or {}).get("Status") == "Queued", "the new film is queued as a link")
         run_task(local, "ZooidDownloadContent")
@@ -2347,7 +2347,7 @@ def scenario_links(creds, apis):
                    "the .nfo carries the source's plot, year, and genre")
         with open(link, encoding="utf-8") as f:
             url = f.read().strip()
-        expect(url.startswith("http://127.0.0.1:8096/Zooid/Link/") and "?k=" in url, "the .strm holds a loopback URL with a secret")
+        expect(url.startswith("http://127.0.0.1:8096/Sync/Link/") and "?k=" in url, "the .strm holds a loopback URL with a secret")
         expect(os.path.exists(os.path.join(STATE, "media", "local", "Movies", "Only A (2021)", "Only A (2021).mp4")), "the copied film is untouched")
 
         wait_until(lambda: find_item(local, "Movie", needle) is not None, 150, "local lists the linked film")
@@ -2368,16 +2368,16 @@ def scenario_links(creds, apis):
 
         # Per user: the source's own rules decide, and a refusal shows at PlaybackInfo.
         details = local.get(f"/Users/{lu}/Items/{item['Id']}")
-        expect(all("/Zooid/Link/" not in (m.get("Path") or "") for m in details.get("MediaSources") or []),
+        expect(all("/Sync/Link/" not in (m.get("Path") or "") for m in details.get("MediaSources") or []),
                "an item's details never show the link's URL")
         wrong = run(["docker", "exec", "zooid-it-local", "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", url.split("?k=")[0] + "?k=wrong"], capture=True, check=False)
         expect(wrong.stdout.strip() == "403", "the link URL refuses local itself when the secret is wrong")
         proxied = run(["docker", "exec", "zooid-it-local", "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-H", "X-Forwarded-For: 203.0.113.9", url], capture=True, check=False)
         expect(proxied.stdout.strip() == "403", "the link URL refuses a request that came through a proxy, even with the right secret")
         status, body = local.call("GET", f"/Items/{item['Id']}/File", raw=True)
-        expect(status == 403 and b"Zooid/Link" not in body, f"/Items/{{id}}/File refuses the link and never hands out its secret ({status})")
+        expect(status == 403 and b"Sync/Link" not in body, f"/Items/{{id}}/File refuses the link and never hands out its secret ({status})")
         status, body = local.call("GET", f"/Items/{item['Id']}/Download", raw=True)
-        expect(status == 200 and b"Zooid/Link" not in body, f"/Items/{{id}}/Download sends the file, never the link or its secret ({status})")
+        expect(status == 200 and b"Sync/Link" not in body, f"/Items/{{id}}/Download sends the file, never the link or its secret ({status})")
         viewer = Api("local-viewer", SERVERS["local"]["port"], "viewer-device")
         _, auth = viewer.post("/Users/AuthenticateByName", {"Username": "viewer", "Pw": ""}, expect=200)
         viewer.token = auth["AccessToken"]
@@ -2437,14 +2437,14 @@ def scenario_links(creds, apis):
                "the stopped session stays listed as idle, so source-a's dashboard shows it stop")
         expect(user_data(a, av, source_item["Id"]).get("PlayCount") == 1, "the source counts the play once")
 
-        links = local.get("/Zooid/Peer/Links")["Links"]
+        links = local.get("/Sync/Peer/Links")["Links"]
         expect(any(l["LinkPath"].endswith(f"{title}.strm") and l["CopiedPath"].endswith(f"{title}.mp4") for l in links),
                "local lists its link with the path its copy would have")
 
         configure_local(creds, local, ["source-a"], EnableHistorySync=True, HistorySyncNegotiate=True, EnableContentSync=False)
         local.post(f"/UserPlayedItems/{item['Id']}?userId={lu}&datePlayed=2026-10-01T10:00:00Z", expect=200)
         run_task(local, "ZooidRefreshHistoryTable")
-        history = [r for r in local.get("/Zooid/HistoryItems?take=500")["Items"] if title in (r.get("ItemName") or "")]
+        history = [r for r in local.get("/Sync/HistoryItems?take=500")["Items"] if title in (r.get("ItemName") or "")]
         expect(any(r.get("LocalItemId", "").replace("-", "") == item["Id"].replace("-", "") for r in history), "local's history matches the source film to the link")
         run_task(local, "ZooidMissingHistory")
         expect(user_data(a, au, source_item["Id"])["Played"], "a play recorded on the link reaches the source's real file")
@@ -2454,7 +2454,7 @@ def scenario_links(creds, apis):
         configure_server(creds, a, "source-a", ["local"], {"local": "Pull"}, EnableHistorySync=True)
         set_linking(a, "local", True)
         run_task(a, "ZooidRefreshHistoryTable")
-        reverse = [r for r in a.get("/Zooid/HistoryItems?take=500")["Items"] if title in (r.get("ItemName") or "")]
+        reverse = [r for r in a.get("/Sync/HistoryItems?take=500")["Items"] if title in (r.get("ItemName") or "")]
         expect(any(r.get("LocalItemId", "").replace("-", "") == source_item["Id"].replace("-", "") for r in reverse),
                "reading local, source-a matches local's link to its own file")
         expect(all(not (r.get("SourcePath") or "").endswith(".strm") for r in reverse), "source-a records the link by the copy's path")
@@ -2465,7 +2465,7 @@ def scenario_links(creds, apis):
 
         # Promotion: the link becomes a full copy, downloaded the normal way, and then the .strm goes.
         configure_local(creds, local, ["source-a"])
-        _, result = local.post("/Zooid/PromoteItems", {"SourceItemIds": [row()["SourceItemId"]]}, expect=200)
+        _, result = local.post("/Sync/PromoteItems", {"SourceItemIds": [row()["SourceItemId"]]}, expect=200)
         expect(result.get("Promoted") == 1 and row()["StorageMode"] == "Promoting", "the Sync tab marks the link to become a copy")
         copy = os.path.join(folder, f"{title}.mp4")
         run_task(local, "ZooidDownloadContent")
@@ -2690,14 +2690,14 @@ def scenario_link_cache(creds, apis):
     film = LinkedFilm(creds, apis, seconds=20, size="320x240", local_flags=dict(LinkCacheSizeGb=1, LinkCacheRetentionDays=0)).setup()
     a, local = film.a, film.local
     try:
-        expect(local.get("/Zooid/LinkCache").get("Enabled") is True, "the link cache is on")
+        expect(local.get("/Sync/LinkCache").get("Enabled") is True, "the link cache is on")
         film.play_info()
         data = film.original()
         base = f"/Videos/{film.item['Id']}/stream?static=true&mediaSourceId={film.source['Id']}"
         play = {"ItemId": film.item["Id"], "MediaSourceId": film.source["Id"], "PlaySessionId": uuid.uuid4().hex, "PositionTicks": 0, "CanSeek": True, "PlayMethod": "DirectPlay"}
         local.post("/Sessions/Playing", play, expect=204)
-        wait_until(lambda: local.get("/Zooid/LinkCache").get("Files") == 1, 90, "playing the link caches its file")
-        expect(local.get("/Zooid/LinkCache").get("UsedBytes") == len(data), "the cached file is the size of the source's")
+        wait_until(lambda: local.get("/Sync/LinkCache").get("Files") == 1, 90, "playing the link caches its file")
+        expect(local.get("/Sync/LinkCache").get("UsedBytes") == len(data), "the cached file is the size of the source's")
         expect((film.row() or {}).get("Cached") is True, "the Sync tab shows the link as cached")
         expect(os.path.exists(film.link) and not os.path.exists(os.path.join(film.folder, f"{film.title}.mp4")), "the link is still a .strm, with no copy in the library")
         local.post("/Sessions/Playing/Stopped", dict(play, PositionTicks=10_000_000), expect=204)
@@ -2724,7 +2724,7 @@ def scenario_link_cache(creds, apis):
         set_linking(a, "local", True)
 
         film.configure(LinkCacheSizeGb=0)
-        expect(local.get("/Zooid/LinkCache").get("Enabled") is False, "the cache is off at size 0")
+        expect(local.get("/Sync/LinkCache").get("Enabled") is False, "the cache is off at size 0")
         leftovers = run(["docker", "exec", "zooid-it-local", "sh", "-c", "ls /cache/zooid-links 2>/dev/null | wc -l"], capture=True, check=False).stdout.strip()
         expect(leftovers == "0", f"switching the cache off empties it ({leftovers} file(s) left)")
         film.play_info()
@@ -2737,18 +2737,18 @@ def scenario_link_cache(creds, apis):
         film.play_info()
         play = dict(play, PlaySessionId=uuid.uuid4().hex, MediaSourceId=film.source["Id"])
         local.post("/Sessions/Playing", play, expect=204)
-        wait_until(lambda: local.get("/Zooid/LinkCache").get("Files") == 1, 90, "playing the link caches its file again")
+        wait_until(lambda: local.get("/Sync/LinkCache").get("Files") == 1, 90, "playing the link caches its file again")
         local.post("/Sessions/Playing/Stopped", dict(play, PositionTicks=10_000_000), expect=204)
-        listed = local.get("/Zooid/Items?cached=true&take=200")["Items"]
+        listed = local.get("/Sync/Items?cached=true&take=200")["Items"]
         expect([r["SourceItemId"] for r in listed] == [film.row()["SourceItemId"]], f"the Cached filter lists the cached link and nothing else ({len(listed)})")
         set_linking(a, "local", False)
-        _, result = local.post("/Zooid/PromoteItems", {"SourceItemIds": [film.row()["SourceItemId"]]}, expect=200)
+        _, result = local.post("/Sync/PromoteItems", {"SourceItemIds": [film.row()["SourceItemId"]]}, expect=200)
         expect(result.get("Promoted") == 1 and result.get("FromCache") == 1, f"keeping the link takes its file from the cache ({result})")
         copy = os.path.join(film.folder, f"{film.title}.mp4")
         wait_until(lambda: os.path.exists(copy) and not os.path.exists(film.link), 120, "the cached file is in the library and the link is gone")
         with open(copy, "rb") as f:
             expect(f.read() == data, "the kept copy is the source's file")
-        expect(local.get("/Zooid/LinkCache").get("Files") == 0, "the file left the cache when it moved into the library")
+        expect(local.get("/Sync/LinkCache").get("Files") == 0, "the file left the cache when it moved into the library")
         wait_until(lambda: (film.row() or {}).get("StorageMode") == "Copy", 60, "the row is a copy")
     finally:
         set_linking(a, "local", True)
@@ -2778,7 +2778,7 @@ def scenario_link_download(creds, apis):
         status, _, body = http(local, "GET", path, {"Range": "bytes=1000-1999"})
         expect(status == 206 and body == data[1000:2000], f"a download resumes from a range ({status})")
         status, _, body = http(local, "GET", f"/Items/{film.item['Id']}/File")
-        expect(status == 403 and b"/Zooid/Link/" not in body, f"Jellyfin's file route still refuses a link ({status})")
+        expect(status == 403 and b"/Sync/Link/" not in body, f"Jellyfin's file route still refuses a link ({status})")
 
         a.post(f"/Users/{au}/Policy", dict(source_policy, EnableContentDownloading=False), expect=204)
         status, _, body = http(local, "GET", path)
@@ -2795,7 +2795,7 @@ def scenario_link_download(creds, apis):
         film.play_info()
         play = {"ItemId": film.item["Id"], "MediaSourceId": film.source["Id"], "PlaySessionId": uuid.uuid4().hex, "PositionTicks": 0, "CanSeek": True, "PlayMethod": "DirectPlay"}
         local.post("/Sessions/Playing", play, expect=204)
-        wait_until(lambda: local.get("/Zooid/LinkCache").get("Files") == 1, 90, "playing the link caches its file")
+        wait_until(lambda: local.get("/Sync/LinkCache").get("Files") == 1, 90, "playing the link caches its file")
         local.post("/Sessions/Playing/Stopped", dict(play, PositionTicks=10_000_000), expect=204)
         status, headers, body = http(local, "GET", path)
         expect(status == 200 and body == data, f"a cached link downloads the file ({status}, {len(body)} bytes)")
@@ -2891,7 +2891,7 @@ def scenario_link_cache_rules(creds, apis):
         mapping["ExcludeFromLinkCache"] = True
         save_plugin_config(local, config)
         run_task(local, "ZooidDownloadContent")
-        expect(cached() == [] and local.get("/Zooid/LinkCache").get("Files") == 0, f"a library left out of the cache has its files dropped ({cached()})")
+        expect(cached() == [] and local.get("/Sync/LinkCache").get("Files") == 0, f"a library left out of the cache has its files dropped ({cached()})")
 
         # Picking the show to always keep turns its links into full copies on the next sync, cache or not.
         series = next(i for i in b.get("/Items?IncludeItemTypes=Series&Recursive=true&Fields=Path")["Items"] if needle in (i.get("Path") or ""))
@@ -2909,10 +2909,10 @@ def scenario_link_cache_rules(creds, apis):
                f"the episodes are files in the library, with no links left ({files})")
         expect(all(r.get("Kept") == "Pick" for r in rows), f"each copy is recorded as kept by the pick ({[r.get('Kept') for r in rows]})")
         key = next(e["Key"] for e in plugin_config(local)["Servers"] if e["Name"] == "source-b")
-        listed = local.get(f"/Zooid/KeptCopies?serverKey={key}&take=200")["Items"]
+        listed = local.get(f"/Sync/KeptCopies?serverKey={key}&take=200")["Items"]
         expect(sorted(r["Id"] for r in listed if needle in r["SourcePath"]) == sorted(r["Id"] for r in rows) and all(r["Kept"] == "Pick" for r in listed if needle in r["SourcePath"]),
                "the Storage tab lists the three copies as kept by the pick")
-        status, body = local.post("/Zooid/KeptCopies/Unkeep", {"Ids": [rows[0]["Id"]]}, expect=200)
+        status, body = local.post("/Sync/KeptCopies/Unkeep", {"Ids": [rows[0]["Id"]]}, expect=200)
         expect(body["Queued"] == 0 and "Always keep pick" in (body["Skipped"][0]["Reason"] if body["Skipped"] else ""),
                "a copy the pick still covers is not turned back by hand, and says to remove the pick")
 
@@ -2937,13 +2937,13 @@ def scenario_link_cache_rules(creds, apis):
         expect(cached() == ["S01E01", "S01E02", "S01E03"], f"each copy moved into the link cache ({cached()})")
 
         # A copy kept by hand stays when no pick covers it, and is turned back by hand from the Storage tab.
-        status, body = local.post("/Zooid/PromoteItems", {"SourceItemIds": [rows[0]["SourceItemId"]]}, expect=200)
+        status, body = local.post("/Sync/PromoteItems", {"SourceItemIds": [rows[0]["SourceItemId"]]}, expect=200)
         run_task(local, "ZooidDownloadContent")
         run_task(local, "ZooidUpdateTables")
         kept = next(r for r in all_rows(local) if r["Id"] == rows[0]["Id"])
         expect(kept["StorageMode"] == "Copy" and kept["Status"] == "Synced" and kept.get("Kept") == "Hand",
                f"Keep Local Copy makes a copy kept by hand, which a refresh leaves alone ({kept['StorageMode']}, {kept['Status']}, {kept.get('Kept')})")
-        status, body = local.post("/Zooid/KeptCopies/Unkeep", {"Ids": [kept["Id"]]}, expect=200)
+        status, body = local.post("/Sync/KeptCopies/Unkeep", {"Ids": [kept["Id"]]}, expect=200)
         expect(body["Queued"] == 1, f"turning it back by hand queues it ({body})")
         run_task(local, "ZooidDownloadContent")
         back = next(r for r in all_rows(local) if r["Id"] == kept["Id"])
@@ -3519,16 +3519,16 @@ def scenario_link_hostile(creds, apis):
         film.play_info()
         with open(film.link, encoding="utf-8") as f:
             url = f.read().strip()
-        link_id = url.split("/Zooid/Link/")[1].split("?")[0]
+        link_id = url.split("/Sync/Link/")[1].split("?")[0]
         secret = url.split("?k=")[1]
-        prefix = url.split("/Zooid/Link/")[0]
+        prefix = url.split("/Sync/Link/")[0]
         cases = {
-            "a path climbing out of the route": (prefix + "/Zooid/Link/..%2F..%2FSystem%2FInfo?k=" + secret, "403"),
-            "a link id that is not a row": (prefix + "/Zooid/Link/" + "0" * 32 + "?k=" + secret, "403"),
-            "a very long link id": (prefix + "/Zooid/Link/" + "a" * 3000 + "?k=x", "403"),
-            "no secret": (prefix + "/Zooid/Link/" + link_id, "403"),
-            "the secret of another link": (prefix + "/Zooid/Link/" + link_id[::-1] + "?k=" + secret, "403"),
-            "an empty secret": (prefix + "/Zooid/Link/" + link_id + "?k=", "403"),
+            "a path climbing out of the route": (prefix + "/Sync/Link/..%2F..%2FSystem%2FInfo?k=" + secret, "403"),
+            "a link id that is not a row": (prefix + "/Sync/Link/" + "0" * 32 + "?k=" + secret, "403"),
+            "a very long link id": (prefix + "/Sync/Link/" + "a" * 3000 + "?k=x", "403"),
+            "no secret": (prefix + "/Sync/Link/" + link_id, "403"),
+            "the secret of another link": (prefix + "/Sync/Link/" + link_id[::-1] + "?k=" + secret, "403"),
+            "an empty secret": (prefix + "/Sync/Link/" + link_id + "?k=", "403"),
         }
         for label, (target, code) in cases.items():
             got = in_local(target)
@@ -3542,16 +3542,16 @@ def scenario_link_hostile(creds, apis):
         expect(got in ("200", "206", "416"), f"a malformed Range is answered, not failed ({got})")
         got = in_local("-I", url)
         expect(got in ("200", "206"), f"HEAD on a link with a live grant answers ({got})")
-        status, _, _ = http(film.local, "GET", "/Zooid/Link/" + link_id + "?k=" + secret)
+        status, _, _ = http(film.local, "GET", "/Sync/Link/" + link_id + "?k=" + secret)
         expect(status == 403, f"the right link and secret from outside the server are refused ({status})")
-        status, body = film.local.call("POST", "/Zooid/Peer/Stream/Check", {"ServerId": "nobody", "ItemId": link_id})
+        status, body = film.local.call("POST", "/Sync/Peer/Stream/Check", {"ServerId": "nobody", "ItemId": link_id})
         expect(status == 409, f"a stream check from a server not configured here is refused ({status})")
-        status, body = film.local.call("POST", "/Zooid/Peer/Playback", None)
+        status, body = film.local.call("POST", "/Sync/Peer/Playback", None)
         expect(status in (400, 415), f"an empty playback report is malformed ({status})")
-        status, body = film.local.call("POST", "/Zooid/Peer/Control", {"ServerId": film.creds["servers"]["source-a"]["serverId"], "SessionKey": "x" * 300})
+        status, body = film.local.call("POST", "/Sync/Peer/Control", {"ServerId": film.creds["servers"]["source-a"]["serverId"], "SessionKey": "x" * 300})
         expect(status in (400, 428), f"a control request with an oversized session is refused ({status})")
         status, _, body = http(film.local, "GET", f"/Items/{film.item['Id']}/Download")
-        expect(status == 200 and b"/Zooid/Link/" not in body, f"downloading a link sends the file, never the .strm ({status})")
+        expect(status == 200 and b"/Sync/Link/" not in body, f"downloading a link sends the file, never the .strm ({status})")
         logs = run(["docker", "logs", "--since", "3m", "zooid-it-local"], capture=True, check=False)
         errors = [l for l in (logs.stdout + logs.stderr).splitlines() if "[ERR]" in l and ("Link" in l or "Zooid" in l)]
         expect(not errors, f"none of those requests logged an error ({errors[:2]})")
@@ -3733,7 +3733,7 @@ def scenario_link_full_disk(creds, apis):
         # This scenario's rows are copies queued on a full disk, which would hold back the next run.
         ids = [r["SourceItemId"] for r in rows if r["Status"] != "Ignored"]
         if ids:
-            local.post("/Zooid/IgnoreItems", {"SourceItemIds": ids}, expect=200)
+            local.post("/Sync/IgnoreItems", {"SourceItemIds": ids}, expect=200)
 
     set_aside([r for r in all_rows(local) if "/Tiny " in r["SourcePath"]])
     try:
@@ -3752,7 +3752,7 @@ def scenario_link_full_disk(creds, apis):
         mapping.update({"LocalLibraryId": tiny, "LocalLibraryName": "Tiny", "LocalRootPath": "/media-tiny", "StorageMode": "Link"})
         entry["LibraryMappings"] = [mapping]
         save_plugin_config(local, config)
-        disk = [d for d in local.get("/Zooid/DiskSpace") if d["Path"] == "/media-tiny"]
+        disk = [d for d in local.get("/Sync/DiskSpace") if d["Path"] == "/media-tiny"]
         expect(disk and not disk[0]["IsSufficient"], f"the small disk reads as below the 1 GB floor ({disk})")
 
         link = f"/media-tiny/{title}/{title}.strm"
@@ -3966,7 +3966,7 @@ def scenario_link_universal_audio(creds, apis):
         for label, extra in (("with redirection left out", ""), ("with redirection asked for", "&EnableRedirection=true")):
             status, headers, body = http(local, "GET", f"/Audio/{item['Id']}/universal?UserId={lu}&Container=mp3&EnableRemoteMedia=true{extra}")
             location = headers.get("Location") or headers.get("location") or ""
-            expect(status in (200, 206) and body == original and "Zooid/Link" not in location,
+            expect(status in (200, 206) and body == original and "Sync/Link" not in location,
                    f"universal audio {label} plays the track itself ({status}, {len(body)} of {len(original)} bytes)")
     finally:
         configure_server(creds, a, "source-a", [])
@@ -4064,7 +4064,7 @@ def scenario_chaos_tampered_links(creds, apis):
             row = film.row() or {}
             expect(open(film.link, encoding="utf-8").read() == content, f"a .strm holding {label} is left as it is, since Zooid no longer owns it")
             expect(row.get("Status") == "Errored" and "did not write" in (row.get("ErrorMessage") or ""), f"its row says why ({row.get('Status')})")
-            film.local.post("/Zooid/MarkSynced", {"SourceItemIds": [row.get("SourceItemId")]}, expect=200)
+            film.local.post("/Sync/MarkSynced", {"SourceItemIds": [row.get("SourceItemId")]}, expect=200)
         # A .strm with nothing in it points nowhere, as one cut short by a power loss does, so it is written again.
         with open(film.link, "w", encoding="utf-8") as f:
             f.write("")
@@ -4163,8 +4163,8 @@ def scenario_chaos_fuzz_routes(creds, apis):
     since = now_stamp()
     import random as _random
     rng = _random.Random(99)
-    targets = ["/Zooid/Peer/Stream/Check", "/Zooid/Peer/Playback", "/Zooid/Peer/Control", "/Zooid/PromoteItems"]
-    gets = ["/Zooid/Peer/Links", "/Zooid/Peer/Stream/{g}", "/Zooid/Peer/Stream/not-a-guid", "/Zooid/Link/{g}", "/Zooid/Link/{g}?k={s}", "/Zooid/Peer/Stream/{g}?probe=maybe&userId={s}"]
+    targets = ["/Sync/Peer/Stream/Check", "/Sync/Peer/Playback", "/Sync/Peer/Control", "/Sync/PromoteItems"]
+    gets = ["/Sync/Peer/Links", "/Sync/Peer/Stream/{g}", "/Sync/Peer/Stream/not-a-guid", "/Sync/Link/{g}", "/Sync/Link/{g}?k={s}", "/Sync/Peer/Stream/{g}?probe=maybe&userId={s}"]
     values = [None, 0, -1, 2**63, 1.5, True, "", " ", "x" * 70000, "\u0000‮", "../../etc/passwd", [], {}, [1, "a"], {"a": {"b": {"c": []}}}, "00000000-0000-0000-0000-000000000000"]
     fields = ["ServerId", "ItemId", "UserId", "SourceUserId", "SessionKey", "Event", "PositionTicks", "Command", "SeekPositionTicks", "Text", "Header", "TimeoutMs", "SourceItemIds", "PlayMethod", "IsPaused"]
     statuses = {}

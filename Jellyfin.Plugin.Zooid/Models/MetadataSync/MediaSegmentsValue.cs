@@ -230,7 +230,7 @@ public sealed record MediaSegmentsValue(
 
     /// <summary>
     /// Gives a server's segments, each naming the server it was first made on. A segment the server made itself names the server.
-    /// An older release names one origin for all the segments it copied, and that origin is given to every segment in its answer.
+    /// An answer that names one origin for all the segments it copied gives that origin to every segment in it.
     /// </summary>
     /// <param name="answer">The server's answer.</param>
     /// <param name="serverId">The server's Jellyfin id, or null when it is not known.</param>

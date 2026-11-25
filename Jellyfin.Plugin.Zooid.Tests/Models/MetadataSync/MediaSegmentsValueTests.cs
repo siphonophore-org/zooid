@@ -113,9 +113,9 @@ public sealed class MediaSegmentsValueTests
     }
 
     /// <summary>
-    /// An older release names one origin for every segment it copied, and that origin is given to all of them.
-    /// True: a pool partly on an older release still never takes back what a server made.
-    /// False: an older peer's copies would look like its own and loop back.
+    /// An answer that names one origin for every segment it copied gives that origin to all of them.
+    /// True: a pool never takes back what a server made, however a peer names origins.
+    /// False: a peer's copies would look like its own and loop back.
     /// </summary>
     [Fact]
     public void Choose_OlderPeer_GivesItsOneOriginToEverySegment()

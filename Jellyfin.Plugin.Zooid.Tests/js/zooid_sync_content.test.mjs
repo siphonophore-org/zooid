@@ -123,7 +123,7 @@ test('bulkQueue leaves out rows that are pending deletion', async function () {
     module.table.items = [{ SourceItemId: 'a', Status: 'Pending', PendingType: 'Deletion' }, { SourceItemId: 'b', Status: 'Queued' }];
     module.bulkQueue();
     await flush();
-    var post = env.page.requests.find(function (r) { return r.url === 'Zooid/QueueItems'; });
+    var post = env.page.requests.find(function (r) { return r.url === 'Sync/QueueItems'; });
     assert.deepEqual(JSON.parse(post.data), { SourceItemIds: ['b'] });
     assert.equal(statusText(env.view.querySelector('#syncStatus')), '1 item queued.');
 });
@@ -152,7 +152,7 @@ test('bulkDelete asks a destructive question first and deletes only when it is c
     env.responses.push({ Deleted: 2 });
     module.bulkDelete();
     await flush();
-    var post = env.page.requests.find(function (r) { return r.url === 'Zooid/DeleteLocalItems'; });
+    var post = env.page.requests.find(function (r) { return r.url === 'Sync/DeleteLocalItems'; });
     assert.deepEqual(JSON.parse(post.data), { SourceItemIds: ['a', 'b'] });
     assert.equal(statusText(env.view.querySelector('#syncStatus')), 'Deleted 2 items.');
 });
@@ -176,7 +176,7 @@ test('modalDelete shows the file as the context and deletes only when it is conf
     answer = true;
     module.modalDelete();
     await flush();
-    assert.equal(env.page.requests.filter(function (r) { return r.url === 'Zooid/DeleteLocalItems'; }).length, 1);
+    assert.equal(env.page.requests.filter(function (r) { return r.url === 'Sync/DeleteLocalItems'; }).length, 1);
     assert.equal(statusText(env.view.querySelector('#syncStatus')), 'Item deleted.');
 });
 

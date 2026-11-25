@@ -22,7 +22,7 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Queue;
 public sealed class PlaylistHintHandlerTests : IDisposable
 {
     private const string ThisServer = "this-server";
-    private const string PlaylistsPath = "/Zooid/Peer/Playlists";
+    private const string PlaylistsPath = "/Sync/Peer/Playlists";
     private static readonly DateTime Edited = new(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
 
     private readonly PlaylistTestHarness _h = new();

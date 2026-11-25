@@ -163,7 +163,7 @@ public sealed class PeerCallerGuardTests
     {
         var http = new DefaultHttpContext { User = user };
         http.Connection.RemoteIpAddress = IPAddress.Parse(remote);
-        http.Request.Path = "/Zooid/Peer/Status";
+        http.Request.Path = "/Sync/Peer/Status";
         var action = new ActionContext(http, new RouteData(), new ActionDescriptor());
         return new ActionExecutingContext(action, new List<IFilterMetadata>(), new Dictionary<string, object?>(), controller: new object());
     }

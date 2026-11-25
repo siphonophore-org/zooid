@@ -173,7 +173,7 @@ public sealed class LinkPlaybackReporterTests
         using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
         var report = body.RootElement;
         Assert.Equal(new[] { "b" }, factory.Created);
-        Assert.Equal("/Zooid/Peer/Playback", request.RequestUri!.AbsolutePath);
+        Assert.Equal("/Sync/Peer/Playback", request.RequestUri!.AbsolutePath);
         Assert.Equal("this-server", report.GetProperty("ServerId").GetString());
         Assert.Equal("bbbb", report.GetProperty("ItemId").GetString());
         Assert.Equal(viewer.Id.ToString("N"), report.GetProperty("UserId").GetString());

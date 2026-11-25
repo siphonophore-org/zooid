@@ -23,8 +23,8 @@ namespace Jellyfin.Plugin.Zooid.Tests.Services.Queue;
 public sealed class OutboundHintWorkerTests : IDisposable
 {
     private const string Me = "this-server";
-    private const string QueuePath = "/Zooid/Peer/Queue";
-    private const string StatusPath = "/Zooid/Peer/Status";
+    private const string QueuePath = "/Sync/Peer/Queue";
+    private const string StatusPath = "/Sync/Peer/Status";
     private static readonly DateTime Edited = new(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
 
     private readonly QueueTestDatabase _db = new();
@@ -111,7 +111,7 @@ public sealed class OutboundHintWorkerTests : IDisposable
     /// <summary>
     /// A peer that has not said what it wants is taken to accept every kind.
     /// True: hints flow to a new peer at once, and it declines what it does not want.
-    /// False: nothing is sent until a first answer that an older peer may never give.
+    /// False: nothing is sent until a first answer that a slow peer may never give.
     /// </summary>
     [Fact]
     public void PeerAccepts_PeerNeverAsked_AcceptsEverything()
@@ -167,7 +167,7 @@ public sealed class OutboundHintWorkerTests : IDisposable
 
     /// <summary>
     /// A hint the peer answers nothing about is taken as accepted.
-    /// True: an older peer that answers with an empty list still receives hints.
+    /// True: a peer that answers with an empty list still receives hints.
     /// False: unanswered rows stay pending and are sent forever.
     /// </summary>
     [Fact]
@@ -377,7 +377,7 @@ public sealed class OutboundHintWorkerTests : IDisposable
     {
         AddPeer();
         Queue();
-        _factory.Peer("peer").OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = "99.0", ProtocolVersion = HintProtocol.ProtocolVersion + 1, MinProtocolVersion = HintProtocol.ProtocolVersion + 1 });
+        _factory.Peer("peer").OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", PluginVersion = "99.0", ProtocolVersion = HintProtocol.ProtocolVersion + 1, MinProtocolVersion = HintProtocol.ProtocolVersion + 1 });
 
         await _worker.DeliverAsync(CancellationToken.None);
         _worker.LiftPauses();
@@ -401,9 +401,9 @@ public sealed class OutboundHintWorkerTests : IDisposable
         AddPeer();
         Queue();
         var peer = _factory.Peer("peer");
-        peer.OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", ProtocolVersion = HintProtocol.ProtocolVersion + 1, MinProtocolVersion = HintProtocol.ProtocolVersion + 1 });
+        peer.OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", ProtocolVersion = HintProtocol.ProtocolVersion + 1, MinProtocolVersion = HintProtocol.ProtocolVersion + 1 });
         await _worker.DeliverAsync(CancellationToken.None);
-        peer.OnJson("/Zooid/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", ProtocolVersion = HintProtocol.ProtocolVersion, MinProtocolVersion = HintProtocol.MinProtocolVersion });
+        peer.OnJson("/Sync/Peer/Capabilities", new PeerCapabilities { ServerId = "peer-id", ProtocolVersion = HintProtocol.ProtocolVersion, MinProtocolVersion = HintProtocol.MinProtocolVersion });
         Answers(peer, HintCode.Queued);
 
         await _worker.DeliverAsync(CancellationToken.None, refreshCapabilities: true);
@@ -422,7 +422,7 @@ public sealed class OutboundHintWorkerTests : IDisposable
     {
         AddPeer();
         Queue();
-        _factory.Peer("peer").OnJson("/Zooid/Peer/Interest", new PeerInterest { Kinds = { HintKind.History }, Revision = "r1" });
+        _factory.Peer("peer").OnJson("/Sync/Peer/Interest", new PeerInterest { Kinds = { HintKind.History }, Revision = "r1" });
 
         await _worker.DeliverAsync(CancellationToken.None);
 
@@ -442,7 +442,7 @@ public sealed class OutboundHintWorkerTests : IDisposable
     {
         AddPeer();
         _suppression.Note("peer", HintKind.Metadata, "item", HintCode.NotMapped, null, DateTime.UtcNow);
-        _factory.Peer("peer").OnJson("/Zooid/Peer/Interest", new PeerInterest
+        _factory.Peer("peer").OnJson("/Sync/Peer/Interest", new PeerInterest
         {
             Kinds = { HintKind.Metadata },
             Libraries = { new PeerInterestLibrary { Root = QueueSamples.LocalRoot } },

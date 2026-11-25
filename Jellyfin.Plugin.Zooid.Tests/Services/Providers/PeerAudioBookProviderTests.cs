@@ -59,6 +59,6 @@ public sealed class PeerAudioBookProviderTests
         Assert.True(result.HasMetadata);
         Assert.IsType<AudioBook>(result.Item);
         Assert.Equal("From The Source", result.Item.Name);
-        Assert.Contains("\"ItemType\":\"AudioBook\"", Assert.Single(server.To("/Zooid/Peer/Lookup")).Body, StringComparison.Ordinal);
+        Assert.Contains("\"ItemType\":\"AudioBook\"", Assert.Single(server.To("/Sync/Peer/Lookup")).Body, StringComparison.Ordinal);
     }
 }

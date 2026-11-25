@@ -158,7 +158,7 @@ public sealed class PeerControllerTests : IDisposable
 
         var sent = JsonSerializer.Deserialize<PairRequest>(Assert.Single(_harness.PeerHandler.Bodies))!;
         Assert.Equal((true, null), (body.Paired, body.PairingError));
-        Assert.Equal(new[] { "/Zooid/Peer/Pair" }, _harness.PeerPaths);
+        Assert.Equal(new[] { "/Sync/Peer/Pair" }, _harness.PeerPaths);
         Assert.Equal(ControllerTestHarness.ThisServerId, sent.ServerId);
         Assert.True(PeerPairingStore.WellFormed(sent.Secret));
         Assert.Equal(sent.Secret, _harness.Pairings.GetInbound(entry.Key));
@@ -747,7 +747,7 @@ public sealed class PeerControllerTests : IDisposable
         Assert.NotNull(controller.GetCustomAttribute<PeerCallerGuardAttribute>());
         Assert.NotNull(controller.GetCustomAttribute<ApiControllerAttribute>());
         Assert.Null(controller.GetCustomAttribute<AllowAnonymousAttribute>());
-        Assert.Equal("Zooid/Peer", controller.GetCustomAttribute<RouteAttribute>()!.Template);
+        Assert.Equal("Sync/Peer", controller.GetCustomAttribute<RouteAttribute>()!.Template);
         Assert.NotNull(controller.GetCustomAttribute<RequestSizeLimitAttribute>());
         Assert.Equal(4L * 1024 * 1024, PeerController.MaxRequestBytes);
     }

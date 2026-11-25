@@ -113,7 +113,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
-        if u.path == '/Zooid/Translations':
+        if u.path == '/Sync/Translations':
             return self.send(translations(re.sub(r'[^a-z-]', '', q.get('language', ['en-us'])[0].lower())), 'application/json')
         if u.path.endswith('configurationpage') and 'name' in q:
             name = q['name'][0]
