@@ -9,7 +9,7 @@ Zooid needs Jellyfin 12.4. Install it on every server that should push, sync, or
 3. Enter this repository URL and select **Save**:
 
 ```
-https://repo.siphonophore.org
+https://repo.siphonophore.org/stable
 ```
 
 ## Install the Plugin

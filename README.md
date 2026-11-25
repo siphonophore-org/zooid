@@ -9,7 +9,7 @@ Installation, setup, every sync type, and the API are covered in the **[Zooid do
 Plugin repository URL for Jellyfin, from [Siphonophore](https://github.com/siphonophore-org/siphonophore), which also has an unstable channel:
 
 ```
-https://repo.siphonophore.org
+https://repo.siphonophore.org/stable
 ```
 
 ## Use At Your Own Risk
