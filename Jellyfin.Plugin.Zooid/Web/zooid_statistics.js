@@ -247,6 +247,7 @@ export default function (view) {
         note.textContent = t.tr('HelpUsagePick');
         content.appendChild(note);
         var holder = document.createElement('div');
+        holder.className = 'zooid-usage-chart';
         var callout = document.createElement('div');
         callout.className = 'stolon-callout-neutral zooid-usage-callout stolon-hidden';
         callout.setAttribute('role', 'region');

@@ -384,17 +384,19 @@ div:not(.zooid-form-row) + .zooid-form-row {
 /* zooid-usage-callout */
 /* The callout under the Usage chart on the Statistics page, one kind of file broken down by server: a heading in the
    kind's color, then a row per server with its name, a bar of its share, its count, and its percent. */
-/* Example: <div class="stolon-callout-neutral zooid-usage-callout"><div class="zooid-usage-callout-head"><span class="stolon-dot stolon-blue"></span><span>Copies by server</span></div><div class="zooid-usage-row"><span class="zooid-usage-name">Alpha</span><span class="stolon-progress zooid-usage-bar"><span class="stolon-progress-bar zooid-usage-fill stolon-blue"></span></span><span class="zooid-usage-count">4</span><span class="zooid-usage-share">67%</span></div></div> */
+/* Example: <div class="zooid-usage-chart"></div><div class="stolon-callout-neutral zooid-usage-callout"><div class="zooid-usage-callout-head"><span class="stolon-dot stolon-blue"></span><span>Copies by server</span></div><div class="zooid-usage-row"><span class="zooid-usage-name">Alpha</span><span class="stolon-progress zooid-usage-bar"><span class="stolon-progress-bar zooid-usage-fill stolon-blue"></span></span><span class="zooid-usage-count">4</span><span class="zooid-usage-share">67%</span></div></div> */
 .zooid-usage-callout {
     display: flex;
     flex-direction: column;
     gap: var(--stolon-gap-narrow);
-    margin-top: var(--stolon-gap-wide);
 }
+/* The Usage chart keeps a full gap above the callout, which takes no margin of its own on the page */
+.zooid-usage-chart { margin-bottom: var(--stolon-gap-wide); }
 .zooid-usage-callout-head {
     display: flex;
     align-items: center;
     gap: var(--stolon-gap-narrow);
+    margin-bottom: calc(var(--stolon-gap-narrow) / 2);
     font-weight: 600;
 }
 .zooid-usage-row {
@@ -404,8 +406,8 @@ div:not(.zooid-form-row) + .zooid-form-row {
     gap: var(--stolon-gap-narrow);
 }
 .zooid-usage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.zooid-usage-bar { height: var(--stolon-gap-narrow); }
-.zooid-usage-fill { width: var(--zooid-usage-share, 0%); }
+.zooid-usage-bar { display: block; height: var(--stolon-gap-narrow); }
+.zooid-usage-fill { display: block; width: var(--zooid-usage-share, 0%); }
 .zooid-usage-fill.stolon-blue { background: var(--stolon-blue-fg); }
 .zooid-usage-fill.stolon-green { background: var(--stolon-green-fg); }
 .zooid-usage-fill.stolon-orange { background: var(--stolon-orange-fg); }
