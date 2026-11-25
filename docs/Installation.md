@@ -9,7 +9,7 @@ Zooid needs Jellyfin 12.4 or later. A server on an older Jellyfin does not see Z
 3. Enter this repository URL and select **Save**:
 
 ```
-https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/manifest.json
+https://repo.siphonophore.org/stable
 ```
 
 ## Install the Plugin
