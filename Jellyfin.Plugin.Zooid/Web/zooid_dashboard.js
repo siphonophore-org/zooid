@@ -55,20 +55,65 @@ export function syncTypeCard(t, type, on, status, runs) {
     return card;
 }
 
+// SERVER_DOTS
+// Each server's health as a dot color and the string that names it, as the Diagram colors them.
+var SERVER_DOTS = {
+    ok: { color: 'green', key: 'DashboardServerOk' },
+    noPlugin: { color: 'orange', key: 'DashboardServerNoPlugin' },
+    down: { color: 'red', key: 'DashboardServerDown' },
+    disabled: { color: 'gray', key: 'DashboardServerOff' },
+    pending: { color: 'gray', key: 'DashboardServerChecking' }
+};
+
+// serverDot
+// One server's dot: its health color, named by the server and what its color means.
+//
+// Inputs
+// t [object]: The strings.
+// server [object]: The server entry.
+// state [string]: A key of SERVER_DOTS.
+//
+// Output
+// [object]: The dot's color and label.
+export function serverDot(t, server, state) {
+    var dot = SERVER_DOTS[state] || SERVER_DOTS.pending;
+    return { color: dot.color, label: t.format(dot.key, server.Name || server.ServerName || server.Url || '') };
+}
+
+// serverState
+// A server's health before or after it is asked, as the Servers page works it out. A server that is off or has no
+// address or key needs no asking.
+//
+// Inputs
+// server [object]: The server entry.
+// check [object]: What Hints/CheckPeer answered, null when the ask failed, or undefined before it is asked.
+//
+// Output
+// [string]: A key of SERVER_DOTS.
+export function serverState(server, check) {
+    if (server.IsEnabled === false) return 'disabled';
+    if (!server.Url || !server.ApiKey) return 'down';
+    if (check === undefined) return 'pending';
+    if (!check || !check.Reachable) return 'down';
+    return check.HasPlugin ? 'ok' : 'noPlugin';
+}
+
 // serversCard
-// Sums up the servers: how many are turned on, out of how many there are.
+// Sums up the servers: how many are turned on, out of how many there are, with one dot per server for its health.
 //
 // Inputs
 // t [object]: The strings.
 // config [object]: The plugin configuration.
+// checks [object]: What Hints/CheckPeer answered for each server, by key. A server not in it is still being asked.
 //
 // Output
 // [object]: The status card's options, with tool for the tool it opens.
-export function serversCard(t, config) {
+export function serversCard(t, config, checks) {
     var servers = (config && config.Servers) || [];
     var on = servers.filter(function (server) { return server.IsEnabled; }).length;
-    var card = Object.assign({ icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' }, EMPTY_CHART);
-    if (!servers.length) return Object.assign(card, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardNoServers') });
+    var card = { icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' };
+    if (!servers.length) return Object.assign(card, EMPTY_CHART, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardNoServers') });
+    card.dots = servers.map(function (server) { return serverDot(t, server, serverState(server, (checks || {})[server.Key])); });
     return Object.assign(card, {
         status: on ? t.tr('OptionEnabled') : t.tr('Off'),
         statusColor: on ? 'green' : 'gray',
@@ -77,21 +122,30 @@ export function serversCard(t, config) {
 }
 
 // queueCard
-// Sums up the change queue: the hints waiting to send, and any received that keep failing.
+// Sums up the change queue as a bar split by state, in the colors of the Queue page's count cards. The number is
+// everything in the bar.
 //
 // Inputs
 // t [object]: The strings.
 // hints [object]: What the Hints route answered, or null when it could not be read.
 //
 // Output
-// [object]: The status card's options, with tool and param for the tool it opens.
+// [object]: The status card's options, with tool for the tool it opens.
 export function queueCard(t, hints) {
-    var card = Object.assign({ icon: 'swap_horiz', title: t.tr('ButtonQueue'), tool: 'queue' }, EMPTY_CHART);
-    if (!hints) return Object.assign(card, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
+    var card = { icon: 'swap_horiz', title: t.tr('ButtonQueue'), tool: 'queue' };
+    if (!hints) return Object.assign(card, EMPTY_CHART, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
+    var counts = hints.OutboundCounts || {};
     var failing = hints.InboundFailingCount || 0;
-    card.value = hints.Pending || 0;
+    card.segments = [
+        { label: t.tr('StatusGathering'), value: (hints.Gathering || []).length || hints.Pending || 0, color: 'gray' },
+        { label: t.tr('StatusPending'), value: counts.Pending || 0, color: 'orange' },
+        { label: t.tr('StatusSent'), value: counts.Sent || 0, color: 'blue' },
+        { label: t.tr('StatusReceived'), value: hints.InboundCount || 0, color: 'purple' },
+        { label: t.tr('LabelFailed'), value: counts.Failed || 0, color: 'red' }
+    ];
+    card.value = card.segments.reduce(function (sum, part) { return sum + part.value; }, 0);
     card.detail = t.format('DashboardQueueLine', hints.InboundCount || 0, failing);
-    if (failing > 0) return Object.assign(card, { status: t.tr('LabelFailed'), statusColor: 'red' });
+    if (failing > 0 || counts.Failed > 0) return Object.assign(card, { status: t.tr('LabelFailed'), statusColor: 'red' });
     if (card.value > 0) return Object.assign(card, { status: t.tr('StatusPending'), statusColor: 'orange' });
     return Object.assign(card, { status: t.tr('PriorityIdle'), statusColor: 'gray' });
 }
@@ -99,11 +153,11 @@ export function queueCard(t, hints) {
 export default function (view) {
     'use strict';
 
-    var apiRequest, getEl;
+    var apiRequest, getEl, requestFor;
     var grid = null;
 
     var made = zooidModule.createZooidPage(view, { page: 'zooid_dashboard', load: function () { load(); }, onHide: function () { clear(); } });
-    ({ apiRequest, getEl } = made.shared.pageHelpers());
+    ({ apiRequest, getEl, requestFor } = made.shared.pageHelpers());
 
     function clear() {
         if (grid) grid.destroy();
@@ -122,7 +176,7 @@ export default function (view) {
         // The grid goes on the page before its cards, so its rows are balanced to the width they have.
         grid = zooidModule.createStatusCardGrid({ minWidth: 240 });
         getEl('dashboardCards').appendChild(grid.element);
-        grid.setCards(cards.map(function (card) {
+        return grid.setCards(cards.map(function (card) {
             var options = Object.assign({}, card);
             delete options.tool;
             delete options.param;
@@ -131,7 +185,29 @@ export default function (view) {
         }));
     }
 
+    // Asks each server that is on and has an address whether it answers and runs Zooid, and recolors its dot as
+    // each answer comes. A later load drops the answers of an earlier one.
+    var loads = 0;
+    function checkServers(config, card) {
+        var load = loads;
+        var checks = {};
+        var redraw = function () {
+            if (load === loads && card) card.setDots(serversCard(made.shared.t, config, checks).dots || null);
+        };
+        ((config && config.Servers) || []).forEach(function (server) {
+            if (server.IsEnabled === false || !server.Url || !server.ApiKey) return;
+            var request = requestFor(server);
+            request.Mode = server.Mode === 1 ? 'Push' : server.Mode === 2 ? 'Sync' : (typeof server.Mode === 'string' ? server.Mode : 'Pull');
+            apiRequest('Hints/CheckPeer', 'POST', request).then(function (result) {
+                checks[server.Key] = result || null;
+            }, function () {
+                checks[server.Key] = null;
+            }).then(redraw);
+        });
+    }
+
     function load() {
+        loads++;
         var status = getEl('dashboardStatus');
         if (status) status.textContent = '';
         var t = made.shared.t;
@@ -148,9 +224,10 @@ export default function (view) {
                     var found = stats && stats.Types ? stats.Types.filter(function (type) { return type.Key === key; })[0] : null;
                     return found ? found.Runs : null;
                 };
-                draw([serversCard(t, config), queueCard(t, answers[0])].concat(types.map(function (entry, i) {
+                var handles = draw([serversCard(t, config, {}), queueCard(t, answers[0])].concat(types.map(function (entry, i) {
                     return syncTypeCard(t, entry.type, entry.on, answers[2][i], runsOf(entry.type.stats));
                 })));
+                checkServers(config, handles && handles[0]);
             });
         }).catch(function () {
             clear();

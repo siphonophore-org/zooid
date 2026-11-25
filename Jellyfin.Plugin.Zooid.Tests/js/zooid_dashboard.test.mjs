@@ -60,22 +60,49 @@ test('the last scans draw a sparkline of what each found, once there are two', a
 
 test('the servers card counts the servers turned on, and says when there are none', async function () {
     var mod = await dashboard();
-    var card = mod.serversCard(strings, { Servers: [{ IsEnabled: true }, { IsEnabled: false }] });
+    var card = mod.serversCard(strings, { Servers: [{ Key: 'a', IsEnabled: true }, { Key: 'b', IsEnabled: false }] }, {});
     assert.equal(card.value, 1);
     assert.equal(card.detail, 'DashboardServersLine:1,2');
     assert.equal(card.tool, 'servers');
-    assert.equal(mod.serversCard(strings, { Servers: [] }).detail, 'DashboardNoServers');
+    assert.equal(card.status, 'OptionEnabled');
+    assert.equal(mod.serversCard(strings, { Servers: [] }, {}).detail, 'DashboardNoServers');
 });
 
-test('the queue card opens the queue and turns red while received changes keep failing', async function () {
+test('the servers card draws a dot per server, colored by health as the Diagram colors it', async function () {
     var mod = await dashboard();
-    var card = mod.queueCard(strings, { Pending: 4, InboundCount: 2, InboundFailingCount: 1 });
-    assert.equal(card.value, 4);
-    assert.equal(card.statusColor, 'red');
+    var servers = [
+        { Key: 'ok', Name: 'Alpha', IsEnabled: true, Url: 'http://a', ApiKey: 'k' },
+        { Key: 'bare', Name: 'Beta', IsEnabled: true, Url: 'http://b', ApiKey: 'k' },
+        { Key: 'down', Name: 'Gamma', IsEnabled: true, Url: 'http://c', ApiKey: 'k' },
+        { Key: 'off', Name: 'Delta', IsEnabled: false, Url: 'http://d', ApiKey: 'k' },
+        { Key: 'wait', Name: 'Echo', IsEnabled: true, Url: 'http://e', ApiKey: 'k' },
+        { Key: 'nokey', Name: 'Foxtrot', IsEnabled: true, Url: 'http://f', ApiKey: '' }
+    ];
+    var checks = { ok: { Reachable: true, HasPlugin: true }, bare: { Reachable: true, HasPlugin: false }, down: null };
+    var dots = mod.serversCard(strings, { Servers: servers }, checks).dots;
+    assert.deepEqual(dots.map(function (d) { return d.color; }), ['green', 'orange', 'red', 'gray', 'gray', 'red']);
+    assert.equal(dots[0].label, 'DashboardServerOk:Alpha');
+    assert.equal(dots[4].label, 'DashboardServerChecking:Echo');
+});
+
+test('the queue card splits a bar by state in the Queue page colors, and totals it', async function () {
+    var mod = await dashboard();
+    var card = mod.queueCard(strings, { Gathering: [{}, {}], OutboundCounts: { Pending: 3, Sent: 1, Failed: 0 }, InboundCount: 4, InboundFailingCount: 0 });
+    assert.deepEqual(card.segments.map(function (p) { return [p.label, p.value, p.color]; }), [
+        ['StatusGathering', 2, 'gray'], ['StatusPending', 3, 'orange'], ['StatusSent', 1, 'blue'], ['StatusReceived', 4, 'purple'], ['LabelFailed', 0, 'red']
+    ]);
+    assert.equal(card.value, 10);
+    assert.equal(card.statusColor, 'orange');
     assert.equal(card.tool, 'queue');
-    assert.equal(mod.queueCard(strings, { Pending: 4 }).statusColor, 'orange');
-    assert.equal(mod.queueCard(strings, {}).statusColor, 'gray');
-    assert.equal(mod.queueCard(strings, {}).status, 'PriorityIdle');
+});
+
+test('the queue card turns red while changes keep failing, and is idle when empty', async function () {
+    var mod = await dashboard();
+    assert.equal(mod.queueCard(strings, { InboundCount: 1, InboundFailingCount: 1 }).statusColor, 'red');
+    assert.equal(mod.queueCard(strings, { OutboundCounts: { Failed: 2 } }).statusColor, 'red');
+    var idle = mod.queueCard(strings, {});
+    assert.equal(idle.status, 'PriorityIdle');
+    assert.equal(idle.value, 0);
 });
 
 test('every card keeps a chart, a flat gray one when there is nothing to draw, so a row of cards lines up', async function () {
@@ -84,7 +111,5 @@ test('every card keeps a chart, a flat gray one when there is nothing to draw, s
     assert.deepEqual(off.sparkline, [0, 0]);
     assert.equal(off.sparklineColor, 'gray');
     assert.equal(off.value, '\u2014');
-    assert.deepEqual(mod.serversCard(strings, { Servers: [{ IsEnabled: true }] }).sparkline, [0, 0]);
-    assert.equal(mod.serversCard(strings, { Servers: [{ IsEnabled: true }] }).status, 'OptionEnabled');
-    assert.deepEqual(mod.queueCard(strings, {}).sparkline, [0, 0]);
+    assert.deepEqual(mod.serversCard(strings, { Servers: [] }, {}).sparkline, [0, 0]);
 });
