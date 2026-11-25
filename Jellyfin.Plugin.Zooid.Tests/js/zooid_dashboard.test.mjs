@@ -85,10 +85,10 @@ test('the servers card draws a dot per server, colored by health as the Diagram 
     assert.equal(dots[4].label, 'DashboardServerChecking:Echo');
 });
 
-test('the queue card splits a bar by state in the Queue page colors, and totals it', async function () {
+test('the queue card draws a column per state in the Queue page colors, and totals them', async function () {
     var mod = await dashboard();
     var card = mod.queueCard(strings, { Gathering: [{}, {}], OutboundCounts: { Pending: 3, Sent: 1, Failed: 0 }, InboundCount: 4, InboundFailingCount: 0 });
-    assert.deepEqual(card.segments.map(function (p) { return [p.label, p.value, p.color]; }), [
+    assert.deepEqual(card.bars.map(function (p) { return [p.label, p.value, p.color]; }), [
         ['StatusGathering', 2, 'gray'], ['StatusPending', 3, 'orange'], ['StatusSent', 1, 'blue'], ['StatusReceived', 4, 'purple'], ['LabelFailed', 0, 'red']
     ]);
     assert.equal(card.value, 10);
@@ -112,4 +112,20 @@ test('every card keeps a chart, a flat gray one when there is nothing to draw, s
     assert.equal(off.sparklineColor, 'gray');
     assert.equal(off.value, '\u2014');
     assert.deepEqual(mod.serversCard(strings, { Servers: [] }, {}).sparkline, [0, 0]);
+});
+
+test('past 12 servers the servers card draws one bar split by health in place of dots', async function () {
+    var mod = await dashboard();
+    var servers = [];
+    for (var n = 0; n < 13; n++) servers.push({ Key: 'k' + n, Name: 'S' + n, IsEnabled: n !== 12, Url: 'http://s' + n, ApiKey: 'k' });
+    var checks = {};
+    for (var m = 0; m < 10; m++) checks['k' + m] = { Reachable: true, HasPlugin: true };
+    checks.k10 = null;
+    var card = mod.serversCard(strings, { Servers: servers }, checks);
+    assert.equal(card.dots, undefined);
+    assert.deepEqual(card.segments.map(function (p) { return [p.label, p.value, p.color]; }), [
+        ['DashboardHealthOk', 10, 'green'], ['DashboardHealthNoPlugin', 0, 'orange'], ['DashboardHealthDown', 1, 'red'], ['DashboardHealthOff', 1, 'gray'], ['DashboardHealthChecking', 1, 'gray']
+    ]);
+    servers.pop();
+    assert.equal(mod.serversCard(strings, { Servers: servers }, checks).dots.length, 12);
 });

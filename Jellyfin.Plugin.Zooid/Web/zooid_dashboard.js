@@ -56,14 +56,20 @@ export function syncTypeCard(t, type, on, status, runs) {
 }
 
 // SERVER_DOTS
-// Each server's health as a dot color and the string that names it, as the Diagram colors them.
+// Each server's health as a dot color, the string that names one server in it, and the string that names a group of
+// them in the health bar, as the Diagram colors them.
 var SERVER_DOTS = {
-    ok: { color: 'green', key: 'DashboardServerOk' },
-    noPlugin: { color: 'orange', key: 'DashboardServerNoPlugin' },
-    down: { color: 'red', key: 'DashboardServerDown' },
-    disabled: { color: 'gray', key: 'DashboardServerOff' },
-    pending: { color: 'gray', key: 'DashboardServerChecking' }
+    ok: { color: 'green', key: 'DashboardServerOk', group: 'DashboardHealthOk' },
+    noPlugin: { color: 'orange', key: 'DashboardServerNoPlugin', group: 'DashboardHealthNoPlugin' },
+    down: { color: 'red', key: 'DashboardServerDown', group: 'DashboardHealthDown' },
+    disabled: { color: 'gray', key: 'DashboardServerOff', group: 'DashboardHealthOff' },
+    pending: { color: 'gray', key: 'DashboardServerChecking', group: 'DashboardHealthChecking' }
 };
+
+// MAX_DOTS
+// The most servers drawn as dots, which fit on one line in the narrowest card. More are drawn as one bar split by
+// health, so the card keeps its height and its row stays in line.
+var MAX_DOTS = 12;
 
 // serverDot
 // One server's dot: its health color, named by the server and what its color means.
@@ -99,7 +105,8 @@ export function serverState(server, check) {
 }
 
 // serversCard
-// Sums up the servers: how many are turned on, out of how many there are, with one dot per server for its health.
+// Sums up the servers: how many are turned on, out of how many there are, with one dot per server for its health, or
+// past MAX_DOTS servers one bar split by health.
 //
 // Inputs
 // t [object]: The strings.
@@ -113,7 +120,14 @@ export function serversCard(t, config, checks) {
     var on = servers.filter(function (server) { return server.IsEnabled; }).length;
     var card = { icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' };
     if (!servers.length) return Object.assign(card, EMPTY_CHART, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardNoServers') });
-    card.dots = servers.map(function (server) { return serverDot(t, server, serverState(server, (checks || {})[server.Key])); });
+    var states = servers.map(function (server) { return serverState(server, (checks || {})[server.Key]); });
+    if (servers.length <= MAX_DOTS) {
+        card.dots = servers.map(function (server, i) { return serverDot(t, server, states[i]); });
+    } else {
+        card.segments = ['ok', 'noPlugin', 'down', 'disabled', 'pending'].map(function (state) {
+            return { label: t.tr(SERVER_DOTS[state].group), value: states.filter(function (s) { return s === state; }).length, color: SERVER_DOTS[state].color };
+        });
+    }
     return Object.assign(card, {
         status: on ? t.tr('OptionEnabled') : t.tr('Off'),
         statusColor: on ? 'green' : 'gray',
@@ -122,8 +136,8 @@ export function serversCard(t, config, checks) {
 }
 
 // queueCard
-// Sums up the change queue as a bar split by state, in the colors of the Queue page's count cards. The number is
-// everything in the bar.
+// Sums up the change queue as a column per state, in the colors of the Queue page's count cards. The number is
+// everything in the columns.
 //
 // Inputs
 // t [object]: The strings.
@@ -136,14 +150,14 @@ export function queueCard(t, hints) {
     if (!hints) return Object.assign(card, EMPTY_CHART, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
     var counts = hints.OutboundCounts || {};
     var failing = hints.InboundFailingCount || 0;
-    card.segments = [
+    card.bars = [
         { label: t.tr('StatusGathering'), value: (hints.Gathering || []).length || hints.Pending || 0, color: 'gray' },
         { label: t.tr('StatusPending'), value: counts.Pending || 0, color: 'orange' },
         { label: t.tr('StatusSent'), value: counts.Sent || 0, color: 'blue' },
         { label: t.tr('StatusReceived'), value: hints.InboundCount || 0, color: 'purple' },
         { label: t.tr('LabelFailed'), value: counts.Failed || 0, color: 'red' }
     ];
-    card.value = card.segments.reduce(function (sum, part) { return sum + part.value; }, 0);
+    card.value = card.bars.reduce(function (sum, part) { return sum + part.value; }, 0);
     card.detail = t.format('DashboardQueueLine', hints.InboundCount || 0, failing);
     if (failing > 0 || counts.Failed > 0) return Object.assign(card, { status: t.tr('LabelFailed'), statusColor: 'red' });
     if (card.value > 0) return Object.assign(card, { status: t.tr('StatusPending'), statusColor: 'orange' });
@@ -192,7 +206,10 @@ export default function (view) {
         var load = loads;
         var checks = {};
         var redraw = function () {
-            if (load === loads && card) card.setDots(serversCard(made.shared.t, config, checks).dots || null);
+            if (load !== loads || !card) return;
+            var next = serversCard(made.shared.t, config, checks);
+            if (next.dots) card.setDots(next.dots);
+            else if (next.segments) card.setSegments(next.segments);
         };
         ((config && config.Servers) || []).forEach(function (server) {
             if (server.IsEnabled === false || !server.Url || !server.ApiKey) return;
