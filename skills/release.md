@@ -2,6 +2,13 @@
 
 How to cut a release of this plugin, from the version number to the manifest every server reads.
 
+| Channel | Repository URL | Released by | Version |
+| :--- | :--- | :--- | :--- |
+| Stable | `https://repo.siphonophore.org/stable` | Publishing the draft release, as below | `JJ.JJ.F.B` |
+| Unstable | `https://repo.siphonophore.org/unstable` | **Release Unstable**, every Friday or by hand. See [Unstable Build](#unstable-build) | `JJ.JJ.YYYY.N` |
+
+The unstable channel lists every stable release too.
+
 ## Versions
 
 A version is `JJ.JJ.F.B`.
@@ -20,7 +27,7 @@ A feature release is cut on `unstable`, then **Sync Branches** with `promote` mo
 
 ## Before the Release
 
-1. **Stolon.** When the release needs a Stolon change, release Stolon first with its **Release** workflow, then raise `Siphonophore.Stolon` in `Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj` and delete any local copy Stolon replaces. Wait until NuGet serves the version, and never release against a local package. Raise Stolon on a branch, and merge it once every check below has passed on it.
+1. **Stolon.** When the release needs a Stolon change, release Stolon first with its **Release** workflow, then raise `Siphonophore.Stolon` in `Jellyfin.Plugin.Zooid/Jellyfin.Plugin.Zooid.csproj` and delete any local copy Stolon replaces. Wait until GitHub Packages serves the version, and never release against a local package. Raise Stolon on a branch, and merge it once every check below has passed on it.
 2. **Protocol.** When a hint, a peer route, or a conflict rule changes in a way a server on the previous protocol would misread, raise `HintProtocol.ProtocolVersion`. Raise `HintProtocol.MinProtocolVersion` only when the release cannot talk to the protocol before it.
 3. **Database.** When the schema changes, raise `SyncSchema.CurrentSchemaVersion` and add the step that brings the version before it forward. Raise `SyncSchema.MinReaderVersion` only when the change alters or removes something the code of an earlier schema relies on, never for added tables, nullable or defaulted columns, or indexes.
 4. **Build.**
@@ -92,7 +99,7 @@ git push
     git pull
     ```
 
-5. **Verify.** On a test server, add the repository URL, install the release from the catalog, restart, and open each tab.
+5. **Verify.** On a test server, add `https://repo.siphonophore.org/stable`, install the release from the catalog, restart, and open each tool.
 
 ## Unstable Build
 
