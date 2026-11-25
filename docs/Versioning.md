@@ -19,7 +19,7 @@ Zooid 12.4.0.0 is the first release. It needs Jellyfin 12.4.
 
 ## Unstable Builds
 
-The unstable channel, `https://repo.siphonophore.org/unstable`, lists every stable release and a test build of the `unstable` branch each Friday. A test build's version is the Jellyfin version and its date, `JJ.JJ.YYYY.MMDD`, such as `12.4.2026.1124`, so it sorts after every stable release. A server on the unstable channel always takes the newest test build.
+The unstable channel, `https://repo.siphonophore.org/unstable`, lists every stable release and a test build of the `unstable` branch each Friday. A test build's version is the Jellyfin version, the year, and a count that goes up by one with each build, `JJ.JJ.YYYY.N`, such as `12.4.2026.1` and then `12.4.2026.2`. It sorts after every stable release, so a server on the unstable channel always takes the newest test build.
 
 ## What a Release Carries
 

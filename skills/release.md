@@ -96,13 +96,14 @@ git push
 
 ## Unstable Build
 
-**Release Unstable** publishes the `unstable` branch as a pre-release, which only the Siphonophore unstable manifest lists. It runs every Friday at 15:00 UTC, and by hand from the Actions tab on any day. A run by hand may name a date, and otherwise takes today in Denver.
+**Release Unstable** publishes the `unstable` branch as a pre-release, which only the Siphonophore unstable manifest lists. It runs every Friday at 15:00 UTC, and by hand from the Actions tab on any day.
 
-* The version is the Jellyfin version and the date, `JJ.JJ.YYYY.MMDD`, such as `12.4.2026.1124`. Each unstable build sorts after every stable release and after the builds before it. A part of a version holds at most 65534, so the date is split into the year and the month and day.
+* The version is the Jellyfin version, the year, and a count, `JJ.JJ.YYYY.N`, such as `12.4.2026.1` and then `12.4.2026.2`. Each build takes the last one's count plus one, and the count starts at 1 each year. Each unstable build sorts after every stable release and after the builds before it.
+* Only published pre-releases with a zip count, so a failed run takes no number.
 * The run sets that version in `build.yaml` for its own build only. Nothing is committed.
-* The notes list the commits since the last pre-release.
-* A Friday run skips when the newest pre-release already holds the branch's last commit.
-* Releases are immutable once published, so the run builds into a draft and publishes it after the zip is in. A date that already has a release is refused, and a draft left by a failed run is filled and published.
+* The notes list the commits since the last unstable build.
+* A Friday run skips when the newest unstable build already holds the branch's last commit.
+* Releases are immutable once published, so the run builds into a draft and publishes it after the zip is in. A draft left by a failed run is filled and published.
 
 ## When a Release Is Wrong
 
