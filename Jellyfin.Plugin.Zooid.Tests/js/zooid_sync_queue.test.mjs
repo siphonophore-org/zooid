@@ -157,8 +157,8 @@ test('a row escapes the title, the server name, and the error, and writes no inl
     queue._data = { Outbound: [{ Id: 5, State: 2, Kind: 'History', PeerKey: 'k1', PeerName: '<b>Peer</b>', Title: '<script>x</script>', LastError: '"><img>', ItemId: 'abc', UserName: '<i>', UserId: 'u1' }] };
     queue.renderList();
     var html = env.view.querySelector('#queueList').innerHTML;
-    assert.doesNotMatch(html, /<script>/);
-    assert.doesNotMatch(html, /<b>Peer/);
+    assert.doesNotMatch(html, /<\s*\/?\s*script\b/i);
+    assert.doesNotMatch(html, /<\s*\/?\s*b\b/i);
     assert.match(html, /&lt;script&gt;x&lt;\/script&gt;/);
     assert.match(html, /&lt;b&gt;Peer&lt;\/b&gt;/);
     assert.doesNotMatch(html, /style=/);

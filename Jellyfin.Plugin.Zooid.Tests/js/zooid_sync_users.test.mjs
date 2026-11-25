@@ -62,7 +62,7 @@ test('_addPropertyRows shows a value that is not JSON as one row', function () {
 test('_createDisabledRow escapes the category and the message', function () {
     var row = module._createDisabledRow('<b>Policy</b>', 'Not available');
     assert.equal(row.className, 'zooid-modal-disabled-row');
-    assert.doesNotMatch(row.children[0].innerHTML, /<b>/);
+    assert.doesNotMatch(row.children[0].innerHTML, /<\s*\/?\s*b\b/i);
 });
 
 test('hasSynced is false for nothing, the default date, and text that is no date, and true for a real date', async function () {

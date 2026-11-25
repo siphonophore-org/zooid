@@ -70,7 +70,7 @@ test('buildArrayComparisonRow marks nothing for the same items in another order'
 
 test('buildArrayComparisonRow escapes the items', function () {
     var html = module.buildArrayComparisonRow('Tags', ['<i>'], []);
-    assert.doesNotMatch(html, /<i>/);
+    assert.doesNotMatch(html, /<\s*\/?\s*i\b/i);
     assert.match(html, /&lt;i&gt;/);
 });
 

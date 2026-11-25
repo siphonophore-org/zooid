@@ -84,7 +84,7 @@ test('the bandwidth rows list each server that may link, with its name and speed
     ] } });
     var html = opened.view.querySelector('#streamSpeedRows').innerHTML;
     assert.match(html, /Streams to &lt;b&gt;Alpha&lt;\/b&gt;/);
-    assert.doesNotMatch(html, /<b>Alpha/);
+    assert.doesNotMatch(html, /<\s*\/?\s*b\b/i);
     assert.match(html, /data-server-key="k&quot;1"/);
     assert.match(html, /value="25"/);
     assert.match(html, /value="10"/);
