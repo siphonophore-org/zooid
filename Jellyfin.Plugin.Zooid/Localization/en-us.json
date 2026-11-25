@@ -821,7 +821,7 @@
   "SkipNotSyncedCopy": "it is not a synced copy yet",
   "SkipRowGone": "the row no longer exists",
   "StatisticsAllOff": "Every sync type is off and no server may link to this one, so there is nothing to show. Turn a sync type on under Settings.",
-  "StatisticsIntro": "Shows how the synced files are kept, what the last 10 scans of each sync type found, and the link streams this server started. A sync type that is off is not shown.",
+  "StatisticsIntro": "Shows storage, recent scans and link streams.",
   "StatusAuthenticating": "Authenticating…",
   "StatusCached": "Cached",
   "StatusChecking": "Checking",
