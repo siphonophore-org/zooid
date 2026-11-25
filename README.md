@@ -2,6 +2,10 @@
 
 A Jellyfin plugin that keeps several Jellyfin servers in step. It syncs **Content**, **History**, **Metadata**, **People**, **Users**, and **Playlists** across servers, on a schedule and, between servers that both run the plugin, as changes happen.
 
+## The Name
+
+A [zooid](https://en.wikipedia.org/wiki/Zooid) is "an animal that is part of a colonial animal." A siphonophore is a colony of zooids that live and work as one, and each Jellyfin server running Zooid is one member of that colony.
+
 ## Documentation
 
 Installation, setup, every sync type, and the API are covered in the **[Zooid documentation](https://siphonophore-org.github.io/zooid/)**.
