@@ -1,22 +1,18 @@
 name: '🧪 Release Unstable'
 
 # Publishes the unstable branch as a pre-release, which only the Siphonophore unstable manifest lists. It runs
-# every Friday, and by hand from the Actions tab on any day. The version is the Jellyfin version followed by
-# the date, 12.4.YYYY.MMDD, such as 12.4.2026.1124, so each unstable build sorts after every stable release
-# and after the builds before it. The date is today in Denver unless the run names one. A scheduled run skips
-# when the newest pre-release already holds the unstable branch's last commit. Releases are immutable once
-# published, so the zip goes into a draft that is published after, and a date that already has a release is
-# refused. A draft left by a failed run is filled and published.
+# every Friday, and by hand from the Actions tab on any day. The version is the Jellyfin version, the year,
+# and a count that goes up by one with each unstable build of that year, 12.4.YYYY.N, such as 12.4.2026.1 and
+# then 12.4.2026.2. Each unstable build sorts after every stable release and after the builds before it. Only
+# published pre-releases with a zip count, so a failed run takes no number. A scheduled run skips when the
+# newest unstable build already holds the unstable branch's last commit. Releases are immutable once
+# published, so the zip goes into a draft that is published after. A draft left by a failed run is filled and
+# published.
 
 on:
   schedule:
     - cron: '0 15 * * 5'
   workflow_dispatch:
-    inputs:
-      date:
-        description: 'Build date as YYYY-MM-DD. Empty is today in Denver.'
-        required: false
-        default: ''
 
 permissions:
   contents: write
@@ -43,38 +39,37 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT: ${{ github.event_name }}
-          DATE_INPUT: ${{ inputs.date }}
         run: |
           set -euo pipefail
-          DAY="${DATE_INPUT:-$(TZ=America/Denver date +%Y-%m-%d)}"
-          if ! [[ "$DAY" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
-            echo "::error::The date must be YYYY-MM-DD, not '${DAY}'."
-            exit 1
-          fi
-          YEAR="${BASH_REMATCH[1]}"
-          MMDD=$((10#${BASH_REMATCH[2]}${BASH_REMATCH[3]}))
           BASE=$(grep '^version:' build.yaml | sed 's/version: *"\?\([^"]*\)"\?.*/\1/' | tr -d '"' | cut -d. -f1-2)
-          VERSION="${BASE}.${YEAR}.${MMDD}"
-          TAG="v${VERSION}"
+          YEAR=$(TZ=America/Denver date +%Y)
+          PREFIX="v${BASE}.${YEAR}."
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq '.[]' | jq -s '.' > /tmp/releases.json
+
+          # The unstable builds that count: published pre-releases with a zip.
+          jq '[.[] | select(.prerelease and (.draft | not) and ([.assets[] | select(.name | endswith(".zip"))] | length > 0))]' /tmp/releases.json > /tmp/built.json
+          LAST=$(jq -r --arg p "$PREFIX" '[.[] | .tag_name | select(startswith($p)) | ltrimstr($p) | select(test("^[0-9]+$")) | tonumber] | max // 0' /tmp/built.json)
+          NEWEST=$(jq -r 'sort_by(.published_at) | last | .tag_name // ""' /tmp/built.json)
           HEAD=$(git rev-parse HEAD)
 
-          LATEST=$(gh release list --limit 50 --json tagName,isPrerelease --jq '[.[] | select(.isPrerelease)][0].tagName // ""')
-          if [ "$EVENT" = "schedule" ] && [ -n "$LATEST" ] && [ "$(git rev-list -n 1 "$LATEST" 2>/dev/null || true)" = "$HEAD" ]; then
-            echo "::notice::${LATEST} already holds ${HEAD}, so this week has nothing new to release."
+          if [ "$EVENT" = "schedule" ] && [ -n "$NEWEST" ] && [ "$(git rev-list -n 1 "$NEWEST" 2>/dev/null || true)" = "$HEAD" ]; then
+            echo "::notice::${NEWEST} already holds ${HEAD}, so this week has nothing new to release."
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          STATE=$(gh release view "${TAG}" --json isDraft --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo "missing")
+          VERSION="${BASE}.${YEAR}.$((LAST + 1))"
+          TAG="v${VERSION}"
+          STATE=$(jq -r --arg t "$TAG" '[.[] | select(.tag_name == $t)][0] | if . == null then "missing" elif .draft then "draft" else "published" end' /tmp/releases.json)
           if [ "$STATE" = "published" ]; then
-            echo "::error::${TAG} is already released, and a published release cannot change. Pick another date."
+            echo "::error::${TAG} is already published without a zip, and a published release cannot change. Delete it, then run again."
             exit 1
           fi
           echo "skipped=false" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "state=${STATE}" >> "$GITHUB_OUTPUT"
-          echo "day=${DAY}" >> "$GITHUB_OUTPUT"
+          echo "newest=${NEWEST}" >> "$GITHUB_OUTPUT"
           echo "Releasing ${TAG} from ${HEAD}."
 
       - name: Setup .NET
@@ -83,7 +78,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # build.sh reads the version from build.yaml, so the date version is written there for this build only.
+      # build.sh reads the version from build.yaml, so the unstable version is written there for this build only.
       - name: Set Version
         if: steps.build_info.outputs.skipped != 'true'
         env:
@@ -104,17 +99,15 @@ jobs:
       - name: Write Notes
         if: steps.build_info.outputs.skipped != 'true'
         env:
-          DAY: ${{ steps.build_info.outputs.day }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEWEST: ${{ steps.build_info.outputs.newest }}
         run: |
           set -euo pipefail
           {
-            echo "Unstable build of ${DAY}, from \`$(git rev-parse --short HEAD)\` on the unstable branch."
+            echo "Unstable build from \`$(git rev-parse --short HEAD)\` on the unstable branch."
             echo
             echo "## Changes"
-            LATEST=$(gh release list --limit 50 --json tagName,isPrerelease --jq '[.[] | select(.isPrerelease)][0].tagName // ""' || true)
-            if [ -n "$LATEST" ] && git rev-parse -q --verify "$LATEST" >/dev/null; then
-              git log --no-merges --format='- %s' "${LATEST}..HEAD"
+            if [ -n "$NEWEST" ] && git rev-parse -q --verify "$NEWEST" >/dev/null; then
+              git log --no-merges --format='- %s' "${NEWEST}..HEAD"
             else
               git log --no-merges --format='- %s' -n 30
             fi
