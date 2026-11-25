@@ -29,7 +29,7 @@
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Siphonophore.Stolon" Version="12.4.5" />
+    <PackageReference Include="Siphonophore.Stolon" Version="12.4.6" />
   </ItemGroup>
 
   <ItemGroup>
