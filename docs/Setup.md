@@ -85,7 +85,7 @@ Below the cards, **Permanent copies** lists the full copies held in that server'
 
 ![Statistics](screenshots/Statistics.png)
 
-The **Statistics** page opens with **Usage** while content sync is on: a chart of how the synced files are kept here, as copies, links, and cached links. Select a part to see it by server in a second chart beside it, and select it again to hide that chart. Below it, the page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
+The **Statistics** page opens with **Usage** while content sync is on: a chart of how the synced files are kept here, as copies, links, and cached links. Select a part to open a callout under the chart that breaks it down by server, with each server's count and share, and select it again to close it. Below it, the page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
 
 | Bar | Counts |
 | :--- | :--- |

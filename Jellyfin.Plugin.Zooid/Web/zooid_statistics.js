@@ -12,24 +12,25 @@ var TYPE_TITLES = { Content: 'SyncTypeContent', History: 'SyncTypeHistory', Meta
 // How a synced file is kept, in the order the Usage chart lists them: the key the Statistics route counts it under
 // and the string key of its name.
 var USAGE_KINDS = [
-    { key: 'Copies', title: 'ChartCopies' },
-    { key: 'Links', title: 'ChartLinks' },
-    { key: 'CachedLinks', title: 'ChartCachedLinks' }
+    { key: 'Copies', title: 'ChartCopies', color: 'blue' },
+    { key: 'Links', title: 'ChartLinks', color: 'green' },
+    { key: 'CachedLinks', title: 'ChartCachedLinks', color: 'orange' }
 ];
 
 // usageSlices
-// The slices of the Usage chart: how many synced files of every server are copies, links, and cached links.
+// The slices of the Usage chart: how many synced files of every server are copies, links, and cached links, each
+// in its kind's color.
 //
 // Inputs
 // files [object[]]: Each server's counts, as the Statistics route answers in Files.
 // t [object]: The strings.
 //
 // Output
-// [object[]]: One slice per kind, in the order of USAGE_KINDS, with its label and value.
+// [object[]]: One slice per kind, in the order of USAGE_KINDS, with its label, value, and color.
 export function usageSlices(files, t) {
     return USAGE_KINDS.map(function (kind) {
         var total = (files || []).reduce(function (sum, file) { return sum + (file[kind.key] || 0); }, 0);
-        return { label: t.tr(kind.title), value: total };
+        return { label: t.tr(kind.title), value: total, color: kind.color };
     });
 }
 
@@ -233,7 +234,8 @@ export default function (view) {
 
     // addUsage
     // Adds the Usage section: how every synced file is kept, as a pie of copies, links, and cached links. Picking a
-    // slice shows that kind broken down by server in a second pie beside it, and picking it again hides the second.
+    // slice opens a callout under the chart that breaks that kind down by server, one row each with its count and
+    // share, and picking it again closes the callout.
     //
     // Inputs
     // files [object[]]: Each server's counts, as the Statistics route answers in Files.
@@ -244,15 +246,14 @@ export default function (view) {
         note.className = 'fieldDescription zooid-mb-md';
         note.textContent = t.tr('HelpUsagePick');
         content.appendChild(note);
-        var grid = document.createElement('div');
-        grid.className = 'zooid-usage';
-        var overall = document.createElement('div');
-        var detail = document.createElement('div');
-        grid.appendChild(overall);
-        grid.appendChild(detail);
-        content.appendChild(grid);
+        var holder = document.createElement('div');
+        var callout = document.createElement('div');
+        callout.className = 'stolon-callout-neutral zooid-usage-callout stolon-hidden';
+        callout.setAttribute('role', 'region');
+        callout.setAttribute('aria-live', 'polite');
+        content.appendChild(holder);
+        content.appendChild(callout);
 
-        var breakdown = null;
         var slices = usageSlices(files, t);
         var total = slices.reduce(function (sum, slice) { return sum + slice.value; }, 0);
         var chart = zooidModule.createPieChart({
@@ -264,32 +265,74 @@ export default function (view) {
             valueName: t.tr('HeaderFiles'),
             emptyText: t.tr('ChartFilesEmpty'),
             onSelect: function (slice, index) {
-                if (breakdown) {
-                    charts = charts.filter(function (c) { return c !== breakdown; });
-                    breakdown.destroy();
-                    breakdown = null;
-                }
-                detail.innerHTML = '';
+                callout.innerHTML = '';
+                callout.classList.toggle('stolon-hidden', !slice);
                 if (!slice) return;
-                var title = document.createElement('div');
-                title.className = 'stolon-subsection-title';
-                title.textContent = t.format('UsageByServerTitle', slice.label);
-                detail.appendChild(title);
-                breakdown = zooidModule.createPieChart({
-                    slices: usageByServer(files, USAGE_KINDS[index].key),
-                    label: t.format('UsageByServerTitle', slice.label),
-                    donut: true,
-                    centerText: String(slice.value),
-                    centerLabel: slice.label,
-                    valueName: t.tr('HeaderFiles'),
-                    emptyText: t.tr('ChartFilesEmpty')
-                });
-                charts.push(breakdown);
-                detail.appendChild(breakdown.element);
+                fillUsageCallout(callout, files, USAGE_KINDS[index], slice.label, t);
             }
         });
         charts.push(chart);
-        overall.appendChild(chart.element);
+        holder.appendChild(chart.element);
+    }
+
+    // fillUsageCallout
+    // Writes one kind's breakdown into the callout: a heading in the kind's color, then a row per server with its
+    // name, a bar of its share, its count, and its percent.
+    //
+    // Inputs
+    // callout [HTMLElement]: The callout under the Usage chart.
+    // files [object[]]: Each server's counts.
+    // kind [object]: The kind, from USAGE_KINDS.
+    // label [string]: The kind's name as the chart shows it.
+    // t [object]: The strings.
+    function fillUsageCallout(callout, files, kind, label, t) {
+        var title = t.format('UsageByServerTitle', label);
+        callout.setAttribute('aria-label', title);
+        var head = document.createElement('div');
+        head.className = 'zooid-usage-callout-head';
+        var dot = document.createElement('span');
+        dot.className = 'stolon-dot stolon-' + kind.color;
+        dot.setAttribute('aria-hidden', 'true');
+        var text = document.createElement('span');
+        text.textContent = title;
+        head.appendChild(dot);
+        head.appendChild(text);
+        callout.appendChild(head);
+        var rows = usageByServer(files, kind.key);
+        if (!rows.length) {
+            var empty = document.createElement('div');
+            empty.className = 'zooid-usage-empty';
+            empty.textContent = t.tr('ChartFilesEmpty');
+            callout.appendChild(empty);
+            return;
+        }
+        var sum = rows.reduce(function (all, row) { return all + row.value; }, 0);
+        rows.forEach(function (row) {
+            var share = sum ? row.value / sum : 0;
+            var line = document.createElement('div');
+            line.className = 'zooid-usage-row';
+            var name = document.createElement('span');
+            name.className = 'zooid-usage-name';
+            name.textContent = row.label;
+            name.title = row.label;
+            var bar = document.createElement('span');
+            bar.className = 'stolon-progress zooid-usage-bar';
+            var fill = document.createElement('span');
+            fill.className = 'stolon-progress-bar zooid-usage-fill stolon-' + kind.color;
+            fill.style.setProperty('--zooid-usage-share', (share * 100).toFixed(3) + '%');
+            bar.appendChild(fill);
+            var count = document.createElement('span');
+            count.className = 'zooid-usage-count';
+            count.textContent = String(row.value);
+            var percent = document.createElement('span');
+            percent.className = 'zooid-usage-share';
+            percent.textContent = Math.round(share * 100) + '%';
+            line.appendChild(name);
+            line.appendChild(bar);
+            line.appendChild(count);
+            line.appendChild(percent);
+            callout.appendChild(line);
+        });
     }
 
     // drawStatistics

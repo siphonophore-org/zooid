@@ -148,7 +148,7 @@ test('usageSlices totals copies, links, and cached links over every server', asy
     var mod = await loadScript('zooid_statistics.js');
     var t = { tr: function (key) { return key; } };
     var slices = mod.usageSlices([{ Copies: 4, Links: 1, CachedLinks: 0 }, { Copies: 2, Links: 0, CachedLinks: 3 }], t);
-    assert.deepEqual(slices, [{ label: 'ChartCopies', value: 6 }, { label: 'ChartLinks', value: 1 }, { label: 'ChartCachedLinks', value: 3 }]);
+    assert.deepEqual(slices, [{ label: 'ChartCopies', value: 6, color: 'blue' }, { label: 'ChartLinks', value: 1, color: 'green' }, { label: 'ChartCachedLinks', value: 3, color: 'orange' }]);
 });
 
 test('usageByServer lists the servers that have the kind, largest first, by name', async function () {

@@ -381,15 +381,41 @@ div:not(.zooid-form-row) + .zooid-form-row {
     .zooid-bandwidth .zooid-form-row { grid-template-columns: minmax(0, 1fr) 6.5em 6.5em; }
 }
 
-/* zooid-usage */
-/* The Usage pie on the Statistics page beside the pie of the kind picked in it, broken down by server. On a narrow
-   page the second pie goes under the first. */
-/* Example: <div class="zooid-usage"><div><div class="stolon-pie-chart"></div></div><div></div></div> */
-.zooid-usage {
+/* zooid-usage-callout */
+/* The callout under the Usage chart on the Statistics page, one kind of file broken down by server: a heading in the
+   kind's color, then a row per server with its name, a bar of its share, its count, and its percent. */
+/* Example: <div class="stolon-callout-neutral zooid-usage-callout"><div class="zooid-usage-callout-head"><span class="stolon-dot stolon-blue"></span><span>Copies by server</span></div><div class="zooid-usage-row"><span class="zooid-usage-name">Alpha</span><span class="stolon-progress zooid-usage-bar"><span class="stolon-progress-bar zooid-usage-fill stolon-blue"></span></span><span class="zooid-usage-count">4</span><span class="zooid-usage-share">67%</span></div></div> */
+.zooid-usage-callout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stolon-gap-narrow);
+    margin-top: var(--stolon-gap-wide);
+}
+.zooid-usage-callout-head {
+    display: flex;
+    align-items: center;
+    gap: var(--stolon-gap-narrow);
+    font-weight: 600;
+}
+.zooid-usage-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24em), 1fr));
-    gap: var(--stolon-gap-wide);
-    align-items: start;
+    grid-template-columns: minmax(6em, 14em) minmax(0, 1fr) 4em 3.5em;
+    align-items: center;
+    gap: var(--stolon-gap-narrow);
+}
+.zooid-usage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zooid-usage-bar { height: var(--stolon-gap-narrow); }
+.zooid-usage-fill { width: var(--zooid-usage-share, 0%); }
+.zooid-usage-fill.stolon-blue { background: var(--stolon-blue-fg); }
+.zooid-usage-fill.stolon-green { background: var(--stolon-green-fg); }
+.zooid-usage-fill.stolon-orange { background: var(--stolon-orange-fg); }
+.zooid-usage-count,
+.zooid-usage-share { text-align: right; font-variant-numeric: tabular-nums; }
+.zooid-usage-share { opacity: 0.7; }
+.zooid-usage-empty { opacity: 0.7; }
+@media (max-width: 480px) {
+    .zooid-usage-row { grid-template-columns: minmax(0, 1fr) 3em 3em; }
+    .zooid-usage-bar { grid-column: 1 / -1; grid-row: 2; }
 }
 
 /* zooid-panel */

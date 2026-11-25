@@ -55,36 +55,16 @@ export function syncTypeCard(t, type, on, status, runs) {
     return card;
 }
 
-// SERVER_DOTS
-// Each server's health as a dot color, the string that names one server in it, and the string that names a group of
-// them in the health bar: green runs Zooid, orange answers without it, red cannot be reached, gray is off.
-var SERVER_DOTS = {
-    ok: { color: 'green', key: 'DashboardServerOk', group: 'DashboardHealthOk' },
-    noPlugin: { color: 'orange', key: 'DashboardServerNoPlugin', group: 'DashboardHealthNoPlugin' },
-    down: { color: 'red', key: 'DashboardServerDown', group: 'DashboardHealthDown' },
-    disabled: { color: 'gray', key: 'DashboardServerOff', group: 'DashboardHealthOff' },
-    pending: { color: 'gray', key: 'DashboardServerChecking', group: 'DashboardHealthChecking' }
-};
-
-// MAX_DOTS
-// The most servers drawn as dots, which fit on one line in the narrowest card. More are drawn as one bar split by
-// health, so the card keeps its height and its row stays in line.
-var MAX_DOTS = 12;
-
-// serverDot
-// One server's dot: its health color, named by the server and what its color means.
-//
-// Inputs
-// t [object]: The strings.
-// server [object]: The server entry.
-// state [string]: A key of SERVER_DOTS.
-//
-// Output
-// [object]: The dot's color and label.
-export function serverDot(t, server, state) {
-    var dot = SERVER_DOTS[state] || SERVER_DOTS.pending;
-    return { color: dot.color, label: t.format(dot.key, server.Name || server.ServerName || server.Url || '') };
-}
+// SERVER_HEALTH
+// Each server health in the order the health bar draws them, with its color and the string that names its part:
+// green runs Zooid, orange answers without it, red cannot be reached, gray is off or still being checked.
+var SERVER_HEALTH = [
+    { state: 'ok', color: 'green', key: 'DashboardHealthOk' },
+    { state: 'noPlugin', color: 'orange', key: 'DashboardHealthNoPlugin' },
+    { state: 'down', color: 'red', key: 'DashboardHealthDown' },
+    { state: 'disabled', color: 'gray', key: 'DashboardHealthOff' },
+    { state: 'pending', color: 'gray', key: 'DashboardHealthChecking' }
+];
 
 // serverState
 // A server's health before or after it is asked, as the Servers page works it out. A server that is off or has no
@@ -95,7 +75,7 @@ export function serverDot(t, server, state) {
 // check [object]: What Hints/CheckPeer answered, null when the ask failed, or undefined before it is asked.
 //
 // Output
-// [string]: A key of SERVER_DOTS.
+// [string]: A state of SERVER_HEALTH.
 export function serverState(server, check) {
     if (server.IsEnabled === false) return 'disabled';
     if (!server.Url || !server.ApiKey) return 'down';
@@ -105,8 +85,7 @@ export function serverState(server, check) {
 }
 
 // serversCard
-// Sums up the servers: how many are turned on, out of how many there are, with one dot per server for its health, or
-// past MAX_DOTS servers one bar split by health.
+// Sums up the servers: how many are turned on, out of how many there are, with one bar split by health.
 //
 // Inputs
 // t [object]: The strings.
@@ -121,13 +100,9 @@ export function serversCard(t, config, checks) {
     var card = { icon: 'dns', title: t.tr('TabServers'), value: on, tool: 'servers' };
     if (!servers.length) return Object.assign(card, EMPTY_CHART, { status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardNoServers') });
     var states = servers.map(function (server) { return serverState(server, (checks || {})[server.Key]); });
-    if (servers.length <= MAX_DOTS) {
-        card.dots = servers.map(function (server, i) { return serverDot(t, server, states[i]); });
-    } else {
-        card.segments = ['ok', 'noPlugin', 'down', 'disabled', 'pending'].map(function (state) {
-            return { label: t.tr(SERVER_DOTS[state].group), value: states.filter(function (s) { return s === state; }).length, color: SERVER_DOTS[state].color };
-        });
-    }
+    card.segments = SERVER_HEALTH.map(function (health) {
+        return { label: t.tr(health.key), value: states.filter(function (s) { return s === health.state; }).length, color: health.color };
+    });
     return Object.assign(card, {
         status: on ? t.tr('OptionEnabled') : t.tr('Off'),
         statusColor: on ? 'green' : 'gray',
@@ -199,7 +174,7 @@ export default function (view) {
         }));
     }
 
-    // Asks each server that is on and has an address whether it answers and runs Zooid, and recolors its dot as
+    // Asks each server that is on and has an address whether it answers and runs Zooid, and redraws the health bar as
     // each answer comes. A later load drops the answers of an earlier one.
     var loads = 0;
     function checkServers(config, card) {
@@ -208,8 +183,7 @@ export default function (view) {
         var redraw = function () {
             if (load !== loads || !card) return;
             var next = serversCard(made.shared.t, config, checks);
-            if (next.dots) card.setDots(next.dots);
-            else if (next.segments) card.setSegments(next.segments);
+            if (next.segments) card.setSegments(next.segments);
         };
         ((config && config.Servers) || []).forEach(function (server) {
             if (server.IsEnabled === false || !server.Url || !server.ApiKey) return;

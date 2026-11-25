@@ -68,23 +68,6 @@ test('the servers card counts the servers turned on, and says when there are non
     assert.equal(mod.serversCard(strings, { Servers: [] }, {}).detail, 'DashboardNoServers');
 });
 
-test('the servers card draws a dot per server, colored by health', async function () {
-    var mod = await dashboard();
-    var servers = [
-        { Key: 'ok', Name: 'Alpha', IsEnabled: true, Url: 'http://a', ApiKey: 'k' },
-        { Key: 'bare', Name: 'Beta', IsEnabled: true, Url: 'http://b', ApiKey: 'k' },
-        { Key: 'down', Name: 'Gamma', IsEnabled: true, Url: 'http://c', ApiKey: 'k' },
-        { Key: 'off', Name: 'Delta', IsEnabled: false, Url: 'http://d', ApiKey: 'k' },
-        { Key: 'wait', Name: 'Echo', IsEnabled: true, Url: 'http://e', ApiKey: 'k' },
-        { Key: 'nokey', Name: 'Foxtrot', IsEnabled: true, Url: 'http://f', ApiKey: '' }
-    ];
-    var checks = { ok: { Reachable: true, HasPlugin: true }, bare: { Reachable: true, HasPlugin: false }, down: null };
-    var dots = mod.serversCard(strings, { Servers: servers }, checks).dots;
-    assert.deepEqual(dots.map(function (d) { return d.color; }), ['green', 'orange', 'red', 'gray', 'gray', 'red']);
-    assert.equal(dots[0].label, 'DashboardServerOk:Alpha');
-    assert.equal(dots[4].label, 'DashboardServerChecking:Echo');
-});
-
 test('the queue card draws a column per state in the Queue page colors, and totals them', async function () {
     var mod = await dashboard();
     var card = mod.queueCard(strings, { Gathering: [{}, {}], OutboundCounts: { Pending: 3, Sent: 1, Failed: 0 }, InboundCount: 4, InboundFailingCount: 0 });
@@ -114,18 +97,21 @@ test('every card keeps a chart, a flat gray one when there is nothing to draw, s
     assert.deepEqual(mod.serversCard(strings, { Servers: [] }, {}).sparkline, [0, 0]);
 });
 
-test('past 12 servers the servers card draws one bar split by health in place of dots', async function () {
+test('the servers card draws one bar split by health, whatever the number of servers', async function () {
     var mod = await dashboard();
-    var servers = [];
-    for (var n = 0; n < 13; n++) servers.push({ Key: 'k' + n, Name: 'S' + n, IsEnabled: n !== 12, Url: 'http://s' + n, ApiKey: 'k' });
-    var checks = {};
-    for (var m = 0; m < 10; m++) checks['k' + m] = { Reachable: true, HasPlugin: true };
-    checks.k10 = null;
+    var servers = [
+        { Key: 'ok', IsEnabled: true, Url: 'http://a', ApiKey: 'k' },
+        { Key: 'bare', IsEnabled: true, Url: 'http://b', ApiKey: 'k' },
+        { Key: 'down', IsEnabled: true, Url: 'http://c', ApiKey: 'k' },
+        { Key: 'off', IsEnabled: false, Url: 'http://d', ApiKey: 'k' },
+        { Key: 'wait', IsEnabled: true, Url: 'http://e', ApiKey: 'k' },
+        { Key: 'nokey', IsEnabled: true, Url: 'http://f', ApiKey: '' }
+    ];
+    var checks = { ok: { Reachable: true, HasPlugin: true }, bare: { Reachable: true, HasPlugin: false }, down: null };
     var card = mod.serversCard(strings, { Servers: servers }, checks);
     assert.equal(card.dots, undefined);
     assert.deepEqual(card.segments.map(function (p) { return [p.label, p.value, p.color]; }), [
-        ['DashboardHealthOk', 10, 'green'], ['DashboardHealthNoPlugin', 0, 'orange'], ['DashboardHealthDown', 1, 'red'], ['DashboardHealthOff', 1, 'gray'], ['DashboardHealthChecking', 1, 'gray']
+        ['DashboardHealthOk', 1, 'green'], ['DashboardHealthNoPlugin', 1, 'orange'], ['DashboardHealthDown', 2, 'red'], ['DashboardHealthOff', 1, 'gray'], ['DashboardHealthChecking', 1, 'gray']
     ]);
-    servers.pop();
-    assert.equal(mod.serversCard(strings, { Servers: servers }, checks).dots.length, 12);
+    assert.equal(mod.serversCard(strings, { Servers: servers.slice(0, 1) }, checks).segments[0].value, 1);
 });
