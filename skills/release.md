@@ -102,7 +102,7 @@ git push
 * The run sets that version in `build.yaml` for its own build only. Nothing is committed.
 * The notes list the commits since the last pre-release.
 * A Friday run skips when the newest pre-release already holds the branch's last commit.
-* A second run for the same date replaces that pre-release's zip.
+* Releases are immutable once published, so the run builds into a draft and publishes it after the zip is in. A date that already has a release is refused, and a draft left by a failed run is filled and published.
 
 ## When a Release Is Wrong
 
