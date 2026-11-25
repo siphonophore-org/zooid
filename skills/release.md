@@ -96,7 +96,13 @@ git push
 
 ## Unstable Build
 
-A test build goes to the Siphonophore unstable manifest only. Set the version and changelog on `unstable` as above, push, then start **Release Unstable** from the Actions tab on `unstable`. It publishes `v<version>` as a pre-release and tells the Siphonophore repository. Running it again for the same version replaces the pre-release's zip. A version already drafted or released as stable is refused.
+**Release Unstable** publishes the `unstable` branch as a pre-release, which only the Siphonophore unstable manifest lists. It runs every Friday at 15:00 UTC, and by hand from the Actions tab on any day. A run by hand may name a date, and otherwise takes today in Denver.
+
+* The version is the Jellyfin version and the date, `JJ.JJ.YYYY.MMDD`, such as `12.4.2026.1124`. Each unstable build sorts after every stable release and after the builds before it. A part of a version holds at most 65534, so the date is split into the year and the month and day.
+* The run sets that version in `build.yaml` for its own build only. Nothing is committed.
+* The notes list the commits since the last pre-release.
+* A Friday run skips when the newest pre-release already holds the branch's last commit.
+* A second run for the same date replaces that pre-release's zip.
 
 ## When a Release Is Wrong
 
