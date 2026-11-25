@@ -466,13 +466,10 @@ div:not(.zooid-form-row) + .zooid-form-row {
     display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 16px;
 }
 .zooid-modal-table-container {
-    max-height: 400px; overflow-x: auto; overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px;
 }
 .zooid-modal-table-container table { margin: 0; }
-.zooid-modal-table-container thead {
-    position: sticky; top: 0; background: var(--stolon-surface); z-index: 1;
-}
 .zooid-modal-section-header td {
     background: rgba(255, 255, 255, 0.08); font-weight: bold;
     padding: 8px 12px; border-bottom: 2px solid rgba(255, 255, 255, 0.2);
