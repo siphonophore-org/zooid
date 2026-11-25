@@ -1,5 +1,5 @@
 // zooid_servers.js
-// The Servers page: the map of servers, each server's steps, and its library and user mappings.
+// The Servers page: each server's steps, and its library and user mappings.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
@@ -17,7 +17,7 @@ export function urlWasCleared(storedUrl, editedUrl) {
 }
 
 // zooid_servers
-// Builds the Servers page. It draws the server list and the pool map, edits one server at a time, tests its
+// Builds the Servers page. It draws the server list, edits one server at a time, tests its
 // connection and sign in, and edits its library and user mappings.
 //
 // Inputs
@@ -167,8 +167,7 @@ export default function (view) {
             editor: getEl('serverEditor'),
             render: cardSpec,
             escapeHtml: escapeHtml,
-            // The open card stays open. Another card's head switches to it.
-            collapsible: false,
+            // Clicking the open card's head folds it, and another card's head switches to that card.
             onBeforeLeave: function () { collectServerEditor(); },
             onSelect: function (index) {
                 selectedIndex = index;
@@ -185,231 +184,16 @@ export default function (view) {
     function renderServerList() {
         ensureCards().setItems(servers);
         setVisible('serverEmpty', servers.length === 0);
-        renderPoolMap();
     }
-
-    var POOL_DOT_CLASSES = { ok: 'zooid-pool-ok', noPlugin: 'zooid-pool-no-plugin', down: 'zooid-pool-down', disabled: 'zooid-pool-disabled', pending: 'zooid-pool-pending' };
 
     function modeOf(server) {
         var mode = server.Mode;
         return mode === 1 ? 'Push' : mode === 2 ? 'Sync' : (typeof mode === 'string' ? mode : 'Pull');
     }
 
-    // A server's color: green runs Zooid and answers, orange answers without it, red does not
-    // answer, gray is disabled. One still being checked is drawn dim until the answer comes.
-    function poolState(server) {
-        if (server.IsEnabled === false) return 'disabled';
-        // A server with no address or key cannot be reached, so it is shown as unreachable.
-        if (!server.Url || !server.ApiKey) return 'down';
-        var health = serverHealth[server.Key];
-        var plugin = peerPlugin[server.Key];
-        if (health === 'bad' || plugin === 'unreachable') return 'down';
-        if (plugin === 'no') return 'noPlugin';
-        if (plugin === 'yes') return 'ok';
-        return 'pending';
-    }
-
-    // Asks each server once whether it runs Zooid, so the map can color it.
-    function checkPoolPlugins() {
-        servers.forEach(function (server) {
-            if (!server.Url || !server.ApiKey || server.IsEnabled === false || peerPlugin[server.Key] !== undefined) return;
-            var key = server.Key;
-            var request = requestFor(server);
-            request.Mode = modeOf(server);
-            peerPlugin[key] = 'checking';
-            apiRequest('Hints/CheckPeer', 'POST', request).then(function (result) {
-                peerPlugin[key] = result && result.Reachable ? (result.HasPlugin ? 'yes' : 'no') : 'unreachable';
-            }).catch(function () {
-                peerPlugin[key] = 'unreachable';
-            }).then(renderPoolMap);
-        });
-    }
-
-    // This server as a card in the middle, and every other server as its own pill in a lane that is
-    // always in the same place: the servers this one pulls from on the left, the servers it pushes to
-    // on the right, and the servers it syncs with below. A lane's pills join one trunk line, so
-    // however many servers a lane holds, one line meets the card. The line's color is the color of
-    // that relationship's badge on the cards, and its arrow points the way things travel.
-    var POOL_LANES = [
-        { key: 'Pull', side: 'left', lineClass: 'zooid-pool-pull' },
-        { key: 'Push', side: 'right', lineClass: 'zooid-pool-push' },
-        { key: 'Sync', side: 'below', lineClass: 'zooid-pool-sync' }
-    ];
-    var POOL_PILL_H = 26;
-    var POOL_PILL_GAP = 8;
-    var POOL_REACH = 46;      // from the card to a lane's trunk
-    var POOL_STUB = 22;       // from the trunk to a pill
-    var POOL_SIDE_ROWS = 8;   // pills in one column of a side lane
-    var POOL_BELOW_COLS = 4;  // pills in one row of the lane below
-
-    // This server's own name, for the middle of the map, read once.
-    var localServerName = '';
-    var localNameAsked = false;
-
-    function askLocalServerName() {
-        if (localNameAsked) return;
-        localNameAsked = true;
-        Promise.resolve(ApiClient.getSystemInfo()).then(function (info) {
-            localServerName = (info && info.ServerName) || '';
-            renderPoolMap();
-        }).catch(function () { /* the map keeps its fallback */ });
-    }
-
-    // The name in the middle of the map. A name too long for the card is shown as the word for Server, and the
-    // full name stays in the card's tooltip. A map with room takes a longer name than a narrow one.
-    var SELF_NAME_CHARS = 12;
-    var SELF_NAME_CHARS_WIDE = 28;
-
-    // How far the map grows past its drawn size to fill the room it has, so a small pool still fills the tab.
-    var POOL_MAX_SCALE = 1.8;
-
-    // The width the map last drew for, so a resize that changes nothing does not draw again.
-    var poolWidth = 0;
-
-    function renderPoolMap() {
-        askLocalServerName();
-        var host = getEl('poolMap');
-        if (!host) return;
-        setVisible('poolMapEmpty', !servers.length);
-        if (!servers.length) {
-            host.innerHTML = '';
-            setVisible('poolMap', false);
-            return;
-        }
-        setVisible('poolMap', true);
-
-        var members = {};
-        servers.forEach(function (server) {
-            var mode = modeOf(server);
-            (members[mode] = members[mode] || []).push(server);
-        });
-        var lanes = POOL_LANES.filter(function (lane) { return members[lane.key] && members[lane.key].length; });
-
-        // A hidden map has no width yet, and draws again once its tab opens.
-        var room = host.clientWidth || 0;
-        poolWidth = room;
-        var hereName = (localServerName || ZooidShared.t.tr('PoolThisServer')).trim();
-        if (hereName.length > (room >= 480 ? SELF_NAME_CHARS_WIDE : SELF_NAME_CHARS)) hereName = ZooidShared.t.tr('TabServer');
-        var cardW = Math.max(92, hereName.length * 7.4 + 32);
-        var cardH = 46;
-        var parts = ['<defs><marker id="poolArrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>'];
-        var bounds = [[-cardW / 2, -cardH / 2], [cardW / 2, cardH / 2]];
-        var labels = [];
-        var pills = [];
-        var fixed = function (n) { return n.toFixed(1); };
-        var line = function (d, lineClass, start, end) {
-            parts.push('<path class="zooid-pool-line ' + lineClass + '" d="' + d + '"' +
-                (start ? ' marker-start="url(#poolArrowHead)"' : '') + (end ? ' marker-end="url(#poolArrowHead)"' : '') + ' />');
-        };
-        var pill = function (server, x, y, w) {
-            var name = serverTitle(server);
-            if (name.length > 18) name = name.substring(0, 17) + '\u2026';
-            var title = ZooidShared.t.format('ListSeparator', serverTitle(server), modeName(modeOf(server)));
-            pills.push('<g><title>' + escapeHtml(title) + '</title>' +
-                '<rect x="' + fixed(x) + '" y="' + fixed(y) + '" width="' + fixed(w) + '" height="' + POOL_PILL_H + '" rx="6" class="zooid-pool-pill" />' +
-                '<circle cx="' + fixed(x + 14) + '" cy="' + fixed(y + POOL_PILL_H / 2) + '" r="4" class="zooid-pool-dot ' + POOL_DOT_CLASSES[poolState(server)] + '" />' +
-                '<text class="zooid-pool-name" x="' + fixed(x + 25) + '" y="' + fixed(y + POOL_PILL_H / 2) + '" dominant-baseline="central">' + escapeHtml(name) + '</text></g>');
-            labels.push(title);
-            bounds.push([x, y], [x + w, y + POOL_PILL_H]);
-        };
-
-        // The side lanes are drawn first, so the lane below can start under the taller of them.
-        var sideBottom = cardH / 2;
-        // Where an overflow column or row starts: centered in the gaps of the first, and one place over
-        // when that would put one of its lines on top of the trunk through the middle.
-        var overflowStart = function (firstOfFull, pitch, full, count) {
-            var skip = Math.max(0, Math.floor((full - 1 - count) / 2));
-            var start = firstOfFull + pitch / 2 + skip * pitch;
-            for (var n = 0; n < count; n++) {
-                if (Math.abs(start + n * pitch) < 1) return start + (skip > 0 ? -pitch : pitch);
-            }
-            return start;
-        };
-        lanes.slice().sort(function (a, b) { return (a.side === 'below') - (b.side === 'below'); }).forEach(function (lane) {
-            var list = members[lane.key];
-            var longest = Math.max.apply(null, list.map(function (s) { return Math.min(serverTitle(s).length, 18); }));
-            var w = longest * 6.9 + 38;
-            var pitch = POOL_PILL_H + POOL_PILL_GAP;
-
-            if (lane.side === 'below') {
-                // Rows of pills under the card. A row's pills hang from one level line, and a second
-                // row sits half a pill across so its lines drop through the gaps of the row above.
-                // Never more than two rows, since a third could not drop its lines through the first.
-                var step = w + 12;
-                var busY = sideBottom + POOL_REACH * 0.6;
-                var perRow = Math.max(POOL_BELOW_COLS, Math.ceil(list.length / 2));
-                var rows = [];
-                for (var r = 0; r * perRow < list.length; r++) rows.push(list.slice(r * perRow, (r + 1) * perRow));
-                var widest = Math.min(list.length, perRow);
-                var xs = [];
-                rows.forEach(function (row, r) {
-                    var top = busY + POOL_STUB + r * pitch;
-                    // The second row is centered under the first, in its gaps.
-                    var first = r % 2 ? overflowStart(-((widest - 1) * step) / 2, step, widest, row.length) : -((widest - 1) * step) / 2;
-                    row.forEach(function (server, c) {
-                        var cx = first + c * step;
-                        xs.push(cx);
-                        pill(server, cx - w / 2, top, w);
-                        line('M' + fixed(cx) + ' ' + fixed(busY) + ' V' + fixed(top - 3), lane.lineClass, false, true);
-                    });
-                });
-                line('M' + fixed(Math.min.apply(null, xs.concat([0]))) + ' ' + fixed(busY) + ' H' + fixed(Math.max.apply(null, xs.concat([0]))), lane.lineClass, false, false);
-                line('M0 ' + fixed(cardH / 2 + 3) + ' V' + fixed(busY), lane.lineClass, true, false);
-                return;
-            }
-
-            // Columns of pills beside the card. A column's pills join one upright line, and a further
-            // column sits half a pill down so its lines run through the gaps of the column before it.
-            var dir = lane.side === 'left' ? -1 : 1;
-            var busX = dir * (cardW / 2 + POOL_REACH);
-            // Never more than two columns, since a third could not run its lines through the first.
-            var perColumn = Math.max(POOL_SIDE_ROWS, Math.ceil(list.length / 2));
-            var columns = [];
-            for (var k = 0; k * perColumn < list.length; k++) columns.push(list.slice(k * perColumn, (k + 1) * perColumn));
-            var tallest = Math.min(list.length, perColumn);
-            var ys = [];
-            columns.forEach(function (column, c) {
-                var near = busX + dir * (POOL_STUB + c * (w + 14));
-                // The second column is centered beside the first, in its gaps.
-                var firstY = c % 2 ? overflowStart(-((tallest - 1) * pitch) / 2, pitch, tallest, column.length) : -((tallest - 1) * pitch) / 2;
-                column.forEach(function (server, r) {
-                    var cy = firstY + r * pitch;
-                    ys.push(cy);
-                    pill(server, dir < 0 ? near - w : near, cy - POOL_PILL_H / 2, w);
-                    // Pull runs from the pill to the trunk. Push runs from the trunk to the pill, where its arrow is.
-                    if (dir < 0) line('M' + fixed(near + 3) + ' ' + fixed(cy) + ' H' + fixed(busX), lane.lineClass, false, false);
-                    else line('M' + fixed(busX) + ' ' + fixed(cy) + ' H' + fixed(near - 3), lane.lineClass, false, true);
-                });
-            });
-            line('M' + fixed(busX) + ' ' + fixed(Math.min.apply(null, ys.concat([0]))) + ' V' + fixed(Math.max.apply(null, ys.concat([0]))), lane.lineClass, false, false);
-            sideBottom = Math.max(sideBottom, Math.max.apply(null, ys) + POOL_PILL_H / 2);
-            if (dir < 0) line('M' + fixed(busX) + ' 0 H' + fixed(-cardW / 2 - 3), lane.lineClass, false, true);
-            else line('M' + fixed(cardW / 2 + 3) + ' 0 H' + fixed(busX), lane.lineClass, false, false);
-        });
-
-        parts = parts.concat(pills);
-        parts.push('<rect x="' + fixed(-cardW / 2) + '" y="' + fixed(-cardH / 2) + '" width="' + fixed(cardW) + '" height="' + cardH + '" rx="8" class="zooid-pool-card"><title>' + escapeHtml(localServerName ? ZooidShared.t.format('PoolSelfTitle', localServerName) : ZooidShared.t.tr('PoolThisServer')) + '</title></rect>');
-        parts.push('<text class="zooid-pool-self" x="0" y="0" dominant-baseline="central">' + escapeHtml(hereName) + '</text>');
-
-        var minX = Math.min.apply(null, bounds.map(function (b) { return b[0]; })) - 6;
-        var minY = Math.min.apply(null, bounds.map(function (b) { return b[1]; })) - 6;
-        var maxX = Math.max.apply(null, bounds.map(function (b) { return b[0]; })) + 6;
-        // The card stays in the middle of the picture, whichever lanes are in use.
-        var half = Math.max(-minX, maxX);
-        minX = -half;
-        maxX = half;
-        var maxY = Math.max.apply(null, bounds.map(function (b) { return b[1]; })) + 6;
-        host.setAttribute('aria-label', ZooidShared.t.format('PoolMapLabel', labels.join(', ')));
-        // The map fills the room it has, up to POOL_MAX_SCALE of its drawn size, and shrinks to fit a narrow one.
-        var drawn = maxX - minX;
-        var width = room ? Math.min(room, drawn * POOL_MAX_SCALE) : drawn;
-        host.innerHTML = '<svg viewBox="' + minX.toFixed(0) + ' ' + minY.toFixed(0) + ' ' + drawn.toFixed(0) + ' ' + (maxY - minY).toFixed(0) + '" width="' + Math.round(width) + '" xmlns="http://www.w3.org/2000/svg">' + parts.join('') + '</svg>';
-    }
-
     // Updates each card's dot in place. A full render rebuilds the cards and moves the open editor,
     // which takes the cursor out of whatever field the operator is typing in.
     function updateHealthDots() {
-        renderPoolMap();
         view.querySelectorAll('#serverList .stolon-card-item').forEach(function (card) {
             var server = servers[parseInt(card.getAttribute('data-index'), 10)];
             var dot = card.querySelector('.stolon-card-item-title .stolon-dot');
@@ -1709,49 +1493,16 @@ export default function (view) {
                 selectServer(-1);
                 saveBars.clean();
                 refreshServerHealth();
-                checkPoolPlugins();
             });
         }).catch(function() {
             ZooidShared.setStatus('serverListStatus', ZooidShared.t.tr('ErrorServersLoad'), true, { timeout: 0 });
         });
     }
 
-    // bindTabs
-    // Splits the page into a Servers tab, which holds the list and the editor, and a Diagram tab, which holds the map.
-    function bindTabs() {
-        var holder = getEl('serverTabs');
-        if (!holder) return;
-        var tabs = zooidModule.createSubTabs({
-            tabs: [
-                { id: 'servers', label: ZooidShared.t.tr('TabServers') },
-                { id: 'diagram', label: ZooidShared.t.tr('TabDiagram') }
-            ],
-            // The map is drawn to its tab's width, which it has only once the tab shows.
-            onChange: function (id) { if (id === 'diagram') setTimeout(renderPoolMap, 0); }
-        });
-        holder.appendChild(tabs.element);
-        var list = tabs.getPanel('servers');
-        var diagram = tabs.getPanel('diagram');
-        var section = holder.parentNode;
-        Array.prototype.slice.call(section.childNodes).forEach(function (node) {
-            if (node === holder || (node.nodeType === 1 && node.getAttribute('data-str') === 'HelpServersIntro')) return;
-            var id = node.nodeType === 1 ? node.id : '';
-            (id === 'poolMap' || id === 'poolMapEmpty' ? diagram : list).appendChild(node);
-        });
-        // The map draws again when its width changes, such as when the window or the sidebar is resized.
-        var map = getEl('poolMap');
-        if (map && typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(function () {
-                if (servers.length && Math.abs((map.clientWidth || 0) - poolWidth) > 8) renderPoolMap();
-            }).observe(map);
-        }
-    }
-
     // bindPage
     // Wires the page's buttons and controls. Stolon calls it once, the first time the page shows.
     function bindPage() {
         ZooidShared.initCollapsibles();
-        bindTabs();
 
         bindClick('btnTestConnection', testConnection);
         bindClick('btnGenerateToken', generateToken);

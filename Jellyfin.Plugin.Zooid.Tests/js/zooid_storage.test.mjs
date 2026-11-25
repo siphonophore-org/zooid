@@ -79,25 +79,6 @@ function countsAnswer(copies, links, cached, cache) {
     };
 }
 
-test('the files chart counts synced copies, links, and cached links, and totals them in its center', async function () {
-    var opened = await openPage({ config: { EnableContentSync: true, Servers: [MAPPED] }, answer: countsAnswer(7, 5, 2) });
-    var asked = opened.page.requests.map(function (r) { return String(r.url); }).filter(function (u) { return u.indexOf('Items?') >= 0; });
-    assert.equal(asked.length, 3);
-    asked.forEach(function (u) { assert.match(u, /status=Synced/); assert.match(u, /serverKey=a%20b/); });
-    assert.equal(opened.view.querySelector('#storageFilesSection').classList.contains('stolon-hidden'), false);
-    var text = opened.view.querySelector('#storageFilesChart').textContent;
-    assert.match(text, /Copies/);
-    assert.match(text, /Cached links/);
-    assert.match(text, /12/);
-});
-
-test('the files chart stays hidden while content sync is off, and when a count fails', async function () {
-    var off = await openPage({ config: { EnableContentSync: false, EnableHistorySync: true, Servers: [] }, answer: countsAnswer(1, 1, 0) });
-    assert.equal(off.view.querySelector('#storageFilesSection').classList.contains('stolon-hidden'), true);
-    var failed = await openPage({ config: { EnableContentSync: true, Servers: [MAPPED] }, answer: function () { return Promise.reject(new Error('refused')); } });
-    assert.equal(failed.view.querySelector('#storageFilesSection').classList.contains('stolon-hidden'), true);
-});
-
 test('the Usage section shows the link cache as used of its limit only while the cache is on', async function () {
     var on = await openPage({ config: { EnableContentSync: true, Servers: [MAPPED] }, answer: countsAnswer(1, 1, 0, { Enabled: true, UsedBytes: 1073741824, LimitBytes: 4294967296 }) });
     assert.equal(on.view.querySelector('#storageUsageSection').classList.contains('stolon-hidden'), false);

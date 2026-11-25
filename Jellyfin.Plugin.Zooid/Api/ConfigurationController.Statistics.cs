@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Jellyfin.Plugin.Zooid.Configuration;
 using Jellyfin.Plugin.Zooid.Models.Statistics;
+using Jellyfin.Plugin.Zooid.Services.ContentSync.Tables;
 using Jellyfin.Plugin.Zooid.Services.Database;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +69,31 @@ public partial class ConfigurationController
                     })
                     .ToList()
             };
+        }
+
+        // How each server's synced files are kept here, while content sync is on. The table and the link cache
+        // are read from the request's services, so a caller without them gets no breakdown rather than an error.
+        var services = HttpContext?.RequestServices;
+        if (config.EnableContentSync && services?.GetService(typeof(ContentSyncTableManager)) is ContentSyncTableManager manager)
+        {
+            var cache = services.GetService(typeof(Services.Links.LinkCache)) as Services.Links.LinkCache;
+            var cachedIds = cache?.List().Select(entry => entry.LinkId).ToList() ?? new List<string>();
+            var counts = manager.CountSyncedStorage(cachedIds);
+            result.Files = counts
+                .Select(pair =>
+                {
+                    var server = config.FindServer(pair.Key);
+                    return new FileUsageDto
+                    {
+                        ServerKey = pair.Key,
+                        Name = server?.DisplayName ?? pair.Key,
+                        Copies = pair.Value.Copies,
+                        Links = pair.Value.Links,
+                        CachedLinks = pair.Value.CachedLinks
+                    };
+                })
+                .OrderBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
         }
 
         return Ok(result);

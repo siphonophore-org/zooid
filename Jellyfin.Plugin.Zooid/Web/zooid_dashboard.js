@@ -57,7 +57,7 @@ export function syncTypeCard(t, type, on, status, runs) {
 
 // SERVER_DOTS
 // Each server's health as a dot color, the string that names one server in it, and the string that names a group of
-// them in the health bar, as the Diagram colors them.
+// them in the health bar: green runs Zooid, orange answers without it, red cannot be reached, gray is off.
 var SERVER_DOTS = {
     ok: { color: 'green', key: 'DashboardServerOk', group: 'DashboardHealthOk' },
     noPlugin: { color: 'orange', key: 'DashboardServerNoPlugin', group: 'DashboardHealthNoPlugin' },

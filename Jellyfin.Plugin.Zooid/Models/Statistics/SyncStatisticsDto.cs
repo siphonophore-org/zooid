@@ -16,4 +16,9 @@ public class SyncStatisticsDto
     /// Gets or sets the link streams of the last thirty days for each server that may link to this one, or null when none may. It does not depend on any sync type being on.
     /// </summary>
     public LinkStreamsDto? LinkStreams { get; set; }
+
+    /// <summary>
+    /// Gets or sets how each server's synced files are kept here, one entry per server that has any, or null while content sync is off.
+    /// </summary>
+    public IReadOnlyList<FileUsageDto>? Files { get; set; }
 }

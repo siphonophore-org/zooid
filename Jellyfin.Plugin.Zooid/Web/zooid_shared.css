@@ -381,24 +381,16 @@ div:not(.zooid-form-row) + .zooid-form-row {
     .zooid-bandwidth .zooid-form-row { grid-template-columns: minmax(0, 1fr) 6.5em 6.5em; }
 }
 
-/* zooid-pool-map */
-/* The web of servers on the Servers page, with this server in the middle. A dot shows a server's state, and a line's color shows its direction. */
-/* Example: <div id="poolMap" class="zooid-pool-map" role="img"><svg><rect class="zooid-pool-pill" /><circle class="zooid-pool-dot zooid-pool-ok" /><path class="zooid-pool-line zooid-pool-pull" /></svg></div> */
-.zooid-pool-map { margin: 0.5em 0 1.25em; }
-.zooid-pool-map svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-.zooid-pool-map .zooid-pool-name { font-size: 12px; fill: var(--stolon-fg); }
-.zooid-pool-map .zooid-pool-self { font-size: 12px; font-weight: 600; fill: var(--stolon-fg); text-anchor: middle; }
-.zooid-pool-map .zooid-pool-pill { fill: var(--stolon-surface); stroke: var(--stolon-border); stroke-width: 1; }
-.zooid-pool-map .zooid-pool-card { fill: var(--stolon-surface); stroke: var(--stolon-accent); stroke-width: 1.6; }
-.zooid-pool-map .zooid-pool-line { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
-.zooid-pool-map .zooid-pool-pull { stroke: var(--stolon-green-fg); }
-.zooid-pool-map .zooid-pool-push { stroke: var(--stolon-blue-fg); }
-.zooid-pool-map .zooid-pool-sync { stroke: var(--stolon-purple-fg); }
-.zooid-pool-map .zooid-pool-ok { fill: var(--stolon-success); }
-.zooid-pool-map .zooid-pool-no-plugin { fill: var(--stolon-warning); }
-.zooid-pool-map .zooid-pool-down { fill: var(--stolon-error); }
-.zooid-pool-map .zooid-pool-disabled { fill: var(--stolon-gray-fg); }
-.zooid-pool-map .zooid-pool-pending { fill: var(--stolon-gray-fg); opacity: 0.5; }
+/* zooid-usage */
+/* The Usage pie on the Statistics page beside the pie of the kind picked in it, broken down by server. On a narrow
+   page the second pie goes under the first. */
+/* Example: <div class="zooid-usage"><div><div class="stolon-pie-chart"></div></div><div></div></div> */
+.zooid-usage {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24em), 1fr));
+    gap: var(--stolon-gap-wide);
+    align-items: start;
+}
 
 /* zooid-panel */
 /* Bordered sub card, with spacing helpers and muted text so no page sets them inline. */

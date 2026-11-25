@@ -8,6 +8,47 @@ import * as zooidModule from './configurationpage?name=zooid_shared.js';
 // The string key of each sync type's heading, by the key the Statistics route answers with.
 var TYPE_TITLES = { Content: 'SyncTypeContent', History: 'SyncTypeHistory', Metadata: 'LabelMetadata', People: 'People', User: 'HeaderUsers' };
 
+// USAGE_KINDS
+// How a synced file is kept, in the order the Usage chart lists them: the key the Statistics route counts it under
+// and the string key of its name.
+var USAGE_KINDS = [
+    { key: 'Copies', title: 'ChartCopies' },
+    { key: 'Links', title: 'ChartLinks' },
+    { key: 'CachedLinks', title: 'ChartCachedLinks' }
+];
+
+// usageSlices
+// The slices of the Usage chart: how many synced files of every server are copies, links, and cached links.
+//
+// Inputs
+// files [object[]]: Each server's counts, as the Statistics route answers in Files.
+// t [object]: The strings.
+//
+// Output
+// [object[]]: One slice per kind, in the order of USAGE_KINDS, with its label and value.
+export function usageSlices(files, t) {
+    return USAGE_KINDS.map(function (kind) {
+        var total = (files || []).reduce(function (sum, file) { return sum + (file[kind.key] || 0); }, 0);
+        return { label: t.tr(kind.title), value: total };
+    });
+}
+
+// usageByServer
+// The slices of one kind's breakdown: how many of its files come from each server. A server with none is left out.
+//
+// Inputs
+// files [object[]]: Each server's counts, as the Statistics route answers in Files.
+// kind [string]: The kind key, Copies, Links, or CachedLinks.
+//
+// Output
+// [object[]]: One slice per server that has files of the kind, largest first.
+export function usageByServer(files, kind) {
+    return (files || [])
+        .filter(function (file) { return (file[kind] || 0) > 0; })
+        .map(function (file) { return { label: file.Name || file.ServerKey, value: file[kind] }; })
+        .sort(function (a, b) { return b.value - a.value; });
+}
+
 // runLabel
 // Writes when a scan finished as a short label in the browser's own time: the time for a scan today, such
 // as "14:05", and the day for an older one, such as "Nov 15". A short label fits under a narrow group of bars.
@@ -190,9 +231,71 @@ export default function (view) {
         }));
     }
 
+    // addUsage
+    // Adds the Usage section: how every synced file is kept, as a pie of copies, links, and cached links. Picking a
+    // slice shows that kind broken down by server in a second pie beside it, and picking it again hides the second.
+    //
+    // Inputs
+    // files [object[]]: Each server's counts, as the Statistics route answers in Files.
+    function addUsage(files) {
+        var t = made.shared.t;
+        var content = addSection(t.tr('HeaderUsage'));
+        var note = document.createElement('div');
+        note.className = 'fieldDescription zooid-mb-md';
+        note.textContent = t.tr('HelpUsagePick');
+        content.appendChild(note);
+        var grid = document.createElement('div');
+        grid.className = 'zooid-usage';
+        var overall = document.createElement('div');
+        var detail = document.createElement('div');
+        grid.appendChild(overall);
+        grid.appendChild(detail);
+        content.appendChild(grid);
+
+        var breakdown = null;
+        var slices = usageSlices(files, t);
+        var total = slices.reduce(function (sum, slice) { return sum + slice.value; }, 0);
+        var chart = zooidModule.createPieChart({
+            slices: slices,
+            label: t.tr('ChartFilesLabel'),
+            donut: true,
+            centerText: String(total),
+            centerLabel: t.tr('HeaderFiles'),
+            valueName: t.tr('HeaderFiles'),
+            emptyText: t.tr('ChartFilesEmpty'),
+            onSelect: function (slice, index) {
+                if (breakdown) {
+                    charts = charts.filter(function (c) { return c !== breakdown; });
+                    breakdown.destroy();
+                    breakdown = null;
+                }
+                detail.innerHTML = '';
+                if (!slice) return;
+                var title = document.createElement('div');
+                title.className = 'stolon-subsection-title';
+                title.textContent = t.format('UsageByServerTitle', slice.label);
+                detail.appendChild(title);
+                breakdown = zooidModule.createPieChart({
+                    slices: usageByServer(files, USAGE_KINDS[index].key),
+                    label: t.format('UsageByServerTitle', slice.label),
+                    donut: true,
+                    centerText: String(slice.value),
+                    centerLabel: slice.label,
+                    valueName: t.tr('HeaderFiles'),
+                    emptyText: t.tr('ChartFilesEmpty')
+                });
+                charts.push(breakdown);
+                detail.appendChild(breakdown.element);
+            }
+        });
+        charts.push(chart);
+        overall.appendChild(chart.element);
+    }
+
     // drawStatistics
-    // Draws one section for each sync type the route answered with. The link streams go under Content, or in
-    // a section of their own on a server that has content sync off and still serves links. The page's
+    // Draws the Usage section while content sync is on, then one section for each sync type the route answered with.
+    // The link streams go under Content, or in a section of their own on a server that has content sync off and
+    // still serves links. The page's
     // description shows only while a sync type is on, since the Link streams section describes itself.
     //
     // Inputs
@@ -204,6 +307,7 @@ export default function (view) {
         var hasContent = types.some(function (type) { return type.Key === 'Content'; });
         setVisible('statisticsIntro', types.length > 0);
         setVisible('statisticsDisabled', types.length === 0 && !linkStreams);
+        if (statistics && statistics.Files && statistics.Files.length) addUsage(statistics.Files);
         types.forEach(function (type) {
             var title = TYPE_TITLES[type.Key] ? made.shared.t.tr(TYPE_TITLES[type.Key]) : type.Key;
             var content = addSection(title);

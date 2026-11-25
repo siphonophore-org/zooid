@@ -601,60 +601,6 @@ export default function (view) {
         });
     }
 
-    // The Pie Chart of synced files, or null before the first draw.
-    var filesChart = null;
-
-    // countSynced
-    // Counts the picked server's synced Content rows that match a query.
-    //
-    // Inputs
-    // query [string]: The Items filters, such as storage=Link.
-    //
-    // Output
-    // [Promise]: Resolves to the count.
-    function countSynced(query) {
-        return apiRequest('Items?status=Synced&skip=0&take=1&serverKey=' + encodeURIComponent(selectedKey) + '&' + query, 'GET').then(function (page) {
-            return (page && page.TotalCount) || 0;
-        });
-    }
-
-    // loadFilesChart
-    // Draws how many of the picked server's synced files are copies, links, and cached links. A failed count
-    // hides the chart, and an answer for a server that is no longer picked is dropped.
-    function loadFilesChart() {
-        var key = selectedKey;
-        if (!contentOn || !key) {
-            setVisible('storageFilesSection', false);
-            return;
-        }
-        Promise.all([countSynced('storage=Copy'), countSynced('storage=Link'), countSynced('storage=Link&cached=true')]).then(function (counts) {
-            if (key !== selectedKey) return;
-            var cached = Math.min(counts[2], counts[1]);
-            var slices = [
-                { label: tr('ChartCopies'), value: counts[0] },
-                { label: tr('ChartLinks'), value: counts[1] - cached },
-                { label: tr('ChartCachedLinks'), value: cached }
-            ];
-            var holder = getEl('storageFilesChart');
-            if (!holder) return;
-            if (filesChart) filesChart.destroy();
-            holder.innerHTML = '';
-            filesChart = zooidModule.createPieChart({
-                slices: slices,
-                label: tr('ChartFilesLabel'),
-                donut: true,
-                centerText: String(counts[0] + counts[1]),
-                centerLabel: tr('HeaderFiles'),
-                valueName: tr('HeaderFiles'),
-                emptyText: tr('ChartFilesEmpty')
-            });
-            holder.appendChild(filesChart.element);
-            setVisible('storageFilesSection', true);
-        }).catch(function () {
-            if (key === selectedKey) setVisible('storageFilesSection', false);
-        });
-    }
-
     // The Usage Meter of the link cache, or null before the first draw.
     var usageMeter = null;
 
@@ -700,7 +646,6 @@ export default function (view) {
             }
             loadUsage();
             renderServerPicker();
-            loadFilesChart();
             renderLibraries();
             reloadKeptCopies();
         }).catch(function () {
@@ -722,7 +667,6 @@ export default function (view) {
         if (select) {
             select.addEventListener('change', function () {
                 selectedKey = select.value;
-                loadFilesChart();
                 renderLibraries();
                 reloadKeptCopies();
             });

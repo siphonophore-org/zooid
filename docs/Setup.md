@@ -9,7 +9,7 @@ Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar fo
 | **Queue** | The changes sent between servers as they happen | Always |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
-| **Statistics** | What the last scans found, and the link streams served | A sync type is on, or a server may link here |
+| **Statistics** | How the synced files are kept, by server, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
 | **Settings** | The options | Always |
 | **Troubleshooting** | Resets that forget Zooid's tracking. Media is untouched | Always |
 
@@ -17,9 +17,7 @@ Zooid is one page in the dashboard menu, with a sidebar of tools. The sidebar fo
 
 ![Servers](screenshots/settings/Servers.png)
 
-The map at the top shows this server by its own name, and every server it is set up with, grouped by direction. Every arrow points the way things travel. Pull points here, Push points out, and Sync points both ways. The servers this one pulls from are on the left, the servers it pushes to are on the right, and the servers it syncs with are below. Each lane's line is the color of that direction's badge on the server cards. Each server's dot is green when it runs Zooid, orange when it answers without it, red when it cannot be reached, and gray when it is disabled.
-
-A server's place in the list is its rank, and servers higher in the list rank first. Drag a server to change the order. Each server has these steps.
+A server's place in the list is its rank, and servers higher in the list rank first. Drag a server to change the order. Select a server to open its steps, and select it again to close them. Each server has these steps.
 
 | Step | What it holds |
 | :--- | :--- |
@@ -87,7 +85,7 @@ Below the cards, **Permanent copies** lists the full copies held in that server'
 
 ![Statistics](screenshots/Statistics.png)
 
-The **Statistics** page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
+The **Statistics** page opens with **Usage** while content sync is on: a chart of how the synced files are kept here, as copies, links, and cached links. Select a part to see it by server in a second chart beside it, and select it again to hide that chart. Below it, the page has one section for each sync type that is on. Each charts what the last 10 scans of that sync type found:
 
 | Bar | Counts |
 | :--- | :--- |

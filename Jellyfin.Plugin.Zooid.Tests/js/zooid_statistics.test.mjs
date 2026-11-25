@@ -143,3 +143,16 @@ test('countAxisMax keeps a small chart on whole numbers and lets a large one cho
     assert.equal(mod.countAxisMax([]), 4);
     assert.equal(mod.countAxisMax([{ values: [3] }, { values: [12] }]), undefined);
 });
+
+test('usageSlices totals copies, links, and cached links over every server', async function () {
+    var mod = await loadScript('zooid_statistics.js');
+    var t = { tr: function (key) { return key; } };
+    var slices = mod.usageSlices([{ Copies: 4, Links: 1, CachedLinks: 0 }, { Copies: 2, Links: 0, CachedLinks: 3 }], t);
+    assert.deepEqual(slices, [{ label: 'ChartCopies', value: 6 }, { label: 'ChartLinks', value: 1 }, { label: 'ChartCachedLinks', value: 3 }]);
+});
+
+test('usageByServer lists the servers that have the kind, largest first, by name', async function () {
+    var mod = await loadScript('zooid_statistics.js');
+    var files = [{ ServerKey: 'b', Name: 'Beta', Copies: 2 }, { ServerKey: 'c', Name: 'Gamma', Copies: 4 }, { ServerKey: 'a', Name: 'Alpha', Copies: 0 }, { ServerKey: 'x', Copies: 1 }];
+    assert.deepEqual(mod.usageByServer(files, 'Copies'), [{ label: 'Gamma', value: 4 }, { label: 'Beta', value: 2 }, { label: 'x', value: 1 }]);
+});

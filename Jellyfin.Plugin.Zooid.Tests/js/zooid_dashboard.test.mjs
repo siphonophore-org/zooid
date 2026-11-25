@@ -68,7 +68,7 @@ test('the servers card counts the servers turned on, and says when there are non
     assert.equal(mod.serversCard(strings, { Servers: [] }, {}).detail, 'DashboardNoServers');
 });
 
-test('the servers card draws a dot per server, colored by health as the Diagram colors it', async function () {
+test('the servers card draws a dot per server, colored by health', async function () {
     var mod = await dashboard();
     var servers = [
         { Key: 'ok', Name: 'Alpha', IsEnabled: true, Url: 'http://a', ApiKey: 'k' },

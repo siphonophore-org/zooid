@@ -66,6 +66,28 @@ public sealed class ContentSyncTableManagerTests : IDisposable
     }
 
     /// <summary>
+    /// Synced rows are counted per server as copies, links, and links whose file is cached. A row that is not synced is left out, and a link being promoted still counts as a link.
+    /// True: the Statistics page's Usage chart and its breakdown by server match what the Storage filters list.
+    /// False: a waiting row or a promotion would shift a server's counts.
+    /// </summary>
+    [Fact]
+    public void CountSyncedStorage_SplitsEachServerByStorage()
+    {
+        Add("a1", serverKey: "alpha");
+        Add("a2", serverKey: "alpha");
+        Add("a3", serverKey: "alpha", storage: StorageMode.Link);
+        Add("a4", serverKey: "alpha", storage: StorageMode.Promoting);
+        Add("a5", serverKey: "alpha", status: SyncStatus.Pending);
+        Add("b1", serverKey: "beta", storage: StorageMode.Link);
+
+        var counts = _table.CountSyncedStorage(new[] { "a4", "B1" });
+
+        Assert.Equal((2, 1, 1), counts["alpha"]);
+        Assert.Equal((0, 0, 1), counts["beta"]);
+        Assert.Equal(2, counts.Count);
+    }
+
+    /// <summary>
     /// A row moves to a new source item, and stays where it is when that item already has a row or there is no row to move.
     /// True: a renamed file keeps its row, its status, and its local file under the new id.
     /// False: a rename leaves a dangling row, or merges two rows into one.

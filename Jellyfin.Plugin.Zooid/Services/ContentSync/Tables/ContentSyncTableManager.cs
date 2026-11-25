@@ -487,6 +487,51 @@ public sealed class ContentSyncTableManager : SyncTableManagerBase<SyncItem, str
     }
 
     /// <summary>
+    /// Counts each server's synced rows by how the file is kept: a full copy, a link, or a link whose file is in the link cache.
+    /// A row changing storage counts under the storage it is leaving, as the Items route lists it.
+    /// </summary>
+    /// <param name="cachedSourceIds">The source item ids whose file is in the link cache.</param>
+    /// <returns>The counts for each server key that has synced rows.</returns>
+    public Dictionary<string, (int Copies, int Links, int CachedLinks)> CountSyncedStorage(IReadOnlyCollection<string> cachedSourceIds)
+    {
+        ArgumentNullException.ThrowIfNull(cachedSourceIds);
+        var cached = new HashSet<string>(cachedSourceIds, StringComparer.OrdinalIgnoreCase);
+        return ExecuteRead(
+            conn =>
+            {
+                var counts = new Dictionary<string, (int Copies, int Links, int CachedLinks)>(StringComparer.OrdinalIgnoreCase);
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT ServerKey, StorageMode IN (1, 2), SourceItemId FROM SyncItems WHERE Status = @synced";
+                cmd.Parameters.AddWithValue("@synced", (int)SyncStatus.Synced);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    var key = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+                    var link = reader.GetInt32(1) != 0;
+                    var source = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                    var held = counts.GetValueOrDefault(key);
+                    if (!link)
+                    {
+                        held.Copies++;
+                    }
+                    else if (cached.Contains(source))
+                    {
+                        held.CachedLinks++;
+                    }
+                    else
+                    {
+                        held.Links++;
+                    }
+
+                    counts[key] = held;
+                }
+
+                return counts;
+            },
+            fallback: new Dictionary<string, (int Copies, int Links, int CachedLinks)>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Returns counts of Pending rows grouped by <see cref="PendingType"/>.
     /// </summary>
     /// <returns>The count for each pending type that has rows.</returns>
