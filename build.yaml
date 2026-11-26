@@ -7,7 +7,7 @@ targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Keeps your whole collection of Jellyfin servers in sync with one another."
 description: >
-  Zooid keeps several Jellyfin servers in step, sharing content, metadata, people, user settings, playlists, and watch history. Servers that run the plugin share each change within about a minute.
+  Zooid syncs content, history, metadata, people, users and playlists across Jellyfin servers, on a schedule and live between servers that both run it.
 category: "Administration"
 owner: "siphonophore"
 artifacts:
@@ -23,4 +23,9 @@ artifacts:
 - "Std.UriTemplate.dll"
 changelog:
   added:
-  - The first release of Zooid
+  - "Content sync: copy or link movies, shows, music and other files from other Jellyfin servers into mapped libraries"
+  - "Links that stream from the source server, with an optional cache and permanent copies"
+  - "History sync of played state, position, play count, last played date and favorites, merged across servers"
+  - "Metadata, people, user and playlist sync, with media segments shared between servers"
+  - "Live changes between servers that both run Zooid, through a queue with retries"
+  - "A dashboard, statistics, storage, and troubleshooting tools on one page"

@@ -258,10 +258,10 @@ main() {
     # meta.json "version" must be 4-part to match the assembly version
     # the web UI uses in the image URL (.NET pads to 4 parts), or GetPlugin()
     # returns null and the image 404s.
-    local logo_src="$PROJECT_DIR/Assets/Logo.png"
-    if [[ -f "$logo_src" ]]; then
-        log "INFO" "Bundling plugin image: Logo.png"
-        cp "$logo_src" "$temp_dir/Logo.png"
+    # The image comes from the Siphonophore brand folder, which holds every project's artwork.
+    local logo_url="https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/catalog.png"
+    if curl -fsSL --retry 3 --max-time 60 "$logo_url" -o "$temp_dir/Logo.png"; then
+        log "INFO" "Bundled plugin image from $logo_url"
 
         local target_abi=$(grep '^targetAbi:' build.yaml | cut -d':' -f2 | tr -d ' "')
         [[ -z "$target_abi" ]] && target_abi="12.0.0.0"
@@ -297,7 +297,8 @@ $assemblies_json
 }
 EOF
     else
-        log "WARN" "Plugin image not found at $logo_src - installed icon will rely on imageUrl download"
+        rm -f "$temp_dir/Logo.png"
+        log "WARN" "Could not download $logo_url - installed icon will rely on imageUrl download"
     fi
 
     # Create ZIP with all files in temp directory

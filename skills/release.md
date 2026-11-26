@@ -60,13 +60,14 @@ A feature release is cut on `unstable`, then **Sync Branches** with `promote` mo
 
     Every check must run on the commit that is released. Run them again after any later change.
 
-7. **Docs.** Every page describes this release. Retake any screenshot whose subject changed, and all of them when the Stolon version changed. Update [Versioning](../docs/Versioning.md) when the protocol or the schema version changed, and [Architecture](../docs/Architecture.md) when the parts or their connections changed.
+7. **Artwork.** The build downloads the installed plugin's image from `brand/zooid/catalog.png` in the Siphonophore repository, and the catalog, docs, and README load theirs from the same folder. Change the artwork there, never in this repository.
+8. **Docs.** Every page describes this release. Retake any screenshot whose subject changed, and all of them when the Stolon version changed. Update [Versioning](../docs/Versioning.md) when the protocol or the schema version changed, and [Architecture](../docs/Architecture.md) when the parts or their connections changed.
 
     ```bash
     mkdocs build --strict
     ```
 
-8. **Review.** Run [review.md](review.md) over everything since the last release.
+9. **Review.** Run [review.md](review.md) over everything since the last release.
 
 ## Set the Release
 
