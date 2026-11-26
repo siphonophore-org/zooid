@@ -8,7 +8,7 @@ A [zooid](https://en.wikipedia.org/wiki/Zooid) is "an animal that is part of a c
 
 ## Documentation
 
-Installation, setup, every sync type, and the API are covered in the **[Zooid documentation](https://siphonophore-org.github.io/zooid/)**.
+Installation, setup, every sync type, and the API are covered in the **[Zooid documentation](https://zooid.siphonophore.org)**.
 
 Plugin repository URL for Jellyfin, from [Siphonophore](https://github.com/siphonophore-org/siphonophore), which also has an unstable channel:
 
