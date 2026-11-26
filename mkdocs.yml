@@ -1,6 +1,6 @@
 site_name: Zooid
 site_description: A Jellyfin plugin that keeps several Jellyfin servers in step.
-site_url: https://siphonophore-org.github.io/zooid/
+site_url: https://zooid.siphonophore.org/
 repo_url: https://github.com/siphonophore-org/zooid
 repo_name: siphonophore-org/zooid
 edit_uri: edit/main/docs/

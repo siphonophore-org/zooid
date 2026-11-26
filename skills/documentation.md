@@ -61,7 +61,7 @@ A docs page and the UI must use the same word for the same thing. When a label c
 
 ## Site Structure
 
-The docs site is MkDocs with the Material theme, built from `docs/` by `mkdocs.yml` and published to `https://siphonophore-org.github.io/zooid/`.
+The docs site is MkDocs with the Material theme, built from `docs/` by `mkdocs.yml` and published to `https://zooid.siphonophore.org/`.
 
 ### Navigation
 
