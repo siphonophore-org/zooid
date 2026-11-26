@@ -21,7 +21,7 @@ Which server this is and what it applies. A `404` means the plugin is not instal
 ```json
 {
   "ServerId": "2f40d5d86aba4689819184b48738d2ad",
-  "PluginVersion": "12.4.0.0",
+  "PluginVersion": "12.4.1.0",
   "ProtocolVersion": 1,
   "MinProtocolVersion": 1,
   "Accepts": ["History", "Metadata", "People", "Content"],
@@ -425,7 +425,7 @@ What the **Servers** page's **Check link** button calls. Judges a server entry a
 ```json
 {
   "Reachable": true, "ServerName": "source-a", "ServerId": "…",
-  "HasPlugin": true, "PluginVersion": "12.4.0.0", "Incompatible": false,
+  "HasPlugin": true, "PluginVersion": "12.4.1.0", "Incompatible": false,
   "ListsThisServer": true, "PeerMode": "Sync", "SendsToThisServer": true,
   "Accepts": ["History", "Metadata", "People"],
   "ClockSkewSeconds": 0,
@@ -434,10 +434,10 @@ What the **Servers** page's **Check link** button calls. Judges a server entry a
   "Severity": "ok",
   "Headline": "Ready. Changes travel both ways as they happen.",
   "Details": [
-    { "Title": "Its entry for this server", "Text": "Zooid 12.4.0.0 there has this server on its Servers tab.", "Badge": "Sync", "State": "ok" },
+    { "Title": "Its entry for this server", "Text": "Zooid 12.4.1.0 there has this server on its Servers tab.", "Badge": "Sync", "State": "ok" },
     { "Title": "What it applies from this server", "Text": "Watch history, metadata, and people. Off there: files, user settings, and playlists.", "Badge": "3 of 6", "State": "limited" }
   ],
-  "Message": "Ready. Zooid 12.4.0.0 there lists this server as Sync, so changes travel both ways as they happen."
+  "Message": "Ready. Zooid 12.4.1.0 there lists this server as Sync, so changes travel both ways as they happen."
 }
 ```
 

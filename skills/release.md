@@ -19,7 +19,7 @@ A version is `JJ.JJ.F.B`.
 | `F` | The feature release | The release adds or changes behavior a user will notice |
 | `B` | The bug release within that feature | The release only fixes bugs |
 
-Raising a part sets every part after it to `0`. The first release is `12.4.0.0`. From there, a feature release raises `F` by one and sets `B` to `0`, and a fix raises `B` by one.
+Raising a part sets every part after it to `0`. The first release is `12.4.1.0`. From there, a feature release raises `F` by one and sets `B` to `0`, and a fix raises `B` by one.
 
 ## Branch
 
@@ -82,7 +82,7 @@ Edit `build.yaml`.
 Commit it on its own.
 
 ```bash
-git commit -am "Set the release to 12.4.0.0"
+git commit -am "Set the release to 12.4.1.0"
 ```
 
 ```bash

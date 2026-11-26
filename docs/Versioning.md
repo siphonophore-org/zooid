@@ -3,7 +3,7 @@
 Releases use a four part version, `JJ.JJ.F.B`. It matches the supported Jellyfin version, followed by the plugin's own feature and bug count.
 
 ```
-12.4.0.0
+12.4.1.0
 └┬─┘ │ └ 0 = Plugin bug release within that feature
  │   └─── 0 = Plugin feature release
  └──────── 12.4 = Jellyfin version this build is released for
@@ -15,7 +15,7 @@ Releases use a four part version, `JJ.JJ.F.B`. It matches the supported Jellyfin
 | `F` | A release adds a feature or changes behavior | `B` starts at 0 |
 | `B` | A release only fixes bugs | Nothing else changes |
 
-Zooid 12.4.0.0 is the first release. It needs Jellyfin 12.4.
+Zooid 12.4.1.0 is the first release. It needs Jellyfin 12.4.
 
 ## Unstable Builds
 
@@ -25,7 +25,7 @@ The unstable channel, `https://repo.siphonophore.org/unstable`, lists every stab
 
 Each release carries three numbers besides its version.
 
-| Number | 12.4.0.0 | What it decides |
+| Number | 12.4.1.0 | What it decides |
 | :--- | :--- | :--- |
 | Protocol | 1, oldest 1 | Which servers this one exchanges live changes, history negotiation, and conflict checks with |
 | Database schema | 1 | The layout of `zooid/sync.db` in the Jellyfin data folder |

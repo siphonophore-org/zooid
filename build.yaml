@@ -2,7 +2,7 @@
 name: "Zooid"
 guid: "d25d4326-c40f-450a-95d1-377254a318ac"
 imageUrl: "https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/catalog.svg"
-version: "12.4.0.0"
+version: "12.4.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Keeps your whole collection of Jellyfin servers in sync with one another."
@@ -23,9 +23,14 @@ artifacts:
 - "Std.UriTemplate.dll"
 changelog:
   added:
-  - "Content sync: copy or link movies, shows, music and other files from other Jellyfin servers into mapped libraries"
-  - "Links that stream from the source server, with an optional cache and permanent copies"
-  - "History sync of played state, position, play count, last played date and favorites, merged across servers"
+  - "Content sync copies or links movies, shows, music and other files from other Jellyfin servers into mapped libraries"
+  - "Links stream from the source server, with an optional cache and permanent copies"
+  - "History sync merges played state, position, play count, last played date and favorites across servers"
   - "Metadata, people, user and playlist sync, with media segments shared between servers"
-  - "Live changes between servers that both run Zooid, through a queue with retries"
-  - "A dashboard, statistics, storage, and troubleshooting tools on one page"
+  - "Live changes travel between servers that both run Zooid, through a queue with retries"
+  - "Dashboard, Statistics, Storage and Troubleshooting tools sit beside the sync tools on one page"
+  changed:
+  - "The logo and catalog artwork are temporary and will be replaced"
+  developer:
+  - "Every route is under /Sync. The database schema and the peer protocol are both version 1"
+  - "Uses Siphonophore.Stolon 12.4.8"
