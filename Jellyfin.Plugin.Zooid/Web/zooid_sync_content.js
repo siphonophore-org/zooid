@@ -173,20 +173,13 @@ export function createContentSyncTableModule(ctx, kit) {
                 return ZooidShared.apiRequest('Status', 'GET').then(function(status) {
                     self._showStatusCounts(status);
 
-                    var pendingDownload = status.PendingDownload || 0;
-                    var pendingReplacement = status.PendingReplacement || 0;
-                    var pendingDeletion = status.PendingDeletion || 0;
-                    var totalPending = pendingDownload + pendingReplacement + pendingDeletion;
                     var show = function(countId, groupId, count, title) {
                         view.querySelector('#' + countId).textContent = count;
                         view.querySelector('#' + groupId).setAttribute('title', title);
                     };
 
-                    show('pendingCount', 'statusGroupPending', totalPending,
-                        t.format('TitlePendingBreakdown', totalPending, pendingDownload, pendingReplacement, pendingDeletion));
-                    show('pendingDownloadCount', 'statusGroupPendingDownload', pendingDownload, t.format('StatusCountTitle', t.tr('StatusPendingDownload'), pendingDownload));
-                    show('pendingReplacementCount', 'statusGroupPendingReplacement', pendingReplacement, t.format('StatusCountTitle', t.tr('StatusPendingReplacement'), pendingReplacement));
-                    show('pendingDeletionCount', 'statusGroupPendingDeletion', pendingDeletion, t.format('StatusCountTitle', t.tr('StatusPendingDeletion'), pendingDeletion));
+                    // Deletions held for approval wait until someone approves them, so they keep a card.
+                    show('pendingDeletionCount', 'statusGroupPendingDeletion', status.PendingDeletion || 0, t.format('StatusCountTitle', t.tr('StatusPendingDeletion'), status.PendingDeletion || 0));
                     show('deletingCount', 'statusGroupDeleting', status.Deleting || 0, t.format('StatusCountTitle', t.tr('StatusDeleting'), status.Deleting || 0));
                 }).catch(function() {
                     // The status endpoint is not available yet.
@@ -506,8 +499,6 @@ export function createContentSyncTableModule(ctx, kit) {
                     this.table.setFilterOptionVisible('optDeleting', showPendingDelete);
                 }
 
-                ZooidShared.setVisible('statusGroupPendingDownload', showPendingDownload);
-                ZooidShared.setVisible('statusGroupPendingReplacement', showPendingReplace);
                 ZooidShared.setVisible('statusGroupPendingDeletion', showPendingDelete);
                 ZooidShared.setVisible('statusGroupDeleting', showPendingDelete);
 
