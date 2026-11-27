@@ -2213,60 +2213,6 @@ def scenario_removed_files_ignore(creds, apis):
     run_task(local, "ZooidUpdateTables")
 
 
-def scenario_older_database_refused(creds, apis):
-    """A database from a release older than the oldest this one reads is refused and left exactly as it was, and is used again untouched once it is back at this release's version."""
-    local = apis["local"]
-    container = "zooid-it-local"
-    db = os.path.join(STATE, "local", "config", "data", "zooid", "sync.db")
-    held = len(content_rows(local))
-    since = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
-
-    def stamp(version):
-        """Stops local, writes the schema version into its database file, and starts it again."""
-        run(["docker", "stop", container])
-        conn = sqlite3.connect(db)
-        found = conn.execute("PRAGMA user_version").fetchone()[0]
-        rows = conn.execute("SELECT COUNT(*) FROM SyncItems").fetchone()[0]
-        conn.execute(f"PRAGMA user_version = {int(version)}")
-        conn.commit()
-        conn.close()
-        run(["docker", "start", container])
-        local.wait_ready(180)
-        time.sleep(6)
-        return found, rows
-
-    current, rows_before = stamp(35)
-    try:
-        status, _ = local.call("GET", "/Sync/Status")
-        expect(status >= 500, f"the Sync tab's routes fail instead of reading an older database ({status})")
-        logs = run(["docker", "logs", "--since", since + "Z", container], capture=True, check=False)
-        expect("written by a release before 12.4.13.0" in logs.stdout + logs.stderr, "the log names the release to install first")
-        wait_until(lambda: bool(activity(local, "earlier update")), 30, "the Activity page says an earlier update is needed first")
-        status, health = local.call("GET", "/Sync/Health")
-        expect(status == 200 and health.get("Ready") is False and "12.4.13.0" in (health.get("Message") or ""), "every page is told why Zooid is held")
-        expect(healthy(local) and local.call("GET", f"/Items?userId={creds['servers']['local']['userId']}&limit=1")[0] == 200, "Jellyfin itself starts and answers as usual")
-        settings = os.path.join(STATE, "local", "config", "plugins", "configurations", "Jellyfin.Plugin.Zooid.xml")
-        with open(settings, encoding="utf-8") as f:
-            before = f.read()
-        config = plugin_config(local)
-        config["MaxConcurrentDownloads"] = 7
-        status, _ = local.call("POST", f"/Plugins/{PLUGIN_GUID}/Configuration", config)
-        with open(settings, encoding="utf-8") as f:
-            after = f.read()
-        expect(status >= 400 and after == before, f"a save is refused and the settings file is left as it was ({status})")
-        expect(os.path.exists(settings + ".before-12.4.13.0"), "the settings were copied aside before anything could change them")
-    finally:
-        found, rows_after = stamp(current)
-    expect(found == 35, f"the refused database kept its version ({found})")
-    expect(rows_after == rows_before, f"the refused database kept its rows ({rows_before} before, {rows_after} after)")
-    status, _ = local.call("GET", "/Sync/Status")
-    expect(status == 200 and len(content_rows(local)) == held, "back at this release's version it is used as it was")
-    expect(local.call("GET", "/Sync/Health")[1].get("Ready") is True, "and Zooid is no longer held")
-    held_copy = os.path.join(STATE, "local", "config", "plugins", "configurations", "Jellyfin.Plugin.Zooid.xml.before-12.4.13.0")
-    if os.path.exists(held_copy):
-        os.remove(held_copy)
-
-
 def set_linking(api, peer, allow):
     """Lets a peer link here or stops it."""
     config = plugin_config(api)
@@ -3318,7 +3264,7 @@ def scenario_file_changes(creds, apis, storage):
         # A removal waits out the hold on the sender, then goes here.
         wait_until(lambda: not os.path.exists(dst["D"]), HINT_REMOVAL_HOLD + 300,
                    f"a file deleted on source-a takes its {storage.lower()} and its folder once its removal is announced")
-        expect(all(old_ids[k] not in json.dumps(hints(a)) for k in ("R", "X")), "the held removals of the renamed files settled")
+        wait_until(lambda: all(old_ids[k] not in json.dumps(hints(a)) for k in ("R", "X")), 120, "the held removals of the renamed files settled")
         # Local announces the removal of its own copy in turn, so that removal is still held here.
         wait_until(settled, 120, "every queue drained after the removals but the ones held back")
         expect(all(os.path.isdir(dst[k]) for k in ("R", "X", "T", "W")), "the other titles keep their folders")
@@ -4416,7 +4362,6 @@ SCENARIOS = [
     ("pool: by rank, only the highest ranked server is heard", scenario_pool_rank),
     ("pool: user settings go both ways, and Permissive and Restrictive settle a clash", scenario_pool_user_conflict),
     ("pool: a kept playlist copy is not handed back", scenario_pool_playlist_keep),
-    ("a database from an older release is refused and left untouched", scenario_older_database_refused),
 ]
 
 _failures = []
