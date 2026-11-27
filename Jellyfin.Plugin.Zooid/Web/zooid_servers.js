@@ -722,6 +722,7 @@ export default function (view) {
         collectServerEditor();
         setStepOpen('serverStepConnection', true);
         setStepOpen('serverStepAuthentication', true);
+        setStepOpen('serverStepDirection', true);
         servers.push({
             Key: newServerKey(),
             Name: '',

@@ -34,7 +34,8 @@ Open **Servers** and select **Add server**. A server's place in the list is its 
 | Step | What it holds |
 | :--- | :--- |
 | Connection | **Name**, **Enabled**, **Server URL**, an optional **External URL**, and **Allow private network address** |
-| Authentication | An **API Key** or a **Sign in**, **Test connection**, what the key can do there, the **Direction**, and **Check link** |
+| Authentication | An **API Key** or a **Sign in**, **Test connection**, and what the key can do there |
+| Direction | **Pull**, **Push**, or **Sync**, and **Check link**, which shows what that server's own key reads here |
 | Linking | For Push and Sync servers only. **Allow linking**, **Link streams at once**, and who **Unmapped users** stream as |
 | Libraries | Which library there fills which library here, and their root folders |
 | Users | Which user there maps to which user here, for history, user settings, and playlists |
@@ -61,7 +62,7 @@ Pick **API Key** and paste a key from that server's **Dashboard > API Keys**, or
 
 **Test connection** shows who the key belongs to, whether it may download, whether Zooid there lets it in, and what each sync type can do with it. A standard user's key works in every direction. It is limited to what that user can see and to that user's own history, settings, and playlists. An administrator's key or an API Key reaches everything. See [Permissions](Permissions.md) for each function.
 
-Then pick the **Direction**.
+Then pick the **Direction** in its own step.
 
 | Direction | Needs Zooid there | What happens |
 | :--- | :--- | :--- |
