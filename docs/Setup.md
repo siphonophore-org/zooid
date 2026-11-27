@@ -111,9 +111,9 @@ Add each other server the same way. Their order in the list is their rank. For m
 | :--- | :--- |
 | ![Storage](screenshots/settings/Storage.png) | ![Storage on a phone](screenshots/settings/Storage%20Phone.png) |
 
-Open **Storage**. With more than one server mapping libraries, a tab for each picks the server. Cards at the top count its libraries, copies, links, cached links, the space its copies use, and any errored files. Below them, each enabled library mapping has a row with the icon of its library type, the library it fills, the source library, its **Storage** as a **Copy** or **Link** badge, what it holds, and anything waiting or failed. With no library mapped yet, **Map libraries** opens the **Servers** page.
+Open **Storage**. With more than one server mapping libraries, a tab for each picks the server. With content sync on, cards at the top count its libraries, copies, links, cached links, the space its copies use, and any errored files. Below them, each enabled library mapping has a row with the icon of its library type, the library it fills, the source library, its **Storage** as a **Copy** or **Link** badge, what it holds, and anything waiting or failed. With no library mapped yet, **Map libraries** opens the **Servers** page.
 
-Select a row to edit that library in a side panel, then select **Save**. The panel shows the two libraries and their root folders above the settings. With content sync off, only the library count, the filter, and the history setting show.
+Select a row to edit that library in a side panel, then select **Save**. The panel shows the two libraries and their root folders above the settings. With content sync off, the page shows no cards, and the panel shows only the history setting and the filter.
 
 ![Storage library](screenshots/settings/Storage%20Library.png)
 
@@ -122,8 +122,8 @@ Select a row to edit that library in a side panel, then select **Save**. The pan
 | **Storage** | **Copy** downloads each file and follows that server, so a file it removes is handled by **Removed files** here. **Link** writes a `.strm` that streams from any server that holds the file, and goes only when none holds it. See [Links](Links.md) |
 | **Link cache** | For a Link library, **Cache this library's links** keeps played links and upcoming episodes in the link cache |
 | **Always keep** | For a Link library, the shows and films that are full copies instead of links |
-| **Library filter** | **Filter mode** syncs everything, or only what is picked, or everything but what is picked. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
 | **Negotiate history** | For a Sync server with history sync on, writes merged watch history back to that server. See [History](History.md) |
+| **Library filter** | **Filter mode** syncs everything, or only what is picked, or everything but what is picked. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
 
 Below the rows, **Content** lists every file that server syncs here, with its library, its size, and a badge for how it is kept: **Copied**, **Linked**, or **Cached** for a link whose file is in the link cache. A full copy in a Link library also shows as **Copied**, and the badge says why on hover. A file that is not synced also shows its status, and a cached link shows when it was last played. Search by name, and filter by **All**, **Copied**, **Linked**, or **Cached**. While a library links, a **Link cache** bar above the table shows how much of the cache is used.
 

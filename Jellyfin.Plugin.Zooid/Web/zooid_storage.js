@@ -105,8 +105,8 @@ export function countFor(counts, mapping) {
 }
 
 // summaryCards
-// The count cards at the top of the page, for the picked server's enabled library mappings. With content sync off
-// only the library count means something, and before the counts arrive only it shows.
+// The count cards at the top of the page, for the picked server's enabled library mappings. They show only with
+// content sync on and the counts in, since a library count alone says nothing the library list below does not.
 //
 // Inputs
 // mappings [object[]]: The enabled library mappings.
@@ -118,8 +118,8 @@ export function countFor(counts, mapping) {
 // Output
 // [object[]]: The cards, as renderCards takes them.
 export function summaryCards(mappings, counts, contentOn, t, formatSize) {
+    if (!contentOn || !counts) return [];
     var cards = [{ count: mappings.length, label: t.tr('HeaderLibraries') }];
-    if (!contentOn || !counts) return cards;
     var sum = { Copies: 0, Links: 0, CachedLinks: 0, Errored: 0, CopyBytes: 0 };
     mappings.forEach(function (mapping) {
         var c = countFor(counts, mapping);
@@ -480,7 +480,11 @@ export default function (view) {
         var entries = enabledMappings(server);
         var list = getEl('storageLibraryList');
         var summary = getEl('storageSummary');
-        if (summary) ZooidShared.renderCards(summary, summaryCards(entries.map(function (e) { return e.mapping; }), counts, contentOn, ZooidShared.t, ZooidShared.formatSize));
+        if (summary) {
+            var cards = summaryCards(entries.map(function (e) { return e.mapping; }), counts, contentOn, ZooidShared.t, ZooidShared.formatSize);
+            summary.classList.toggle('stolon-hidden', cards.length === 0);
+            if (cards.length) ZooidShared.renderCards(summary, cards);
+        }
         setVisible('storageNoLibraries', !!server && entries.length === 0);
         setVisible('storageLibraryList', entries.length > 0);
         if (!server || !list) return;
@@ -640,6 +644,16 @@ export default function (view) {
             body.appendChild(permanentSection);
         }
 
+        // Only a Sync server writes history back, so only its libraries offer negotiation, while history sync is on.
+        var negotiate = null;
+        if (negotiable) {
+            var historySection = zooidModule.make('div', 'stolon-stack');
+            historySection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('SyncTypeHistory')));
+            negotiate = zooidModule.createCheckboxField({ label: tr('LabelNegotiateHistory'), help: tr('HelpNegotiateHistory'), checked: !!mapping.NegotiateHistory });
+            historySection.appendChild(negotiate.element);
+            body.appendChild(historySection);
+        }
+
         // The library filter applies to content, history, and metadata.
         var filterSection = zooidModule.make('div', 'stolon-stack');
         filterSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('HeaderLibraryFilter')));
@@ -672,16 +686,6 @@ export default function (view) {
         filterSection.appendChild(filterBrowser);
         body.appendChild(filterSection);
         if (filterMode.input) filterMode.input.addEventListener('change', updateFilterSection);
-
-        // Only a Sync server writes history back, so only its libraries offer negotiation, while history sync is on.
-        var negotiate = null;
-        if (negotiable) {
-            var historySection = zooidModule.make('div', 'stolon-stack');
-            historySection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('SyncTypeHistory')));
-            negotiate = zooidModule.createCheckboxField({ label: tr('LabelNegotiateHistory'), help: tr('HelpNegotiateHistory'), checked: !!mapping.NegotiateHistory });
-            historySection.appendChild(negotiate.element);
-            body.appendChild(historySection);
-        }
 
         function filterModeValue() {
             return (filterMode.input ? filterMode.input.value : mapping.FilterMode) || 'AllowAll';
