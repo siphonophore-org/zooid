@@ -259,7 +259,7 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 * A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading when a page needs another.
 * Entry names are short, each with a Material icon.
 * Keep the list in one place, `zooidTools` in the shared module, never copied into each page.
-* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Queue**, **Content**, **History**, **Metadata**, **People**, **Users**, **Storage**, **Servers**, **Statistics**, **Settings**, **Troubleshooting**.
+* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Queue**, **Content**, **History**, **Metadata**, **People**, **Users**, **Servers**, **Storage**, **Statistics**, **Settings**, **Troubleshooting**.
 * Each sync type has its own entry, with the icon of its Settings section, `video_library`, `history`, `info`, `recent_actors`, and `group`. An entry whose feature is off leaves the sidebar, through `TOOL_FLAG_KEYS` and `toolFlags` in the shared module.
 
 ### Sections

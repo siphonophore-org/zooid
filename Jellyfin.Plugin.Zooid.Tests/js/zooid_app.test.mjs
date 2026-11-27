@@ -11,7 +11,7 @@ import { installPage, loadScript, pageView, sidebar, flush, paths } from './supp
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
 
-var EVERY_TOOL = ['Dashboard', 'Queue', 'Content', 'History', 'Metadata', 'People', 'Users', 'Storage', 'Servers', 'Statistics', 'Settings', 'Troubleshooting'];
+var EVERY_TOOL = ['Dashboard', 'Queue', 'Content', 'History', 'Metadata', 'People', 'Users', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting'];
 
 // openApp
 // Builds the Zooid page over a fresh view and returns the view.
@@ -48,7 +48,7 @@ test('every tool shows its own registered page', async function () {
     var shared = await loadScript('zooid_shared.js');
     assert.deepEqual(shared.zooidTools().map(function (tool) { return tool.page; }), [
         'zooid_dashboard', 'zooid_queue', 'zooid_content', 'zooid_history', 'zooid_metadata', 'zooid_people', 'zooid_users',
-        'zooid_storage', 'zooid_servers', 'zooid_statistics', 'zooid_settings', 'zooid_troubleshooting'
+        'zooid_servers', 'zooid_storage', 'zooid_statistics', 'zooid_settings', 'zooid_troubleshooting'
     ]);
 });
 
@@ -101,7 +101,7 @@ test('the sync type tools and Statistics leave the sidebar once the stored answe
 test('a sync type that is off leaves the sidebar once the app reads the config', async function () {
     var view = await openApp({}, null, { EnableContentSync: true, EnableHistorySync: false, EnableMetadataSync: true, EnablePeopleSync: false, EnableUserSync: true });
     await flush();
-    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Content', 'Metadata', 'Users', 'Storage', 'Servers', 'Statistics', 'Settings', 'Troubleshooting']);
+    assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Content', 'Metadata', 'Users', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
     assert.equal(view.page.store['zooid.historyTab'], '0');
     assert.equal(view.page.store['zooid.contentTab'], '1');
 });

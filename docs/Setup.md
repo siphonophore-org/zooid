@@ -15,8 +15,8 @@ Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tool
 | **Metadata** | The metadata sync table | Metadata sync is on |
 | **People** | The people sync table | People sync is on |
 | **Users** | The user sync table | User sync is on |
-| **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
+| **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
 | **Statistics** | How the synced files are kept, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
 | **Settings** | Bandwidth, processing, the whitelist, and one section for each sync type | Always |
 | **Troubleshooting** | Resets that forget Zooid's tracking. Media is untouched | Always |
