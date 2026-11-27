@@ -841,21 +841,35 @@ div:not(.zooid-form-row) + .zooid-form-row {
 .zooid-section-intro { display: flex; flex-direction: column; gap: var(--stolon-gap-narrow); margin-bottom: var(--stolon-gap-wide); }
 .pluginConfigurationPage .zooid-section-intro > .fieldDescription { margin: 0 !important; padding-left: 0; }
 
-/* zooid-settings-flow */
-/* Settings lays each open section and each group in it out as one column with the standard gap, so every field,
-   checkbox, table, and list sits the same distance from the next. Stolon and Jellyfin give fields their own margins,
+/* zooid-section-flow */
+/* Settings and the server editor lay each open section and each group in it out as one column with the standard
+   gap, so every field, checkbox, table, and list sits the same distance from the next. Stolon and Jellyfin give fields their own margins,
    some with !important, which stack unevenly, so the column takes them over. A group keeps its dividing line, with the
    same gap on each side of it. */
 /* Example: <div id="ZooidSettingsPage"><div class="stolon-collapsible-content"><div class="zooid-settings-group">…</div></div></div> */
 #ZooidSettingsPage .stolon-collapsible-content:not(.stolon-collapsed),
-#ZooidSettingsPage .zooid-settings-group { display: flex; flex-direction: column; gap: var(--stolon-gap-wide); }
+#ZooidSettingsPage .zooid-settings-group,
+#ZooidServersPage .stolon-collapsible-content:not(.stolon-collapsed),
+#ZooidServersPage .zooid-settings-group { display: flex; flex-direction: column; gap: var(--stolon-gap-wide); }
 #ZooidSettingsPage .stolon-collapsible-content > *,
-#ZooidSettingsPage .zooid-settings-group > * { flex: none; margin-top: 0 !important; margin-bottom: 0 !important; }
-#ZooidSettingsPage .zooid-settings-group { padding-bottom: var(--stolon-gap-wide); }
-#ZooidSettingsPage .zooid-settings-group:last-child { padding-bottom: 0; }
-#ZooidSettingsPage .stolon-collapsible-content > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
+#ZooidSettingsPage .zooid-settings-group > *,
+#ZooidServersPage .stolon-collapsible-content > *,
+#ZooidServersPage .zooid-settings-group > * { flex: none; margin-top: 0 !important; margin-bottom: 0 !important; }
+#ZooidSettingsPage .zooid-settings-group,
+#ZooidServersPage .zooid-settings-group { padding-bottom: var(--stolon-gap-wide); }
+#ZooidSettingsPage .zooid-settings-group:last-child,
+#ZooidServersPage .zooid-settings-group:last-child { padding-bottom: 0; }
+#ZooidSettingsPage .stolon-collapsible-content > .stolon-subsection-title:not(:first-child),
+#ZooidServersPage .stolon-collapsible-content > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
 #ZooidSettingsPage .inputContainer > .fieldDescription,
 #ZooidSettingsPage .selectContainer > .fieldDescription,
-#ZooidSettingsPage .checkboxContainer > .fieldDescription { margin-bottom: 0 !important; padding-left: 0; }
-#ZooidSettingsPage .fieldDescription { padding-left: 0; }
-#ZooidSettingsPage .zooid-settings-group > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
+#ZooidSettingsPage .checkboxContainer > .fieldDescription,
+#ZooidServersPage .inputContainer > .fieldDescription,
+#ZooidServersPage .selectContainer > .fieldDescription,
+#ZooidServersPage .checkboxContainer > .fieldDescription { margin-bottom: 0 !important; padding-left: 0; }
+#ZooidSettingsPage .fieldDescription,
+#ZooidServersPage .fieldDescription { padding-left: 0; }
+#ZooidSettingsPage .zooid-settings-group > .stolon-subsection-title:not(:first-child),
+#ZooidServersPage .zooid-settings-group > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
+#ZooidSettingsPage .stolon-collapsible-content > div > :last-child,
+#ZooidServersPage .stolon-collapsible-content > div > :last-child { margin-bottom: 0 !important; }
