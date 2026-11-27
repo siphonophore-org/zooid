@@ -170,6 +170,7 @@ export default function (view) {
         return {
             title: serverTitle(server),
             subtitle: server.Url || ZooidShared.t.tr('ServerNoUrl'),
+            mono: !!server.Url,
             badges: badges,
             dot: health,
             dotTitle: dotTitles[health],
