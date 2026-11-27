@@ -85,6 +85,8 @@
   "BadgeNothing": "Nothing",
   "BadgePaired": "Paired",
   "BadgeProvider": "Provider",
+  "BadgeRecordMany": "{0} records",
+  "BadgeRecordOne": "{0} record",
   "BadgeStandardUser": "Standard user",
   "BadgeUnavailable": "Unavailable",
   "ButtonAddLibraryMapping": "Add library mapping",
