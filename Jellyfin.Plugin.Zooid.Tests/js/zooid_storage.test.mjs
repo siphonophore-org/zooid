@@ -87,11 +87,10 @@ test('the page says nothing applies while content, history, and metadata sync ar
     assert.equal(hidden(opened.view, 'storageNoServers'), true);
 });
 
-test('with content sync off the page says only the filter applies, and counts only the libraries', async function () {
+test('with content sync off the page says only the filter applies, and shows no count cards', async function () {
     var opened = await openPage({ config: { EnableContentSync: false, EnableHistorySync: true, Servers: [DEN] }, answer: storageAnswer([]) });
     assert.equal(hidden(opened.view, 'storageFiltersOnly'), false);
-    var labels = all(opened.view, '#storageSummary .stolon-card-label').map(function (el) { return el.textContent; });
-    assert.deepEqual(labels, ['Libraries']);
+    assert.equal(hidden(opened.view, 'storageSummary'), true);
     assert.equal(opened.page.requests.some(function (r) { return String(r.url).indexOf('LibraryStorage') >= 0; }), false);
 });
 
@@ -133,9 +132,10 @@ test('each enabled library mapping gets a row with its counts, and the cards sum
     assert.deepEqual(cards.filter(function (c) { return !/Space used/.test(c); }), ['Libraries=2', 'Copies=3', 'Links=5', 'Cached links=1', 'Errored=1']);
 });
 
-test('summaryCards shows only the library count before the counts arrive', async function () {
+test('summaryCards shows no cards before the counts arrive or with content sync off', async function () {
     var mod = await loadScript('zooid_storage.js');
-    assert.deepEqual(mod.summaryCards([mapping('a', 'b')], null, true, t, String), [{ count: 1, label: 'Libraries' }]);
+    assert.deepEqual(mod.summaryCards([mapping('a', 'b')], null, true, t, String), []);
+    assert.deepEqual(mod.summaryCards([mapping('a', 'b')], [], false, t, String), []);
 });
 
 test('libraryCard draws the icon by library type, the Storage badge, and the most urgent state', async function () {
