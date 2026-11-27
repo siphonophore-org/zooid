@@ -2,7 +2,7 @@
 name: "Zooid"
 guid: "d25d4326-c40f-450a-95d1-377254a318ac"
 imageUrl: "https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/catalog.svg"
-version: "12.4.1.4"
+version: "12.4.1.5"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Keeps your whole collection of Jellyfin servers in sync with one another."
@@ -22,12 +22,11 @@ artifacts:
 - "Microsoft.IO.RecyclableMemoryStream.dll"
 - "Std.UriTemplate.dll"
 changelog:
-  added:
-  - "Recent activity, at the bottom of the Dashboard, lists Zooid's newest activity log entries with how long ago each happened"
   changed:
-  - "The Storage tool shows in the sidebar only once a server this one pulls from has library mappings"
-  - "Troubleshooting counts the records of each table that has any in a badge before its Reset button"
+  - "Side panels close with the X in their header, and still ask before discarding edits. The Cancel button is gone"
+  - "A short last row of cards stretches to fill the row, as on the Dashboard"
   fixed:
-  - "Turning copies back into links said \"0 copies will turn back\" and gave its reason in lowercase. It says why plainly"
+  - "Dialog buttons such as Keep editing broke onto two lines on a phone. Each label stays on one line"
+  - "Timeline entries showed their date before their title. The title leads, beside its icon"
   developer:
-  - "GET /Sync/Activity?limit= gives Zooid's newest activity log entries, newest first, 20 by default and up to 50"
+  - "Uses Siphonophore.Stolon 12.4.15"
