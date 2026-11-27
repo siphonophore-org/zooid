@@ -2,7 +2,7 @@
 name: "Zooid"
 guid: "d25d4326-c40f-450a-95d1-377254a318ac"
 imageUrl: "https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/catalog.svg"
-version: "12.4.1.3"
+version: "12.4.1.4"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Keeps your whole collection of Jellyfin servers in sync with one another."
@@ -22,6 +22,9 @@ artifacts:
 - "Microsoft.IO.RecyclableMemoryStream.dll"
 - "Std.UriTemplate.dll"
 changelog:
-  changed:
-  - "A library's side panel on the Storage page puts History above the library filter, so a long filter list sits last"
-  - "The Storage page shows its count cards only while content sync is on, so a lone Libraries card no longer shows"
+  added:
+  - "Recent activity, at the bottom of the Dashboard, lists Zooid's newest activity log entries with how long ago each happened"
+  fixed:
+  - "Turning copies back into links said \"0 copies will turn back\" and gave its reason in lowercase. It says why plainly"
+  developer:
+  - "GET /Sync/Activity?limit= gives Zooid's newest activity log entries, newest first, 20 by default and up to 50"

@@ -162,7 +162,7 @@ A change travels as a hint that says what changed, never the value. The receiver
 
 8. **Complete.** The receiver reports `POST /Sync/Peer/Complete`, and the sender deletes the row. `OutboundHintWorker` asks for `GET /Sync/Peer/Status` after ten minutes and resends any hint the receiver lost.
 
-`QueueMaintenanceService` clears settled hints, retries errored rows, and raises items that have failed for a day on the **Activity** page. `HintActivityLog` writes one activity entry per outcome with Stolon's `ActivitySummary`.
+`QueueMaintenanceService` clears settled hints, retries errored rows, and raises items that have failed for a day on the **Activity** page. `HintActivityLog` writes one activity entry per outcome with Stolon's `ActivitySummary`. `ActivityFeed` reads Zooid's entries back from the activity log for the **Dashboard**.
 
 ## Links
 
@@ -242,7 +242,7 @@ Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's too
 
 | Tool | Page | Calls |
 | :--- | :--- | :--- |
-| **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics` |
+| **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics`, `Activity` |
 | **Content** | `zooid_content.html` and `zooid_sync_content.js` | `Items`, `Status`, the content actions, and `Tasks/{taskKey}/Run` |
 | **History** | `zooid_history.html` and `zooid_sync_history.js` | The `HistoryItems` routes, `HistoryStatus`, and `Tasks/{taskKey}/Run` |
 | **Metadata** | `zooid_metadata.html` and `zooid_sync_metadata.js` | The `MetadataItems` routes, `MetadataStatus`, and `Tasks/{taskKey}/Run` |

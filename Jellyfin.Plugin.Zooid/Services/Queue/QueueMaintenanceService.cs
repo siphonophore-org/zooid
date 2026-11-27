@@ -7,6 +7,7 @@ using Siphonophore.Stolon;
 using Jellyfin.Plugin.Zooid.Configuration;
 using Jellyfin.Plugin.Zooid.Models.Common;
 using Jellyfin.Plugin.Zooid.Models.Queue;
+using Jellyfin.Plugin.Zooid.Services.Activity;
 using Jellyfin.Plugin.Zooid.Services.Configuration;
 using Jellyfin.Plugin.Zooid.Services.ContentSync.Cleanup;
 using Jellyfin.Plugin.Zooid.Services.ContentSync.Downloads;
@@ -164,7 +165,7 @@ public sealed class QueueMaintenanceService : IHostedService, IDisposable
             var language = ActivityLanguage();
             _ = activity.LogAndWaitAsync(
                 StolonTranslations.Get(total == 1 ? TranslationKeys.AttentionFailingNameOne : TranslationKeys.AttentionFailingNameMany, language),
-                "ZooidAttention",
+                ActivityFeed.AttentionType,
                 ActivityText.Sentence(Overview(language)),
                 LogLevel.Warning);
         }
@@ -187,7 +188,7 @@ public sealed class QueueMaintenanceService : IHostedService, IDisposable
                 var language = ActivityLanguage();
                 _ = activity.LogAndWaitAsync(
                     StolonTranslations.Get(TranslationKeys.AttentionHeldName, language),
-                    "ZooidAttention",
+                    ActivityFeed.AttentionType,
                     ActivityText.Sentence(StolonTranslations.Format(TranslationKeys.AttentionHeldOverview, language, failure.ModuleKey, phase, failure.Reason)),
                     LogLevel.Warning);
             }

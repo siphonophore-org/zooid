@@ -1,14 +1,19 @@
 <!-- zooid_dashboard.html -->
-<!-- The Dashboard tool, one card for the servers, the change queue, and each sync type. A card opens its tool. -->
+<!-- The Dashboard tool, one card for the servers, the change queue, and each sync type, then Zooid's recent
+     activity. A card opens its tool. -->
 
 <div id="ZooidDashboardPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-controller="__plugin/zooid_dashboard.js">
     <div data-role="content">
         <div class="content-primary">
-            <div class="verticalSection verticalSection-extrabottompadding">
+            <div class="verticalSection verticalSection-extrabottompadding stolon-stack">
                 <div class="fieldDescription" data-str="HelpDashboard">Shows how the servers, the change queue, and each sync type stand. Select a card to open it.</div>
                 <div id="dashboardStatus" class="stolon-status-text" role="status"></div>
                 <div id="dashboardCards"></div>
+
+                <!-- Recent activity -->
+                <!-- Zooid's newest activity log entries. -->
+                <div id="dashboardActivity" class="stolon-stack"></div>
             </div>
         </div>
     </div>
