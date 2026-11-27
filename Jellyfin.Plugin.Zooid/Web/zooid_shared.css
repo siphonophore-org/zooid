@@ -733,3 +733,8 @@ div:not(.zooid-form-row) + .zooid-form-row {
 /* An access row whose answer is not known yet, dimmed, with a dash for its text and its badge. */
 /* Example: <div class="zooid-access-row zooid-access-pending"><div class="zooid-access-text">…</div><span class="stolon-badge stolon-gray">–</span></div> */
 .zooid-access-pending { opacity: .6; }
+
+/* zooid-table-count */
+/* A table's record count on its reset row, at the end of the row just before its Reset button. */
+/* Example: <div class="stolon-reset-row">…<span class="stolon-badge stolon-blue zooid-table-count">12 records</span><button></button></div> */
+.stolon-reset-row > .zooid-table-count { margin-left: auto; margin-right: var(--stolon-gap-narrow); flex: none; }

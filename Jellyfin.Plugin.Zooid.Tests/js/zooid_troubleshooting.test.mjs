@@ -107,8 +107,10 @@ test('a table tile keeps the accent while the table has rows and goes gray while
 
     assert.ok(!content.tile.classList.contains('stolon-gray'));
     assert.ok(history.tile.classList.contains('stolon-gray'));
-    var badge = content.title.querySelector('.zooid-table-count');
+    var badge = content.element.querySelector('.zooid-table-count');
     assert.ok(badge, 'a table with rows shows its count');
     assert.equal(badge.textContent, '12 records');
-    assert.equal(history.title.querySelector('.zooid-table-count'), null, 'an empty table shows no badge');
+    var kids = content.element.children;
+    assert.equal(kids[kids.indexOf(badge) + 1].id, 'btnResetContentTable', 'the badge sits before the Reset button');
+    assert.equal(history.element.querySelector('.zooid-table-count'), null, 'an empty table shows no badge');
 });

@@ -75,7 +75,7 @@ export default function (view) {
 
     // paintTables
     // Colors each table's tile by what it holds: the accent while it has rows a reset would forget, gray while it is
-    // empty. A table with rows shows how many in a badge beside its name. A table whose count cannot be read keeps the
+    // empty. A table with rows shows how many in a badge before its Reset button. A table whose count cannot be read keeps the
     // accent and shows no badge.
     function paintTables() {
         return ZooidShared.apiRequest('Tables', 'GET').then(function (counts) {
@@ -85,13 +85,11 @@ export default function (view) {
                 if (!row) return;
                 var count = counts ? counts[table] : undefined;
                 zooidModule.setCollapsibleTile(row.querySelector('.stolon-collapsible-tile'), count === 0 ? 'gray' : null);
-                var title = row.querySelector('.stolon-reset-info > div');
                 var badge = row.querySelector('.zooid-table-count');
-                if (typeof count === 'number' && count > 0 && title) {
+                if (typeof count === 'number' && count > 0) {
                     if (!badge) {
                         badge = zooidModule.make('span', 'stolon-badge stolon-blue zooid-table-count');
-                        title.appendChild(document.createTextNode(' '));
-                        title.appendChild(badge);
+                        row.insertBefore(badge, button);
                     }
                     badge.textContent = ZooidShared.t.format(count === 1 ? 'BadgeRecordOne' : 'BadgeRecordMany', count.toLocaleString());
                     badge.hidden = false;
