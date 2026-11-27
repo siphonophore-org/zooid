@@ -662,7 +662,7 @@ export default function (view) {
                 ZooidShared.bindReveal(pair[0], pair[1]);
             });
             reflectLinkCacheActions();
-            bindSwitchTiles();
+            paintSwitchTiles();
             loadCallerAccessSettings(config);
             fetchWatchedFilterUsers();
             saveBars.clean();
@@ -673,24 +673,23 @@ export default function (view) {
 
     // bindPage
     // Wires the page's buttons and controls. Stolon calls it once, the first time the page shows.
-    // bindSwitchTiles
+    // The handles that color each sync type's tile by its switch, made on the first load.
+    var tileSwitches = null;
+
+    // paintSwitchTiles
     // Colors each sync type's tile by its switch, green while the type is on and gray while it is off, and follows
-    // the switch as it changes. Sections with no switch keep the accent.
-    function bindSwitchTiles() {
+    // the switch as it changes. A load sets the switches in code, so it paints them again. Sections with no switch
+    // keep the accent.
+    function paintSwitchTiles() {
+        if (tileSwitches) {
+            tileSwitches.forEach(function (handle) { handle.refresh(); });
+            return;
+        }
+        tileSwitches = [];
         ['chkEnableContentSync', 'chkEnableHistorySync', 'chkEnableMetadataSync', 'chkEnablePeopleSync', 'chkEnablePlaylistSync', 'chkEnableUserSync'].forEach(function (id) {
             var box = getEl(id);
             var section = box && box.closest('.stolon-collapsible-section');
-            var tile = section && section.querySelector('.stolon-collapsible-header .stolon-collapsible-tile');
-            if (!tile) return;
-            var paint = function () {
-                tile.classList.toggle('stolon-green', box.checked);
-                tile.classList.toggle('stolon-gray', !box.checked);
-            };
-            paint();
-            if (!box.dataset.tileBound) {
-                box.dataset.tileBound = '1';
-                box.addEventListener('change', paint);
-            }
+            if (section) tileSwitches.push(zooidModule.bindTileToSwitch(section, box));
         });
     }
 

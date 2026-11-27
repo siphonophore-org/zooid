@@ -39,6 +39,9 @@ import {
     refreshToolConfig,
     openTool,
     createStatusCardGrid,
+    setDotColor,
+    setCollapsibleTile,
+    bindTileToSwitch,
     createTimeRangeField,
     toHours,
     fromHours,
@@ -49,7 +52,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createSaveBars, createPaginatedTable, createSortableCardList, createChoiceGroup, createPillGroup, createSubTabs, createMediaCard, createDefinitionList, openEditorSidecar, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, SECRET_KEPT };
+export { createSaveBars, createPaginatedTable, createSortableCardList, createChoiceGroup, createPillGroup, createSubTabs, createMediaCard, createDefinitionList, openEditorSidecar, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, setDotColor, setCollapsibleTile, bindTileToSwitch, createTimeRangeField, toHours, fromHours, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 

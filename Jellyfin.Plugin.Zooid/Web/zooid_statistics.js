@@ -292,8 +292,8 @@ export default function (view) {
         var head = document.createElement('div');
         head.className = 'zooid-usage-callout-head';
         var dot = document.createElement('span');
-        dot.className = 'stolon-dot stolon-' + kind.color;
         dot.setAttribute('aria-hidden', 'true');
+        zooidModule.setDotColor(dot, kind.color);
         var text = document.createElement('span');
         text.textContent = title;
         head.appendChild(dot);

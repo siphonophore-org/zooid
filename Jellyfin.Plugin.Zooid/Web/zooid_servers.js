@@ -218,9 +218,7 @@ export default function (view) {
             var spec = cardSpec(server);
             var color = { ok: 'green', bad: 'red', checking: 'orange', unknown: 'gray' }[spec.dot];
             if (!color) return;
-            dot.className = 'stolon-dot stolon-' + color;
-            dot.title = spec.dotTitle || '';
-            dot.setAttribute('aria-label', spec.dotTitle || '');
+            zooidModule.setDotColor(dot, color, spec.dotTitle);
         });
     }
 

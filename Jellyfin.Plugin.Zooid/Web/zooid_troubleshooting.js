@@ -81,8 +81,7 @@ export default function (view) {
             Object.keys(TABLE_BUTTONS).forEach(function (table) {
                 var button = view.querySelector('#' + TABLE_BUTTONS[table]);
                 var row = button && button.closest('.stolon-reset-row');
-                var tile = row && row.querySelector('.stolon-collapsible-tile');
-                if (tile) tile.classList.toggle('stolon-gray', counts && counts[table] === 0);
+                if (row) zooidModule.setCollapsibleTile(row.querySelector('.stolon-collapsible-tile'), counts && counts[table] === 0 ? 'gray' : null);
             });
         }).catch(function () { /* the tiles keep the accent */ });
     }
