@@ -1,17 +1,34 @@
 // zooid_storage.test.mjs
-// Tests for zooid_storage.js: that a load failure shows on the page status and never in an
-// alert, that the page says so when no sync type that uses storage is on, and the chart of synced files.
+// Tests for zooid_storage.js: that a load failure shows on the page status and never in an alert, that the page says so
+// when no sync type that uses storage is on, the server tabs, the count cards and library rows, and the editor sidecar's save.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installPage, loadScript, settle, statusText } from './support.mjs';
+import { installPage, loadScript, settle, statusText, strings } from './support.mjs';
 
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
 globalThis.setInterval = function () { return 1; };
 
-var IDS = ['storageStatus', 'storageDisabled', 'storageFiltersOnly', 'storageContent', 'storageLibrariesContainer', 'storageServerContainer',
-    'storageNoServers', 'storageLibrariesSection', 'keptCopiesSection', 'selStorageServer', 'storageFilesSection', 'storageFilesChart', 'storageUsageSection', 'storageUsageMeter'];
+var IDS = ['storageStatus', 'storageDisabled', 'storageFiltersOnly', 'storageNoServers', 'btnStorageMapLibraries', 'storageContent', 'storageServerPicker',
+    'storageServerContent', 'storageServerOff', 'storageSummary', 'storageLibraryList', 'storageNoLibraries', 'keptCopiesSection', 'keptCopiesStatus',
+    'keptCopiesTableContainer', 'storageUsageSection', 'storageUsageMeter'];
+
+// t
+// The strings bag the pure helpers take, in US English.
+var t = {
+    tr: function (key) { return strings[key]; },
+    format: function (key) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return strings[key].replace(/\{(\d+)\}/g, function (m, i) { return String(args[i]); });
+    }
+};
+
+// bag
+// The helper bag the pure helpers take: plural over the same strings.
+var bag = {
+    plural: function (count, one, many) { return t.format(count === 1 ? one : many, count); }
+};
 
 // openPage
 // Loads the Storage controller over a view that holds the elements it uses, and shows the page.
@@ -19,15 +36,46 @@ async function openPage(opts) {
     opts = opts || {};
     var calls = [];
     var page = installPage({ calls: calls, config: opts.config === undefined ? {} : opts.config, storage: opts.storage });
-    var view = page.dom.el('div', {}, IDS.map(function (id) { return page.dom.el(id === 'selStorageServer' ? 'select' : 'div', { id: id }); }));
+    var view = page.dom.el('div', {}, IDS.map(function (id) { return page.dom.el('div', { id: id }); }));
     page.dom.document.documentElement.appendChild(view);
+    globalThis.ApiClient.getVirtualFolders = function () { return Promise.resolve(opts.folders || []); };
+    globalThis.ApiClient.getImageUrl = function (id) { return '/image/' + id; };
     if (opts.answer) globalThis.ApiClient.fetch = function (options) { page.requests.push(options); return opts.answer(options); };
     if (opts.fail) globalThis.ApiClient.getPluginConfiguration = function () { return Promise.reject(new Error('refused')); };
+    var saved = [];
+    globalThis.ApiClient.updatePluginConfiguration = function (id, config) { saved.push(JSON.parse(JSON.stringify(config))); return Promise.resolve(); };
     var mod = await loadScript('zooid_storage.js');
     mod.default(view);
     view.dispatch('viewshow');
     await settle();
-    return { page: page, view: view, calls: calls };
+    return { page: page, view: view, calls: calls, saved: saved };
+}
+
+// all
+// The elements under a root that match a selector, as an array.
+function all(root, selector) {
+    return Array.from(root.querySelectorAll(selector));
+}
+
+function hidden(view, id) {
+    return view.querySelector('#' + id).classList.contains('stolon-hidden');
+}
+
+function mapping(source, local, extra) {
+    return Object.assign({ SourceLibraryId: source, SourceLibraryName: source + ' there', LocalLibraryId: local, LocalLibraryName: local + ' here', IsEnabled: true, FilterMode: 'AllowAll', FilteredItems: [] }, extra || {});
+}
+
+var DEN = { Key: 'den', Name: 'Den', Url: 'u', ApiKey: 'k', Mode: 'Sync', LibraryMappings: [mapping('films', 'movies'), mapping('shows', 'tv', { StorageMode: 'Link' })] };
+
+// storageAnswer
+// Answers the LibraryStorage route with the given counts, and every other route with an empty answer.
+function storageAnswer(counts) {
+    return function (options) {
+        var url = String(options.url);
+        if (url.indexOf('Sync/LibraryStorage') === 0) return Promise.resolve(counts);
+        if (url === 'Sync/LinkCache') return Promise.resolve({ Enabled: false });
+        return Promise.resolve({ Items: [], TotalCount: 0 });
+    };
 }
 
 test('a config that cannot be loaded shows an error on the page status and never opens an alert', async function () {
@@ -39,52 +87,127 @@ test('a config that cannot be loaded shows an error on the page status and never
 
 test('the page says nothing applies while content, history, and metadata sync are all off', async function () {
     var opened = await openPage({ config: { EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: false } });
-    assert.equal(opened.view.querySelector('#storageDisabled').classList.contains('stolon-hidden'), false);
-    assert.equal(opened.view.querySelector('#storageContent').classList.contains('stolon-hidden'), true);
+    assert.equal(hidden(opened.view, 'storageDisabled'), false);
+    assert.equal(hidden(opened.view, 'storageContent'), true);
+    assert.equal(hidden(opened.view, 'storageNoServers'), true);
 });
 
-test('the page says only the filter applies while content sync is off and another sync type is on', async function () {
-    var opened = await openPage({ config: { EnableContentSync: false, EnableHistorySync: true, Servers: [] } });
-    assert.equal(opened.view.querySelector('#storageDisabled').classList.contains('stolon-hidden'), true);
-    assert.equal(opened.view.querySelector('#storageFiltersOnly').classList.contains('stolon-hidden'), false);
-    assert.equal(opened.view.querySelector('#storageContent').classList.contains('stolon-hidden'), false);
-    assert.ok(opened.view.querySelector('#storageLibrariesContainer').classList.contains('zooid-filters-only'));
+test('with content sync off the page says only the filter applies, and counts only the libraries', async function () {
+    var opened = await openPage({ config: { EnableContentSync: false, EnableHistorySync: true, Servers: [DEN] }, answer: storageAnswer([]) });
+    assert.equal(hidden(opened.view, 'storageFiltersOnly'), false);
+    var labels = all(opened.view, '#storageSummary .stolon-card-label').map(function (el) { return el.textContent; });
+    assert.deepEqual(labels, ['Libraries']);
+    assert.equal(opened.page.requests.some(function (r) { return String(r.url).indexOf('LibraryStorage') >= 0; }), false);
 });
 
-test('the page shows the server picker only when more than one server has library mappings', async function () {
-    var one = { Key: 'a', Name: 'A', Url: 'u', ApiKey: 'k', LibraryMappings: [] };
-    var two = { Key: 'b', Name: 'B', Url: 'u', ApiKey: 'k', LibraryMappings: [] };
-    var opened = await openPage({ config: { EnableContentSync: true, Servers: [{ ...one, LibraryMappings: [{ IsEnabled: false }] }] } });
-    assert.equal(opened.view.querySelector('#storageServerContainer').classList.contains('stolon-hidden'), true);
-    opened = await openPage({ config: { EnableContentSync: true, Servers: [{ ...one, LibraryMappings: [{ IsEnabled: false }] }, { ...two, LibraryMappings: [{ IsEnabled: false }] }] } });
-    assert.equal(opened.view.querySelector('#storageServerContainer').classList.contains('stolon-hidden'), false);
+test('with no mapped server the page shows the empty state and its way to the Servers page', async function () {
+    var opened = await openPage({ config: { EnableContentSync: true, Servers: [{ Key: 'p', Name: 'P', Url: 'u', ApiKey: 'k', Mode: 'Push', LibraryMappings: [mapping('a', 'b')] }] } });
+    assert.equal(hidden(opened.view, 'storageNoServers'), false);
+    assert.equal(hidden(opened.view, 'storageContent'), true);
 });
 
-test('a Push server maps no libraries, so the picker leaves it out', async function () {
-    var opened = await openPage({ config: { EnableContentSync: true, Servers: [{ Key: 'p', Name: 'P', Url: 'u', ApiKey: 'k', Mode: 'Push', LibraryMappings: [{ IsEnabled: false }] }] } });
-    assert.equal(opened.view.querySelector('#storageNoServers').classList.contains('stolon-hidden'), false);
+test('the server tabs show only when more than one server has library mappings, named by each server', async function () {
+    var one = await openPage({ config: { EnableContentSync: true, Servers: [DEN] }, answer: storageAnswer([]) });
+    assert.equal(hidden(one.view, 'storageServerPicker'), true);
+    var cabin = { Key: 'cabin', Name: 'Cabin', Url: 'u', ApiKey: 'k', Mode: 'Pull', LibraryMappings: [mapping('docs', 'docs')] };
+    var two = await openPage({ config: { EnableContentSync: true, Servers: [DEN, cabin] }, answer: storageAnswer([]) });
+    assert.equal(hidden(two.view, 'storageServerPicker'), false);
+    var tabs = all(two.view, '#storageServerPicker .stolon-subtab').map(function (el) { return el.textContent; });
+    assert.deepEqual(tabs, ['Den', 'Cabin']);
 });
 
-var MAPPED = { Key: 'a b', Name: 'A', Url: 'u', ApiKey: 'k', LibraryMappings: [{ IsEnabled: false }] };
+test('each enabled library mapping gets a row with its counts, and the cards sum them', async function () {
+    var off = mapping('old', 'old', { IsEnabled: false });
+    var den = Object.assign({}, DEN, { LibraryMappings: DEN.LibraryMappings.concat([off]) });
+    var opened = await openPage({
+        config: { EnableContentSync: true, Servers: [den] },
+        folders: [{ ItemId: 'movies', CollectionType: 'movies' }],
+        answer: storageAnswer([
+            { SourceLibraryId: 'films', LocalLibraryId: 'movies', Copies: 3, Links: 0, CachedLinks: 0, Errored: 1, CopyBytes: 2048 },
+            { SourceLibraryId: 'shows', LocalLibraryId: 'tv', Copies: 0, Links: 4, CachedLinks: 1 }
+        ])
+    });
+    var rows = opened.view.querySelectorAll('#storageLibraryList .stolon-media-card');
+    assert.equal(rows.length, 2);
+    assert.match(rows[0].textContent, /movies here/);
+    assert.match(rows[0].textContent, /1 errored/);
+    assert.match(rows[1].textContent, /5 links/);
+    var cards = all(opened.view, '#storageSummary .stolon-card').map(function (el) {
+        return el.querySelector('.stolon-card-label').textContent + '=' + el.querySelector('.stolon-card-count').textContent;
+    });
+    assert.deepEqual(cards.filter(function (c) { return !/Space used/.test(c); }), ['Libraries=2', 'Copies=3', 'Links=5', 'Cached links=1', 'Errored=1']);
+});
 
-// countsAnswer
-// Answers the Items counts the chart asks for: copies, links, and cached links.
-function countsAnswer(copies, links, cached, cache) {
-    return function (options) {
-        var url = String(options.url);
-        if (url === 'Sync/LinkCache') return Promise.resolve(cache || { Enabled: false });
-        if (url.indexOf('Items?') < 0) return Promise.resolve({});
-        var total = url.indexOf('cached=true') >= 0 ? cached : url.indexOf('storage=Link') >= 0 ? links : copies;
-        return Promise.resolve({ Items: [], TotalCount: total });
-    };
-}
+test('summaryCards shows only the library count before the counts arrive', async function () {
+    var mod = await loadScript('zooid_storage.js');
+    assert.deepEqual(mod.summaryCards([mapping('a', 'b')], null, true, t, String), [{ count: 1, label: 'Libraries' }]);
+});
+
+test('libraryCard draws the icon by library type, the Storage badge, and the most urgent state', async function () {
+    var mod = await loadScript('zooid_storage.js');
+    var link = mod.libraryCard(mapping('a', 'b', { StorageMode: 'Link', FilterMode: 'Whitelist' }), { Pending: 2, Queued: 1 }, 'tvshows', true, t, bag);
+    assert.equal(link.icon, 'tv');
+    assert.deepEqual(link.badges.map(function (b) { return b.label + ':' + b.color; }), ['Link:green', 'Link cache:orange', 'Whitelist:blue']);
+    assert.deepEqual(link.status, { label: '2 pending', color: 'purple' });
+    assert.equal(link.subtitle, 'From a there');
+    var empty = mod.libraryCard(mapping('a', 'b'), {}, '', true, t, bag);
+    assert.equal(empty.icon, 'video_library');
+    assert.equal(empty.detail, 'Nothing synced yet.');
+    assert.equal(empty.status, null);
+    var filtersOnly = mod.libraryCard(mapping('a', 'b'), { Copies: 3 }, '', false, t, bag);
+    assert.deepEqual(filtersOnly.badges, []);
+    assert.equal(filtersOnly.detail, null);
+});
+
+test('applyMappingEdit writes to the mapping with the same pair of libraries, even after it moved', async function () {
+    var mod = await loadScript('zooid_storage.js');
+    var config = { Servers: [{ Key: 'den', LibraryMappings: [mapping('new', 'new'), mapping('films', 'movies')] }] };
+    assert.equal(mod.applyMappingEdit(config, 'den', { index: 0, sourceLibraryId: 'films', localLibraryId: 'movies' }, { StorageMode: 'Link' }), true);
+    assert.equal(config.Servers[0].LibraryMappings[1].StorageMode, 'Link');
+    assert.equal(config.Servers[0].LibraryMappings[0].StorageMode, undefined);
+    assert.equal(mod.applyMappingEdit(config, 'den', { index: 0, sourceLibraryId: 'gone', localLibraryId: 'gone' }, { StorageMode: 'Link' }), false);
+    assert.equal(mod.applyMappingEdit(config, 'other', { index: 1, sourceLibraryId: 'films', localLibraryId: 'movies' }, {}), false);
+});
+
+test('selecting a library opens its editor, and Save writes its Storage to that mapping only', async function () {
+    var config = { EnableContentSync: true, Servers: [JSON.parse(JSON.stringify(DEN))] };
+    var opened = await openPage({ config: config, answer: storageAnswer([]) });
+    var dom = opened.page.dom;
+    opened.view.querySelectorAll('#storageLibraryList .stolon-media-card')[0].click();
+    await settle();
+    var sidecar = dom.document.querySelector('.stolon-sidecar');
+    assert.ok(sidecar, 'the editor opens');
+    assert.match(sidecar.textContent, /movies here/);
+    var radios = all(sidecar, 'input').filter(function (input) { return input.type === 'radio'; });
+    var link = radios.find(function (input) { return input.value === 'Link'; });
+    // The fake DOM does not uncheck the other radio of the group, as a browser does.
+    radios.forEach(function (input) { input.checked = input === link; });
+    link.dispatch('change');
+    var save = all(sidecar, 'button').find(function (b) { return b.textContent === 'Save'; });
+    save.click();
+    await settle();
+    assert.equal(opened.saved.length, 1);
+    var stored = opened.saved[0].Servers[0].LibraryMappings;
+    assert.equal(stored[0].StorageMode, 'Link');
+    assert.equal(stored[0].ExcludeFromLinkCache, false);
+    assert.equal(stored[0].FilterMode, 'AllowAll');
+    assert.equal(stored[1].StorageMode, 'Link');
+    assert.equal(stored[1].SourceLibraryName, 'shows there');
+    assert.equal(statusText(opened.view.querySelector('#storageStatus')), 'Storage saved.');
+});
 
 test('the Usage section shows the link cache as used of its limit only while the cache is on', async function () {
-    var on = await openPage({ config: { EnableContentSync: true, Servers: [MAPPED] }, answer: countsAnswer(1, 1, 0, { Enabled: true, UsedBytes: 1073741824, LimitBytes: 4294967296 }) });
-    assert.equal(on.view.querySelector('#storageUsageSection').classList.contains('stolon-hidden'), false);
+    function answer(cache) {
+        return function (options) {
+            if (String(options.url) === 'Sync/LinkCache') return Promise.resolve(cache);
+            return Promise.resolve([]);
+        };
+    }
+    var on = await openPage({ config: { EnableContentSync: true, Servers: [DEN] }, answer: answer({ Enabled: true, UsedBytes: 1073741824, LimitBytes: 4294967296 }) });
+    assert.equal(hidden(on.view, 'storageUsageSection'), false);
     var text = on.view.querySelector('#storageUsageMeter').textContent;
     assert.match(text, /Link cache/);
     assert.match(text, /1 GB of 4 GB used/);
-    var off = await openPage({ config: { EnableContentSync: true, Servers: [MAPPED] }, answer: countsAnswer(1, 1, 0, { Enabled: false, UsedBytes: 0, LimitBytes: 0 }) });
-    assert.equal(off.view.querySelector('#storageUsageSection').classList.contains('stolon-hidden'), true);
+    var off = await openPage({ config: { EnableContentSync: true, Servers: [DEN] }, answer: answer({ Enabled: false, UsedBytes: 0, LimitBytes: 0 }) });
+    assert.equal(hidden(off.view, 'storageUsageSection'), true);
 });

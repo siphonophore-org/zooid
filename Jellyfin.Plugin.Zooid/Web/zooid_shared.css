@@ -657,168 +657,11 @@ div:not(.zooid-form-row) + .zooid-form-row {
     flex-direction: column;
 }
 
-/* zooid-library-card */
-/* Card for one library mapping on the Storage page, a route header above its storage settings. */
-/* Example: <div class="zooid-library-card"><div class="zooid-library-card-header"></div></div> */
-#storageServerContainer { margin-bottom: 1.5em; }
-.zooid-library-card {
-    margin-bottom: 1.5em;
-    padding: 1.25em 1.25em 0.75em;
-    border: 1px solid var(--stolon-border);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-}
-.zooid-library-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.85em;
-    margin: -0.25em 0 1.25em;
-    padding-bottom: 1em;
-    border-bottom: 1px solid var(--stolon-border);
-}
-.zooid-library-card-icon {
-    flex: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    color: var(--stolon-accent);
-    background: var(--stolon-accent-wash);
-}
-.zooid-library-card-route {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75em;
-}
-.zooid-library-card-end {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-}
-.zooid-library-card-label {
-    font-size: 0.7em;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.55;
-}
-.zooid-library-card-name {
-    font-size: 1.1em;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.zooid-library-card-arrow {
-    flex: none;
-    font-size: 20px;
-    opacity: 0.45;
-}
-.zooid-storage-mode-badge { flex: none; }
-@media (max-width: 480px) {
-    .zooid-library-card-icon { display: none; }
-}
-#storageLibrariesContainer.zooid-filters-only .zooid-storage-mode-block,
-#storageLibrariesContainer.zooid-filters-only .zooid-link-cache-section,
-#storageLibrariesContainer.zooid-filters-only .zooid-permanent-section,
-#storageLibrariesContainer.zooid-filters-only .zooid-storage-mode-badge { display: none !important; }
-
 /* zooid-kept-bulk-button */
 /* Bulk action button with an icon before its label. */
 /* Example: <button class="raised zooid-kept-bulk-button"><span class="material-icons">link</span><span>Turn back into links</span></button> */
 .zooid-kept-bulk-button { display: inline-flex; align-items: center; gap: 4px; }
 .zooid-kept-bulk-button .material-icons { font-size: 18px; }
-
-/* zooid-filter-section */
-/* Spaced block for a library's filter or its Always keep picks. */
-/* Example: <div class="zooid-filter-section"><h3 class="stolon-subsection-title">Library filter</h3></div> */
-.zooid-filter-section {
-    margin-top: 1em;
-    padding-top: 0.75em;
-}
-
-/* zooid-filter-item */
-/* One pickable item with a thumbnail, its details, and a check box, inside a picker table row. */
-/* Example: <div class="zooid-filter-item zooid-selected"><img class="zooid-filter-item-thumb" /><div class="zooid-filter-item-info"></div></div> */
-.zooid-filter-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(85, 85, 85, 0.15);
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.zooid-filter-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-.zooid-filter-item.zooid-selected {
-    background: var(--stolon-accent-wash);
-}
-/* In the base paginated table the row already provides padding/border/hover,
-   so flatten the inner item (no nested box) and tint the whole row when selected. */
-.stolon-table-cell .zooid-filter-item { padding: 0; border-bottom: none; }
-.stolon-table-cell .zooid-filter-item:hover,
-.stolon-table-cell .zooid-filter-item.zooid-selected { background: transparent; }
-.zooid-filter-item-thumb {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 60px;
-    border-radius: 3px;
-    object-fit: cover;
-    background: rgba(255, 255, 255, 0.05);
-}
-.zooid-filter-item-thumb-placeholder {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 60px;
-    border-radius: 3px;
-    background: rgba(255, 255, 255, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 18px;
-}
-.zooid-filter-item-info {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-}
-.zooid-filter-item-name {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.zooid-filter-item-meta {
-    font-size: 0.8em;
-    color: rgba(255, 255, 255, 0.5);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.zooid-filter-item-overview {
-    font-size: 0.75em;
-    color: rgba(255, 255, 255, 0.35);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-}
-.zooid-filter-item-check {
-    flex: 0 0 auto;
-}
-.zooid-filter-items-list {
-    padding: 0;
-    transition: opacity 0.15s;
-}
 
 /* zooid-settings-group */
 /* Group of related settings, divided from the next by a faint line. */
@@ -873,3 +716,34 @@ div:not(.zooid-form-row) + .zooid-form-row {
 #ZooidServersPage .zooid-settings-group > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
 #ZooidSettingsPage .stolon-collapsible-content > div > :last-child,
 #ZooidServersPage .stolon-collapsible-content > div > :last-child { margin-bottom: 0 !important; }
+/* The Storage page and its library editor take the same column. Each level of the page, the server tabs, the open
+   sections, the editor, and each group in the editor, is one column with the standard gap, and the library rows sit closer. */
+/* Example: <div class="zooid-storage-flow"><div class="stolon-cards"></div><div class="stolon-collapsible-section"></div></div> */
+#ZooidStoragePage .zooid-storage-flow,
+#ZooidStoragePage #storageServerPicker,
+#ZooidStoragePage .stolon-collapsible-content:not(.stolon-collapsed),
+.zooid-storage-editor,
+.zooid-storage-editor-group { display: flex; flex-direction: column; gap: var(--stolon-gap-wide); }
+#ZooidStoragePage .zooid-storage-flow > *,
+#ZooidStoragePage #storageServerPicker > *,
+#ZooidStoragePage .stolon-collapsible-content > *,
+.zooid-storage-sidecar .zooid-storage-editor > *,
+.zooid-storage-sidecar .zooid-storage-editor-group > * { flex: none; margin-top: 0 !important; margin-bottom: 0 !important; }
+#ZooidStoragePage .fieldDescription,
+.zooid-storage-sidecar .zooid-storage-editor .fieldDescription { padding-left: 0; }
+.zooid-storage-sidecar .zooid-storage-editor .selectContainer > .fieldDescription,
+.zooid-storage-sidecar .zooid-storage-editor .checkboxContainer > .fieldDescription { margin-bottom: 0 !important; }
+.zooid-storage-editor-group.stolon-hidden,
+#ZooidStoragePage .zooid-storage-flow > .stolon-status-text:empty,
+#ZooidStoragePage .stolon-collapsible-content > .stolon-status-text:empty { display: none; }
+#ZooidStoragePage .zooid-storage-libraries { display: flex; flex-direction: column; gap: var(--stolon-gap-narrow); }
+
+/* zooid-storage-empty */
+/* The Storage page's empty state, its sentence above the button to the Servers page. */
+/* Example: <div class="stolon-empty-section zooid-storage-empty"><div>No server has library mappings yet.</div><button></button></div> */
+.zooid-storage-empty { display: flex; flex-direction: column; align-items: center; gap: var(--stolon-gap-wide); }
+
+/* zooid-pick-cell */
+/* The check box column of a library editor's picker table, at the row's end. */
+/* Example: <div class="stolon-table-cell zooid-pick-cell"><span class="material-icons">check_box</span></div> */
+.stolon-table-cell.zooid-pick-cell { flex: none; width: 2.5rem; text-align: right; }

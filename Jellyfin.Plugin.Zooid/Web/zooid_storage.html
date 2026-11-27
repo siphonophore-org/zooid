@@ -1,55 +1,58 @@
 <!-- zooid_storage.html -->
-<!-- The Storage page, how each mapped library keeps its files, and the permanent copies of the Link libraries. -->
+<!-- The Storage page, what each mapped library holds and how it keeps its files, and the permanent copies of the Link libraries. -->
 
 <div id="ZooidStoragePage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox"
      data-controller="__plugin/zooid_storage.js">
     <div data-role="content">
         <div class="content-primary">
-            <form id="ZooidStorageForm">
-                <div class="verticalSection verticalSection-extrabottompadding">
+            <div class="verticalSection verticalSection-extrabottompadding zooid-storage-flow">
 
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpStorage">Sets how each mapped library keeps its files, and which items it syncs. Libraries are mapped on the Servers page.</div>
+                <div class="fieldDescription" data-str="HelpStorage">Shows what each mapped library holds, and how it keeps its files. Select a library to change it.</div>
 
-                    <div id="storageStatus" class="stolon-status-text" role="status"></div>
-                    <div id="storageDisabled" class="stolon-callout-neutral zooid-mb-md stolon-hidden" data-str="StorageAllOff">Content, history, and metadata sync are off, so nothing here applies. Turn one on under Settings.</div>
-                    <div id="storageFiltersOnly" class="stolon-callout-neutral zooid-mb-md stolon-hidden" data-str="StorageFiltersOnly">Content sync is off, so only each library's filter and history setting apply here.</div>
+                <div id="storageStatus" class="stolon-status-text" role="status"></div>
+                <div id="storageDisabled" class="stolon-callout-neutral stolon-hidden" data-str="StorageAllOff">Content, history, and metadata sync are off, so nothing here applies. Turn one on under Settings.</div>
+                <div id="storageFiltersOnly" class="stolon-callout-neutral stolon-hidden" data-str="StorageFiltersOnly">Content sync is off, so only each library's filter and history setting apply here.</div>
 
-                    <div id="storageContent" class="stolon-hidden">
+                <!-- Empty state -->
+                <!-- Shows while no server has a library mapping, with the way to the Servers page. -->
 
-                        <!-- Link cache -->
-                        <!-- Shows how much of the link cache's room is used, while the cache is on. -->
+                <div id="storageNoServers" class="stolon-empty-section zooid-storage-empty stolon-hidden">
+                    <div data-str="EmptyStorageServers">No server has library mappings yet. Map libraries on the Servers page.</div>
+                    <button is="emby-button" type="button" id="btnStorageMapLibraries" class="raised stolon-button primary">
+                        <span class="material-icons" aria-hidden="true">dns</span><span data-str="ButtonMapLibraries">Map libraries</span>
+                    </button>
+                </div>
 
-                        <div id="storageUsageSection" class="stolon-collapsible-section stolon-hidden">
-                            <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageUsageContent">
-                                <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">cached</span></span>
-                                <span class="stolon-collapsible-title" data-str="HeaderLinkCache">Link cache</span>
-                                <span class="stolon-collapsible-icon">&#9660;</span>
-                            </button>
-                            <div id="storageUsageContent" class="stolon-collapsible-content stolon-collapsed">
-                                <div id="storageUsageMeter"></div>
-                            </div>
-                        </div>
+                <div id="storageContent" class="zooid-storage-flow stolon-hidden">
 
-                        <!-- Server picker -->
+                    <!-- Server picker -->
+                    <!-- One tab for each server with library mappings, shown when there is more than one. The picked server's
+                         content moves into its tab's panel. -->
 
-                        <div id="storageServerContainer" class="selectContainer">
-                            <label for="selStorageServer" data-str="TabServer">Server</label>
-                            <select is="emby-select" id="selStorageServer" class="emby-select-withcolor emby-select"></select>
-                        </div>
-                        <div id="storageNoServers" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageServers">No server has library mappings yet. Map libraries on the Servers page.</div>
+                    <div id="storageServerPicker" class="stolon-hidden"></div>
+
+                    <!-- Picked server -->
+                    <!-- Everything that belongs to the picked server. -->
+
+                    <div id="storageServerContent" class="zooid-storage-flow">
+                        <div id="storageServerOff" class="stolon-callout-neutral stolon-hidden" data-str="StorageServerOff">This server is off on the Servers page, so its libraries do not sync.</div>
+
+                        <!-- Summary -->
+                        <!-- Counts for the picked server's libraries. -->
+
+                        <div id="storageSummary" class="stolon-cards"></div>
 
                         <!-- Libraries -->
+                        <!-- One row for each enabled library mapping of the picked server. Selecting one opens its editor. -->
 
-                        <div id="storageLibrariesSection" class="stolon-collapsible-section stolon-hidden">
-                            <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageLibrariesContent">
+                        <div id="storageLibrariesSection" class="stolon-collapsible-section stolon-fixed">
+                            <div class="stolon-collapsible-header">
                                 <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">video_library</span></span>
                                 <span class="stolon-collapsible-title" data-str="HeaderLibraries">Libraries</span>
-                                <span class="stolon-collapsible-icon">&#9660;</span>
-                            </button>
-                            <div id="storageLibrariesContent" class="stolon-collapsible-content stolon-collapsed">
-                                <div class="fieldDescription zooid-mb-md" data-str="HelpStorageLibraries">Shows one card for each enabled library mapping of this server.</div>
-                                <div id="storageLibrariesContainer"></div>
+                            </div>
+                            <div class="stolon-collapsible-content">
+                                <div id="storageLibraryList" class="zooid-storage-libraries"></div>
                                 <div id="storageNoLibraries" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageLibraries">This server has no enabled library mappings. Map libraries on the Servers page.</div>
                             </div>
                         </div>
@@ -63,16 +66,30 @@
                                 <span class="stolon-collapsible-icon">&#9660;</span>
                             </button>
                             <div id="keptCopiesContent" class="stolon-collapsible-content stolon-collapsed">
-                                <div class="fieldDescription zooid-mb-md" data-str="HelpPermanentCopies">Lists the full copies in this server's Link libraries. Turning one back into a link moves the copy into the link cache.</div>
-                                <div id="keptCopiesStatus" class="stolon-status-text zooid-mb-md" role="status"></div>
+                                <div class="fieldDescription" data-str="HelpPermanentCopies">Lists the full copies in this server's Link libraries. Turning one back into a link moves the copy into the link cache.</div>
+                                <div id="keptCopiesStatus" class="stolon-status-text" role="status"></div>
                                 <div id="keptCopiesTableContainer"></div>
                             </div>
                         </div>
+                    </div>
 
+                    <!-- Link cache -->
+                    <!-- Shows how much of the link cache's room is used, while the cache is on. It counts every server. -->
+
+                    <div id="storageUsageSection" class="stolon-collapsible-section stolon-hidden">
+                        <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageUsageContent">
+                            <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">cached</span></span>
+                            <span class="stolon-collapsible-title" data-str="HeaderLinkCache">Link cache</span>
+                            <span class="stolon-collapsible-icon">&#9660;</span>
+                        </button>
+                        <div id="storageUsageContent" class="stolon-collapsible-content stolon-collapsed">
+                            <div id="storageUsageMeter"></div>
+                        </div>
                     </div>
 
                 </div>
-            </form>
+
+            </div>
         </div>
     </div>
 
