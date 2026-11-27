@@ -1,5 +1,5 @@
 // zooid_shared.test.mjs
-// Tests for zooid_shared.js: the config readers, the request body, the Storage page flag, the save helper,
+// Tests for zooid_shared.js: the config readers, the request body, the flags of the tools that can be hidden, the save helper,
 // the thumbnail markup, and the health banner.
 
 import { test, beforeEach } from 'node:test';
@@ -122,41 +122,41 @@ test('requestFor allows a private network address unless it is turned off, and s
     assert.equal(body.AuthenticatedUserId, null);
 });
 
-test('rememberContentSync stores 1 while any of content, history, or metadata sync is on', function () {
-    shared.rememberContentSync({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: true });
+test('rememberTools stores 1 while any of content, history, or metadata sync is on', function () {
+    shared.rememberTools({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: true });
     assert.equal(page.store[mod.STORAGE_TAB_KEY], '1');
-    shared.rememberContentSync({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: false });
+    shared.rememberTools({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: false });
     assert.equal(page.store[mod.STORAGE_TAB_KEY], '0');
 });
 
-test('rememberContentSync ignores a config that does not carry the content setting', function () {
-    shared.rememberContentSync({ Other: true });
-    shared.rememberContentSync(null);
+test('rememberTools ignores a config that does not carry the content setting', function () {
+    shared.rememberTools({ Other: true });
+    shared.rememberTools(null);
     assert.equal(mod.STORAGE_TAB_KEY in page.store, false);
 });
 
-test('rememberContentSync runs onTabsChanged only when what shows changes', function () {
+test('rememberTools runs onTabsChanged only when what shows changes', function () {
     var changes = 0;
     shared.onTabsChanged = function () { changes++; };
-    shared.rememberContentSync({ EnableContentSync: false });
+    shared.rememberTools({ EnableContentSync: false });
     assert.equal(changes, 1, 'a missing flag showed the tab, so turning it off changes the tabs');
-    shared.rememberContentSync({ EnableContentSync: false });
+    shared.rememberTools({ EnableContentSync: false });
     assert.equal(changes, 1, 'the same answer changes nothing');
-    shared.rememberContentSync({ EnableContentSync: true });
+    shared.rememberTools({ EnableContentSync: true });
     assert.equal(changes, 2, 'turning it back on shows the tab again');
 });
 
-test('rememberContentSync does not run onTabsChanged when the first answer matches the default of shown', function () {
+test('rememberTools does not run onTabsChanged when the first answer matches the default of shown', function () {
     var changes = 0;
     shared.onTabsChanged = function () { changes++; };
-    shared.rememberContentSync({ EnableContentSync: true });
+    shared.rememberTools({ EnableContentSync: true, EnableHistorySync: true, EnableMetadataSync: true, EnablePeopleSync: true, EnableUserSync: true });
     assert.equal(changes, 0);
 });
 
-test('rememberContentSync survives storage that throws', async function () {
+test('rememberTools survives storage that throws', async function () {
     await build();
     globalThis.localStorage = { getItem: function () { throw new Error('blocked'); }, setItem: function () { throw new Error('blocked'); } };
-    shared.rememberContentSync({ EnableContentSync: true });
+    shared.rememberTools({ EnableContentSync: true });
 });
 
 test('getConfig remembers the content setting of the config it reads', async function () {
@@ -241,7 +241,7 @@ test('createSaveBars clears the unsaved mark only once a save lands', async func
     assert.equal(handle.guard(), false);
 });
 
-test('syncStatus shows a result on the Synchronization page status line, in the error color for a failure', function () {
+test('syncStatus shows a result on a sync type tool status line, in the error color for a failure', function () {
     shared.syncStatus('Item deleted.', false);
     var el = view.querySelector('#syncStatus');
     assert.equal(statusText(el), 'Item deleted.');

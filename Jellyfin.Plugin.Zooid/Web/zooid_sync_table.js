@@ -1,8 +1,8 @@
 // zooid_sync_table.js
-// The table kit every Sync view is built from. Loaded by zooid_sync.js once the shared module is in.
+// The table kit every sync type tool is built from. Loaded by zooid_sync_page.js once the shared module is in.
 
 // createSyncTableKit
-// Builds the factory every Sync view is built from, plus the row, health, and value helpers the views share.
+// Builds the factory every sync type tool is built from, plus the row, health, and value helpers the views share.
 //
 // Inputs
 // ctx [object]: The page context, with the view, the shared helper bag, the paginated table and dialog builders,
@@ -25,7 +25,7 @@ export function createSyncTableKit(ctx) {
     var bindSidecar = ctx.bindSidecar;
     var _activePollIntervals = ctx.activePollIntervals;
 
-    // Builds the module behind one Sync view. Every view shares the table setup, the status counts,
+    // Builds the module behind one sync type tool. Every tool shares the table setup, the status counts,
     // the Refresh and Sync buttons, retrying errors, the bulk and modal actions, and the page load.
     // A spec supplies what differs: element ids, endpoints, columns, health figures, and the detail
     // modal. A method the spec defines replaces the shared one of the same name.

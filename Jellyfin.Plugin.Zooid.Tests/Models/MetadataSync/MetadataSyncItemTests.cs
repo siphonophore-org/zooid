@@ -5,7 +5,7 @@ using Xunit;
 namespace Jellyfin.Plugin.Zooid.Tests.Models.MetadataSync;
 
 /// <summary>
-/// A metadata sync item reports which of its categories have changes and describes them for the Synchronization page.
+/// A metadata sync item reports which of its categories have changes and describes them for the Metadata tool.
 /// </summary>
 public class MetadataSyncItemTests
 {

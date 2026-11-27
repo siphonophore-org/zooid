@@ -201,7 +201,7 @@ public partial class ConfigurationController : ControllerBase
         => StolonTranslations.Serve(language, Request, Response);
 
     /// <summary>
-    /// The scheduled tasks the Synchronization page may start, by key.
+    /// The scheduled tasks the sync type tools may start, by key.
     /// </summary>
     private static readonly HashSet<string> RunnableTasks = new(StringComparer.Ordinal)
     {

@@ -6,9 +6,10 @@
 // bind and load run once it has them, so script text and the marked markup are in the viewer's language.
 //
 // Zooid is one page, zooid, whose sidebar lists every tool, and each tool is its own registered page that the
-// tool app swaps in place. Storage is listed while content, history, or metadata sync is on. The sidebar is
-// built before any config is read, so the last known answer is kept per browser under STORAGE_TAB_KEY. A
-// missing answer lists it. When the answer changes, the tool's onTabsChanged callback runs.
+// tool app swaps in place. Each sync type has its own tool, listed while that type is on. The sidebar is built
+// before any config is read, so the last known answer for each tool that can be hidden is kept per browser under
+// TOOL_FLAG_KEYS. A missing answer lists the tool. The app reads the config once it is built and again each time
+// a tool shows, and the sidebar is read again whenever an answer changes.
 
 // The specifier is relative so it resolves against this module's own URL, and a server hosted under
 // a base URL still loads the bundle.
@@ -37,7 +38,6 @@ import {
     createTimeRangeField,
     toHours,
     fromHours,
-    TOOL_PARAM_ATTRIBUTE,
     loadTranslations,
     createTranslations,
     SECRET_KEPT
@@ -45,7 +45,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, TOOL_PARAM_ATTRIBUTE, SECRET_KEPT };
+export { createPaginatedTable, createSortableCardList, createChoiceGroup, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 
@@ -57,10 +57,18 @@ export var TRANSLATIONS_URL = 'Sync/Translations';
 var tabStrings = null;
 
 // TOOL_FLAG_KEYS
-// The browser storage keys that hold whether a tool that can be hidden shows, by tool. Storage shows while
-// content, history, or metadata sync is on, Sync while any sync type is on, and Statistics while any sync type
+// The browser storage keys that hold whether a tool that can be hidden shows, by tool. Each sync type's tool shows
+// while that type is on, Storage while content, history, or metadata sync is on, and Statistics while any sync type
 // is on or a server may link here. The sidebar is built before any config is read, so the last answer is kept.
-export var TOOL_FLAG_KEYS = { storage: 'zooid.storageTab', sync: 'zooid.syncTab', statistics: 'zooid.statisticsTab' };
+export var TOOL_FLAG_KEYS = {
+    content: 'zooid.contentTab',
+    history: 'zooid.historyTab',
+    metadata: 'zooid.metadataTab',
+    people: 'zooid.peopleTab',
+    users: 'zooid.usersTab',
+    storage: 'zooid.storageTab',
+    statistics: 'zooid.statisticsTab'
+};
 
 // STORAGE_TAB_KEY
 // The browser storage key that holds whether the Storage page shows.
@@ -105,13 +113,53 @@ function writeToolFlag(tool, value) {
 // Output
 // [object]: '1' or '0' for each tool in TOOL_FLAG_KEYS.
 export function toolFlags(config) {
+    var flag = function (on) { return on ? '1' : '0'; };
     var anyType = !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync || config.EnablePeopleSync || config.EnableUserSync);
     var linking = (config.Servers || []).some(function (server) { return server && server.OffersLinks; });
     return {
-        storage: config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync ? '1' : '0',
-        sync: anyType ? '1' : '0',
-        statistics: anyType || linking ? '1' : '0'
+        content: flag(config.EnableContentSync),
+        history: flag(config.EnableHistorySync),
+        metadata: flag(config.EnableMetadataSync),
+        people: flag(config.EnablePeopleSync),
+        users: flag(config.EnableUserSync),
+        storage: flag(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync),
+        statistics: flag(anyType || linking)
     };
+}
+
+// rememberToolFlags
+// Records which tools that can be hidden show for a config.
+//
+// Inputs
+// config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
+//
+// Output
+// [boolean]: Whether what the sidebar shows changed.
+export function rememberToolFlags(config) {
+    if (!config || typeof config !== 'object' || !('EnableContentSync' in config)) return false;
+    var flags = toolFlags(config);
+    var changed = false;
+    Object.keys(flags).forEach(function (tool) {
+        var before = readToolFlag(tool);
+        if (before === flags[tool]) return;
+        writeToolFlag(tool, flags[tool]);
+        // A missing flag already showed the tool, so only a change of what shows reads the sidebar again.
+        if ((before !== '0') !== (flags[tool] === '1')) changed = true;
+    });
+    return changed;
+}
+
+// followToolsOff
+// Reads the config again and reads the sidebar again when a tool joins or leaves it, so a sync type turned on or
+// off elsewhere, such as from another browser, shows without a reload.
+//
+// Inputs
+// view [HTMLElement]: Any element inside the tool app.
+function followToolsOff(view) {
+    if (typeof ApiClient === 'undefined' || !ApiClient.getPluginConfiguration) return;
+    ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
+        if (rememberToolFlags(config)) refreshTools(view);
+    }, function () { /* the sidebar stays as it is */ });
 }
 
 // tabName
@@ -136,7 +184,11 @@ function tabName(key, english) {
 export function zooidTools() {
     var tools = [
         { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
-        { key: 'sync', name: tabName('HeaderSynchronization', 'Synchronization'), icon: 'sync', page: 'zooid_sync' },
+        { key: 'content', name: tabName('SyncTypeContent', 'Content'), icon: 'video_library', page: 'zooid_content' },
+        { key: 'history', name: tabName('SyncTypeHistory', 'History'), icon: 'history', page: 'zooid_history' },
+        { key: 'metadata', name: tabName('LabelMetadata', 'Metadata'), icon: 'info', page: 'zooid_metadata' },
+        { key: 'people', name: tabName('People', 'People'), icon: 'people', page: 'zooid_people' },
+        { key: 'users', name: tabName('HeaderUsers', 'Users'), icon: 'group', page: 'zooid_users' },
         { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
         { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
         { key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' },
@@ -149,8 +201,8 @@ export function zooidTools() {
 
 // createZooidApp
 // Builds the Zooid page: Stolon's tool app with every Zooid tool, which swaps each tool in place. The app is built
-// at once, so it catches the page's first show, and the sidebar names turn to the viewer's language once the
-// strings arrive.
+// at once, so it catches the page's first show. The sidebar names turn to the viewer's language once the strings
+// arrive, and the tools that are off leave it once the config is read.
 //
 // Inputs
 // view [HTMLElement]: The host page the dashboard passes to the controller.
@@ -159,6 +211,7 @@ export function zooidTools() {
 // [object]: The tool app's handle.
 export function createZooidApp(view) {
     var app = createToolApp(view, { storageKey: 'zooid', name: 'Zooid', tools: zooidTools });
+    followToolsOff(app.shell.content);
     loadTranslations(TRANSLATIONS_URL).then(function (t) {
         tabStrings = t;
         app.refreshTools();
@@ -192,11 +245,12 @@ export function createZooidPage(view, opts) {
         },
         load: function () {
             bound.then(function () { if (opts.load) opts.load(bag, page); });
+            followToolsOff(view);
         },
         onHide: pass(opts.onHide)
     });
     bag = createZooidShared(view, page.shared);
-    // A config load that turns a sync type on or off adds or drops Storage from the sidebar.
+    // A config load or save that turns a sync type on or off adds or drops its tools from the sidebar.
     bag.onTabsChanged = function () { refreshTools(view); };
     // Sets the heading over the tool, which is the tool's name by default.
     bag.setPageTitle = function (text) { setToolTitle(view, text); };
@@ -295,23 +349,13 @@ export function createZooidShared(view, bag) {
     // Set by a page to read the sidebar again when a tool appears or disappears.
     shared.onTabsChanged = null;
 
-    // rememberContentSync
+    // rememberTools
     // Records which tools that can be hidden show, and tells the page when that changed the sidebar.
     //
     // Inputs
     // config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
-    shared.rememberContentSync = function (config) {
-        if (!config || typeof config !== 'object' || !('EnableContentSync' in config)) return;
-        var flags = toolFlags(config);
-        var changed = false;
-        Object.keys(flags).forEach(function (tool) {
-            var before = readToolFlag(tool);
-            if (before === flags[tool]) return;
-            writeToolFlag(tool, flags[tool]);
-            // A missing flag already showed the tool, so only a change of what shows reads the sidebar again.
-            if ((before !== '0') !== (flags[tool] === '1')) changed = true;
-        });
-        if (changed && typeof shared.onTabsChanged === 'function') shared.onTabsChanged();
+    shared.rememberTools = function (config) {
+        if (rememberToolFlags(config) && typeof shared.onTabsChanged === 'function') shared.onTabsChanged();
     };
 
     var baseGetConfig = shared.getConfig;
@@ -324,13 +368,13 @@ export function createZooidShared(view, bag) {
     // [Promise]: Resolves with the configuration.
     shared.getConfig = function () {
         return baseGetConfig.apply(shared, arguments).then(function (config) {
-            shared.rememberContentSync(config);
+            shared.rememberTools(config);
             return config;
         });
     };
 
     // saveConfig
-    // Saves the plugin configuration and remembers whether the Storage page shows.
+    // Saves the plugin configuration and remembers which tools show.
     //
     // Inputs
     // config [object]: The configuration to save.
@@ -339,7 +383,7 @@ export function createZooidShared(view, bag) {
     // [Promise]: Resolves when the save landed.
     shared.saveConfig = function (config) {
         return baseSaveConfig.apply(shared, arguments).then(function (result) {
-            shared.rememberContentSync(config);
+            shared.rememberTools(config);
             return result;
         });
     };
@@ -586,7 +630,7 @@ export function createZooidShared(view, bag) {
     };
 
     // syncStatus
-    // Reports a result on the Synchronization page's status line.
+    // Reports a result on the status line of a sync type tool or the Queue tool.
     //
     // Inputs
     // message [string]: What happened, as one sentence.

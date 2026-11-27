@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { installPage, loadScript } from './support.mjs';
 
-var CONTENT = { enable: 'EnableContentSync', route: 'Status', view: 'content', stats: 'Content', title: 'SyncTypeContent', icon: 'movie' };
+var CONTENT = { enable: 'EnableContentSync', route: 'Status', view: 'content', stats: 'Content', title: 'SyncTypeContent', icon: 'video_library' };
 
 // strings
 // A strings handle that answers with the key, and with the key and its values for a format.
@@ -34,8 +34,8 @@ test('failed rows win over waiting ones and color the card red', async function 
     assert.equal(card.statusColor, 'red');
     assert.equal(card.value, 40);
     assert.equal(card.detail, 'DashboardCountsLine:3,3');
-    assert.equal(card.tool, 'sync');
-    assert.equal(card.param, 'content');
+    assert.equal(card.tool, 'content');
+    assert.equal('param' in card, false);
 });
 
 test('waiting rows with none failed color the card orange, and none at all green', async function () {

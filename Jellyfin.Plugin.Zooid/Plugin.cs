@@ -218,11 +218,21 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
             EmbeddedResourcePath = $"{ns}.Web.zooid_dashboard.js"
         };
 
-        yield return new PluginPageInfo
+        // One tool per sync type, each its own page and script.
+        foreach (var type in new[] { "content", "history", "metadata", "people", "users" })
         {
-            Name = "zooid_sync",
-            EmbeddedResourcePath = $"{ns}.Web.zooid_sync.html"
-        };
+            yield return new PluginPageInfo
+            {
+                Name = $"zooid_{type}",
+                EmbeddedResourcePath = $"{ns}.Web.zooid_{type}.html"
+            };
+
+            yield return new PluginPageInfo
+            {
+                Name = $"zooid_{type}.js",
+                EmbeddedResourcePath = $"{ns}.Web.zooid_{type}.js"
+            };
+        }
 
         yield return new PluginPageInfo
         {
@@ -250,8 +260,8 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
 
         yield return new PluginPageInfo
         {
-            Name = "zooid_sync.js",
-            EmbeddedResourcePath = $"{ns}.Web.zooid_sync.js"
+            Name = "zooid_sync_page.js",
+            EmbeddedResourcePath = $"{ns}.Web.zooid_sync_page.js"
         };
 
         yield return new PluginPageInfo

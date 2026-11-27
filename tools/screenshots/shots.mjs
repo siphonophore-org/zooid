@@ -46,13 +46,13 @@ async function section(p, target) {
   await p.waitForTimeout(600);
   return h;
 }
-async function syncType(p, value) {
-  await p.selectOption('#syncTypeDropdown', value);
+// Waits for a sync type tool's table to fill.
+async function table(p) {
   await p.waitForTimeout(2500);
 }
-// Opens a row of the Synchronization table whose name reads a text, and returns its sidecar's panel.
-async function row(p, type, name, sidecar) {
-  await syncType(p, type);
+// Opens a row of a sync type tool's table whose name reads a text, and returns its sidecar's panel.
+async function row(p, name, sidecar) {
+  await table(p);
   await p.evaluate((n) => [...document.querySelectorAll('.zooid-item-name')].find((e) => (n === null || e.textContent === n) && e.offsetParent).click(), name);
   await p.waitForTimeout(1200);
   return p.evaluateHandle((id) => document.querySelector('#' + id + ' .stolon-sidecar-panel'), sidecar);
@@ -98,9 +98,9 @@ const shots = {
   'Troubleshooting': { page: 'troubleshooting', act: (p) => content(p, 'Troubleshooting.png') },
   'Queue': { page: 'queue', vp: { width: 800, height: 1400 }, act: (p) => content(p, 'Queue.png') },
   'Queue Phone': { page: 'queue', vp: { width: 375, height: 1400 }, act: (p) => content(p, 'Queue Phone.png') },
-  'Sync Table': { page: 'sync', vp: { width: 800, height: 1400 }, act: async (p) => { await syncType(p, 'content'); await content(p, 'Sync Table.png'); } },
-  'Item Detail': { page: 'sync', vp: { width: 800, height: 640 }, act: async (p) => sidecar(p, await row(p, 'content', null, 'itemDetailModal'), 'Item Detail.png') },
-  'Metadata Item': { page: 'sync', vp: { width: 800, height: 1100 }, act: async (p) => sidecar(p, await row(p, 'metadata', 'Harbor Lights', 'metadataSyncItemDetailModal'), 'Metadata Item.png') }
+  'Sync Table': { page: 'content', vp: { width: 800, height: 1400 }, act: async (p) => { await table(p); await content(p, 'Sync Table.png'); } },
+  'Item Detail': { page: 'content', vp: { width: 800, height: 640 }, act: async (p) => sidecar(p, await row(p, null, 'itemDetailModal'), 'Item Detail.png') },
+  'Metadata Item': { page: 'metadata', vp: { width: 800, height: 1100 }, act: async (p) => sidecar(p, await row(p, 'Harbor Lights', 'metadataSyncItemDetailModal'), 'Metadata Item.png') }
 };
 
 for (const [name, s] of Object.entries(shots)) {

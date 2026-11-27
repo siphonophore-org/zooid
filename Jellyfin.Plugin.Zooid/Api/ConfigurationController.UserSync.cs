@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The Users routes of the Synchronization page.
+/// The routes of the Users tool.
 /// </summary>
 public partial class ConfigurationController
 {

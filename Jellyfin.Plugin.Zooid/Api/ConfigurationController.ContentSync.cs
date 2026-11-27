@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Zooid.Api;
 
 /// <summary>
-/// The Content routes of the Synchronization page and the Storage page.
+/// The routes of the Content tool and the Storage tool.
 /// </summary>
 public partial class ConfigurationController
 {

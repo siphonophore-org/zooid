@@ -1,0 +1,141 @@
+<!-- zooid_users.html -->
+<!-- The Users tool: the user sync table, its counts, and the details of one user. -->
+
+<div id="ZooidUsersPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_users.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="DescSyncUsers">Permissions, preferences, and profile images of mapped users. Library permissions follow your library mappings.</div>
+                <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                <!-- Status summary cards -->
+                <div id="userSyncStatusSummary">
+                    <div class="stolon-cards">
+                        <div class="stolon-card stolon-green" id="userStatusGroupSynced" title="">
+                            <span class="stolon-card-count" id="userSyncedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                        </div>
+                        <div class="stolon-card stolon-orange" id="userStatusGroupQueued" title="">
+                            <span class="stolon-card-count" id="userQueuedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                        </div>
+                        <div class="stolon-card stolon-red" id="userStatusGroupErrored" title="">
+                            <span class="stolon-card-count" id="userErroredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                        </div>
+                        <div class="stolon-card stolon-gray" id="userStatusGroupIgnored" title="">
+                            <span class="stolon-card-count" id="userIgnoredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health dashboard -->
+                <div id="userHealthDashboard" class="zooid-health-dashboard">
+                    <div class="zooid-health-row">
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                            <span class="zooid-health-value" id="userHealthLastSync" data-str="Never">Never</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelUsersMapped">Users mapped</span>
+                            <span class="zooid-health-value" id="userHealthUserCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="stolon-button-row">
+                    <button is="emby-button" type="button" id="btnRefreshUserItems" class="raised stolon-button stolon-secondary stolon-fill">
+                        <span data-str="Refresh">Refresh</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnTriggerUserSync" class="raised stolon-button stolon-primary stolon-fill">
+                        <span data-str="TabSync">Sync</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnRetryUserErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                        <span data-str="ButtonRetryErrors">Retry errors</span>
+                    </button>
+                </div>
+
+                <div class="stolon-divider stolon-divider-plain"></div>
+
+                <!-- Table -->
+                <div id="userSyncItemsTableContainer">
+                    <!-- The table builds its own markup here. -->
+                </div>
+
+                <!-- User Item Detail Sidecar -->
+                <div id="userSyncItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                    <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="userSyncModalTitle">
+                        <div class="stolon-sidecar-head">
+                            <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="userSyncModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                            <button type="button" id="btnUserSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                        </div>
+                        <div class="stolon-sidecar-body">
+                            <div class="zooid-modal-top-row">
+                                <span id="userSyncModalStatusBadge" class="stolon-table-status-badge"></span>
+                                <span id="userSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
+                            </div>
+                            <div id="userSyncModalInfoGrid" class="zooid-modal-info-grid stolon-hidden">
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                    <div id="userSyncModalLastSync" class="zooid-modal-info-value"></div>
+                                </div>
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                    <div id="userSyncModalVersion" class="zooid-modal-info-value">-</div>
+                                </div>
+                            </div>
+                            <div id="userSyncModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                <div id="userSyncModalError" class="stolon-error-message"></div>
+                            </div>
+                            <div id="userSyncModalChangesSummary" class="zooid-modal-changes-summary"></div>
+                            <div class="zooid-user-sync-section">
+                                <div class="zooid-user-sync-block">
+                                    <div class="zooid-user-sync-label" data-str="LabelSourceUser">Source user</div>
+                                    <div id="userSyncModalSourceUser" class="zooid-user-sync-name"></div>
+                                    <div id="userSyncModalSourceUserId" class="zooid-user-sync-id"></div>
+                                </div>
+                                <div class="zooid-user-sync-block">
+                                    <div class="zooid-user-sync-label" data-str="LabelLocalUser">Local user</div>
+                                    <div id="userSyncModalLocalUser" class="zooid-user-sync-name"></div>
+                                    <div id="userSyncModalLocalUserId" class="zooid-user-sync-id"></div>
+                                </div>
+                            </div>
+                            <div class="zooid-modal-table-container">
+                                <table class="zooid-compare-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                            <th id="userSyncModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                            <th id="userSyncModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                            <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userSyncModalTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="stolon-sidecar-shelf">
+                            <button is="emby-button" type="button" id="btnUserSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                <span data-str="ButtonIgnore">Ignore</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnUserSyncModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                <span data-str="ButtonQueue">Queue</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

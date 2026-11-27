@@ -1,0 +1,177 @@
+<!-- zooid_content.html -->
+<!-- The Content tool: the content sync table, its counts, and the details of one file. -->
+
+<div id="ZooidContentPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_content.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="DescSyncContent">Media files copied or linked into mapped libraries from your Pull and Sync servers.</div>
+                <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                <!-- Status summary cards -->
+                <div id="syncStatusSummary">
+                    <div class="stolon-cards stolon-compact" id="mainStatusRow">
+                        <div class="stolon-card stolon-green" id="statusGroupSynced" title="">
+                            <span class="stolon-card-count" id="syncedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                        </div>
+                        <div class="stolon-card stolon-purple" id="statusGroupPending" title="">
+                            <span class="stolon-card-count" id="pendingCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPending">Pending</span>
+                        </div>
+                        <div class="stolon-card stolon-orange" id="statusGroupQueued" title="">
+                            <span class="stolon-card-count" id="queuedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                        </div>
+                        <div class="stolon-card stolon-red" id="statusGroupErrored" title="">
+                            <span class="stolon-card-count" id="erroredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                        </div>
+                        <div class="stolon-card stolon-gray" id="statusGroupIgnored" title="">
+                            <span class="stolon-card-count" id="ignoredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                        </div>
+                        <div class="stolon-card stolon-blue stolon-hidden" id="statusGroupPendingDownload" title="">
+                            <span class="stolon-card-count" id="pendingDownloadCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPendingDownload">Pending download</span>
+                        </div>
+                        <div class="stolon-card stolon-yellow stolon-hidden" id="statusGroupPendingReplacement" title="">
+                            <span class="stolon-card-count" id="pendingReplacementCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPendingReplacement">Pending replacement</span>
+                        </div>
+                        <div class="stolon-card stolon-pink stolon-hidden" id="statusGroupPendingDeletion" title="">
+                            <span class="stolon-card-count" id="pendingDeletionCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPendingDeletion">Pending deletion</span>
+                        </div>
+                        <div class="stolon-card stolon-teal stolon-hidden" id="statusGroupDeleting" title="">
+                            <span class="stolon-card-count" id="deletingCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusDeleting">Deleting</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health dashboard -->
+                <div id="healthDashboard" class="zooid-health-dashboard">
+                    <div class="zooid-health-row">
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                            <span class="zooid-health-value" id="healthLastSync" data-str="Never">Never</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLibrariesMapped">Libraries mapped</span>
+                            <span class="zooid-health-value" id="healthLibraryCount">0</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="StatusPending">Pending</span>
+                            <span class="zooid-health-value" id="healthPendingCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="stolon-button-row">
+                    <button is="emby-button" type="button" id="btnRefreshItems" class="raised stolon-button stolon-secondary stolon-fill">
+                        <span data-str="Refresh">Refresh</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnTriggerSync" class="raised stolon-button stolon-primary stolon-fill">
+                        <span data-str="TabSync">Sync</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnRetryErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                        <span data-str="ButtonRetryErrors">Retry errors</span>
+                    </button>
+                </div>
+
+                <div class="stolon-divider stolon-divider-plain"></div>
+
+                <!-- Table -->
+                <div id="syncItemsTableContainer">
+                    <!-- The table builds its own markup here. -->
+                </div>
+
+                <!-- Content Item Detail Sidecar -->
+                <div id="itemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                    <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                        <div class="stolon-sidecar-head">
+                            <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="modalTitle" class="stolon-sidecar-title"></h2></div></div>
+                            <button type="button" id="btnModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                        </div>
+                        <div id="modalContent" class="stolon-sidecar-body">
+                            <div class="zooid-modal-top-row">
+                                <span id="modalStatusBadge" class="stolon-table-status-badge"></span>
+                                <span id="modalServerMapping" class="zooid-modal-server-mapping"></span>
+                            </div>
+                            <div class="zooid-modal-info-grid">
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                    <div id="modalLastSync" class="zooid-modal-info-value">-</div>
+                                </div>
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="TasksLibraryCategory">Library</div>
+                                    <div id="modalLibraryMapping" class="zooid-modal-info-value">-</div>
+                                </div>
+                            </div>
+                            <div id="modalErrorSection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                <div id="modalError" class="stolon-error-message"></div>
+                            </div>
+                            <div id="modalRetrySection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="LabelRetryCount">Retry count</div>
+                                <div id="modalRetryCount"></div>
+                            </div>
+                            <div class="zooid-modal-paths-section">
+                                <div class="zooid-modal-path-row">
+                                    <div class="zooid-modal-path-block">
+                                        <div class="zooid-modal-path-label" data-str="LabelSourcePath">Source path</div>
+                                        <div id="modalSourcePath" class="zooid-modal-path-value"></div>
+                                        <div class="zooid-modal-path-meta">
+                                            <span class="zooid-modal-path-meta-label" data-str="LabelSize">Size</span>
+                                            <span id="modalSourceSize" class="zooid-modal-path-meta-value"></span>
+                                        </div>
+                                    </div>
+                                    <div class="zooid-modal-path-block">
+                                        <div class="zooid-modal-path-label" data-str="LabelLocalPath">Local path</div>
+                                        <div id="modalLocalPath" class="zooid-modal-path-value"></div>
+                                        <div id="modalLocalPathNote" class="zooid-modal-path-note"></div>
+                                        <div id="modalLocalSizeRow" class="zooid-modal-path-meta">
+                                            <span class="zooid-modal-path-meta-label" data-str="LabelSize">Size</span>
+                                            <span id="modalLocalSize" class="zooid-modal-path-meta-value"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="modalCompanionFilesSection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="HeaderCompanionFiles">Companion files</div>
+                                <div id="modalCompanionFiles"></div>
+                            </div>
+                        </div>
+                        <div class="stolon-sidecar-shelf">
+                            <button is="emby-button" type="button" id="btnModalDelete" class="raised stolon-button stolon-destructive stolon-modal-button" title="Delete local file" data-str-title="ButtonDeleteLocalFile">
+                                <span data-str="Delete">Delete</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                <span data-str="ButtonIgnore">Ignore</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnModalMarkSynced" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                <span data-str="ButtonMarkSynced">Mark synced</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnModalKeep" class="raised stolon-button stolon-secondary stolon-modal-button stolon-hidden" title="Keep a copy" data-str-title="ButtonKeepCopy">
+                                <span data-str="Download">Download</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                <span data-str="ButtonQueue">Queue</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>
