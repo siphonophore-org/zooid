@@ -2,7 +2,7 @@
 name: "Zooid"
 guid: "d25d4326-c40f-450a-95d1-377254a318ac"
 imageUrl: "https://raw.githubusercontent.com/siphonophore-org/siphonophore/main/brand/zooid/catalog.svg"
-version: "12.4.1.1"
+version: "12.4.1.2"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Keeps your whole collection of Jellyfin servers in sync with one another."
@@ -22,18 +22,5 @@ artifacts:
 - "Microsoft.IO.RecyclableMemoryStream.dll"
 - "Std.UriTemplate.dll"
 changelog:
-  changed:
-  - "The sidebar lists Dashboard, Queue, the sync tools, Servers, Storage, and Statistics, then Settings and Troubleshooting"
-  - "Settings and Troubleshooting sections lead with an icon, green while a sync type is on and gray while it is off"
-  - "Settings help is one short line per section"
-  - "The server editor gives Direction its own step, and its access and link checks show dashes until they answer"
-  - "The Storage tool has a tab per server, a card per library with a side panel for its settings, and one Content table filtered by Copied, Linked, or Cached"
-  - "Link cache use shows as a bar above the Storage tool's Content table"
-  - "The Content tool shows one Pending card that counts every pending download, replacement, and deletion"
-  - "Troubleshooting grays a table's reset while the table is empty"
   fixed:
-  - "Server status dots lost their color after a refresh. They keep it"
-  - "A long status such as Ignored (Copy to Link) ran past its row. The status column fits it"
-  developer:
-  - "GET /Sync/Tables counts each table's rows, GET /Sync/LibraryStorage counts storage per library, and POST /Sync/LinkCache/Remove takes files out of the link cache"
-  - "Uses Siphonophore.Stolon 12.4.9, whose tool switches, save bars, tile and dot helpers, field builders, stack layout, metered stream, per run lookup, folder probe, and disk space helpers replace the local copies"
+  - "A film added on a source in several versions lost the link for one version at random when its hints arrived. Every version keeps its link"
