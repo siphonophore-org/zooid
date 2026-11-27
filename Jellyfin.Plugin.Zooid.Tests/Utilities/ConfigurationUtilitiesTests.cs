@@ -232,44 +232,6 @@ public sealed class ConfigurationUtilitiesTests
     }
 
     /// <summary>
-    /// Addresses that are not URLs compare as text, ignoring case, outer spaces, and a trailing slash, and two missing ones are the same.
-    /// True: a half typed address still matches its stored copy.
-    /// False: the same server would be added twice because of a space or a slash.
-    /// </summary>
-    [Theory]
-    [InlineData(null, null, true)]
-    [InlineData(null, "", true)]
-    [InlineData("", "  ", true)]
-    [InlineData("server-a", "SERVER-A/", true)]
-    [InlineData("  server-a  ", "server-a", true)]
-    [InlineData("server-a", "server-b", false)]
-    [InlineData(null, "https://a", false)]
-    public void SameServerUrl_NotBothUrls_ComparesAsText(string? a, string? b, bool expected)
-    {
-        var same = ConfigurationUtilities.SameServerUrl(a, b);
-
-        Assert.Equal(expected, same);
-    }
-
-    /// <summary>
-    /// Two URLs are the same server across outer spaces, the scheme's default port, path case, and a query, and differ on the port.
-    /// True: one server is recognized however its address was typed.
-    /// False: a retyped address would create a second entry for the same server.
-    /// </summary>
-    [Theory]
-    [InlineData("  https://a.example  ", "https://a.example", true)]
-    [InlineData("https://a.example", "https://a.example:443/", true)]
-    [InlineData("HTTPS://A.EXAMPLE/Jellyfin", "https://a.example/jellyfin/", true)]
-    [InlineData("https://a.example/?x=1", "https://a.example", true)]
-    [InlineData("https://a.example", "https://a.example:8443", false)]
-    public void SameServerUrl_BothUrls_ComparesSchemeHostPortAndPath(string a, string b, bool expected)
-    {
-        var same = ConfigurationUtilities.SameServerUrl(a, b);
-
-        Assert.Equal(expected, same);
-    }
-
-    /// <summary>
     /// Carrier NAT addresses, which Tailscale uses, count as a private network, and the broadcast and reserved ranges are always refused.
     /// True: a server entry reaches 100.64.0.0/10 only with Allow private network address on, and never the ranges no server lives in.
     /// False: a public-only entry could be pointed at a private overlay network.

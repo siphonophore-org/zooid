@@ -200,6 +200,6 @@ public static class FileValidationService
             return false;
         }
 
-        return FileOperationUtilities.HasWritePermission(directory);
+        return FolderProbe.CanWrite(directory);
     }
 }

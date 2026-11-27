@@ -61,7 +61,7 @@ public class SourceServerClientFactory : ISourceServerClientFactory
         var client = Create(server.Url, server.ApiKey, server.AllowPrivateNetwork);
 
         // A pairing secret only goes to the address saved on the server entry.
-        if (_configManager.Configuration.FindServer(server.Key) is { } saved && ConfigurationUtilities.SameServerUrl(saved.Url, server.Url))
+        if (_configManager.Configuration.FindServer(server.Key) is { } saved && UrlUtilities.SameServer(saved.Url, server.Url))
         {
             client.Pairing = new PeerPairing(_pairings, saved.Key, _applicationHost.SystemId);
         }

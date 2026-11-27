@@ -187,9 +187,9 @@ public sealed class AuditFixTests : IDisposable
     [InlineData("http://a:8096", "https://a:8096", false)]
     [InlineData("http://a:8096", "http://a:8097", false)]
     [InlineData("http://a:8096/x", "http://a:8096/y", false)]
-    public void SameServerUrl_ComparesTheServer(string a, string b, bool same)
+    public void SameServer_ComparesTheServer(string a, string b, bool same)
     {
-        Assert.Equal(same, ConfigurationUtilities.SameServerUrl(a, b));
+        Assert.Equal(same, UrlUtilities.SameServer(a, b));
     }
 
     /// <summary>

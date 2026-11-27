@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Siphonophore.Stolon;
 
 namespace Jellyfin.Plugin.Zooid.Api;
 
@@ -112,7 +113,7 @@ public partial class PeerController
             }
 
             var probeFile = new FileStream(verdict.Item.Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1, FileOptions.Asynchronous | FileOptions.SequentialScan);
-            return new FileStreamResult(new Utilities.MeteredReadStream(probeFile, bytes => sessions.TakeProbe(peer.Key, probed, bytes)), mime)
+            return new FileStreamResult(new MeteredReadStream(probeFile, bytes => sessions.TakeProbe(peer.Key, probed, bytes)), mime)
             {
                 EnableRangeProcessing = true,
                 LastModified = System.IO.File.GetLastWriteTimeUtc(verdict.Item.Path)

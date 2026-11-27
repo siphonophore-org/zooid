@@ -131,7 +131,7 @@ public sealed class Plugin : PluginBase<Plugin, PluginConfiguration>
         ArgumentNullException.ThrowIfNull(incoming);
         ArgumentNullException.ThrowIfNull(stored);
         var storedServer = stored.FindServer(incoming.Key);
-        if (storedServer is null || !Utilities.ConfigurationUtilities.SameServerUrl(storedServer.Url, incoming.Url))
+        if (storedServer is null || !UrlUtilities.SameServer(storedServer.Url, incoming.Url))
         {
             return string.Empty;
         }

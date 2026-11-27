@@ -128,22 +128,7 @@ public sealed class LinkCache
     /// cannot be read, so a cache sized by its disk takes nothing new until it can.
     /// </summary>
     private static long DiskFreeSpace(string folder)
-    {
-        try
-        {
-            var path = Path.GetFullPath(folder);
-            while (!Directory.Exists(path) && Path.GetDirectoryName(path) is { Length: > 0 } parent)
-            {
-                path = parent;
-            }
-
-            return new DriveInfo(path).AvailableFreeSpace;
-        }
-        catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
-        {
-            return 0;
-        }
-    }
+        => DiskSpace.TryGetFreeBytes(folder, out var free) ? free : 0;
 
     /// <summary>Gets the folder the cache keeps its files in.</summary>
     public string Root

@@ -182,11 +182,20 @@ public static class DiskSpaceService
         }
     }
 
-    /// <summary>Reads the free space on the volume that holds a path.</summary>
+    /// <summary>Reads the free space on the volume that holds a path, and warns once for a path it cannot measure.</summary>
     /// <param name="path">A file or folder on the volume.</param>
     /// <param name="freeBytes">The bytes free on that volume, or zero when unknown.</param>
     /// <returns><c>true</c> when the space was read, <c>false</c> when it is unknown.</returns>
-    public static bool TryGetFreeBytes(string path, out long freeBytes) => TryGetSpace(path, out freeBytes, out _);
+    public static bool TryGetFreeBytes(string path, out long freeBytes)
+    {
+        if (DiskSpace.TryGetFreeBytes(path, out freeBytes))
+        {
+            return true;
+        }
+
+        ReportUnmeasurable(path, null);
+        return false;
+    }
 
     /// <summary>Gets the bytes held on all volumes, for tests.</summary>
     public static long HeldBytes

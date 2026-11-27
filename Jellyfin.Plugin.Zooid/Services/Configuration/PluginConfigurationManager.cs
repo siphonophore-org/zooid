@@ -61,7 +61,7 @@ public class PluginConfigurationManager : IPluginConfigurationManager
         }
 
         // The stored key only goes to the saved address, or an edited URL could take it.
-        if (requestUrl is not null && !Utilities.ConfigurationUtilities.SameServerUrl(entry.Url, requestUrl))
+        if (requestUrl is not null && !UrlUtilities.SameServer(entry.Url, requestUrl))
         {
             throw new ArgumentException("The stored key is only sent to the address saved for this server. Enter the key again to use a new address.");
         }

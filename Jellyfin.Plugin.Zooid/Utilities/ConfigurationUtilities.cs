@@ -78,21 +78,4 @@ public static class ConfigurationUtilities
 
     private static string? Sentence(string? refusal)
         => string.IsNullOrEmpty(refusal) ? null : char.ToUpperInvariant(refusal[0]) + refusal[1..];
-
-    /// <summary>Whether two server addresses name the same server, ignoring case and a trailing slash.</summary>
-    /// <param name="a">The first Server URL.</param>
-    /// <param name="b">The address compared with it.</param>
-    /// <returns><c>true</c> when they are the same.</returns>
-    public static bool SameServerUrl(string? a, string? b)
-    {
-        if (Uri.TryCreate((a ?? string.Empty).Trim(), UriKind.Absolute, out var ua) && Uri.TryCreate((b ?? string.Empty).Trim(), UriKind.Absolute, out var ub))
-        {
-            return string.Equals(ua.Scheme, ub.Scheme, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(ua.Host, ub.Host, StringComparison.OrdinalIgnoreCase)
-                && ua.Port == ub.Port
-                && string.Equals(ua.AbsolutePath.TrimEnd('/'), ub.AbsolutePath.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
-        }
-
-        return string.Equals((a ?? string.Empty).Trim().TrimEnd('/'), (b ?? string.Empty).Trim().TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
-    }
 }

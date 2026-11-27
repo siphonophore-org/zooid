@@ -199,4 +199,66 @@ public sealed class FileValidationServiceTests : IDisposable
 
         Assert.Equal(expected, root);
     }
+
+    /// <summary>
+    /// An existing folder that can be written passes the probe and holds no probe file afterward.
+    /// True: the settings page accepts a usable folder and leaves it clean.
+    /// False: every probe would litter the library with a hidden file.
+    /// </summary>
+    [Fact]
+    public void HasWritePermission_WritableFolder_IsTrueAndLeavesNothingBehind()
+    {
+        var folder = Directory.CreateDirectory(Path.Combine(_root, "library")).FullName;
+
+        var writable = FileValidationService.HasWritePermission(Path.Combine(folder, "Film.mkv"));
+
+        Assert.True(writable);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(folder));
+    }
+
+    /// <summary>
+    /// A folder that does not exist is created and passes.
+    /// True: a new download folder is made ready by the probe.
+    /// False: a first run into a new folder would be refused.
+    /// </summary>
+    [Fact]
+    public void HasWritePermission_MissingFolder_CreatesIt()
+    {
+        var folder = Path.Combine(_root, "new", "nested");
+
+        var writable = FileValidationService.HasWritePermission(Path.Combine(folder, "Film.mkv"));
+
+        Assert.True(writable);
+        Assert.True(Directory.Exists(folder));
+    }
+
+    /// <summary>
+    /// No path, an empty path, and a path that runs through a file all fail the probe.
+    /// True: an unusable folder is reported before a download is tried.
+    /// False: the probe would throw, or a download would start into a place it cannot write.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void HasWritePermission_UnusablePath_IsFalse(int scenario)
+    {
+        var path = scenario switch
+        {
+            0 => null,
+            1 => string.Empty,
+            _ => Path.Combine(WriteFile("a-file.txt"), "below", "Film.mkv")
+        };
+
+        var writable = FileValidationService.HasWritePermission(path);
+
+        Assert.False(writable);
+    }
+
+    private string WriteFile(string name)
+    {
+        var path = Path.Combine(_root, name);
+        File.WriteAllText(path, "x");
+        return path;
+    }
 }

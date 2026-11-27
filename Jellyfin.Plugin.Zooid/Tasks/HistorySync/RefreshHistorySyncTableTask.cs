@@ -19,6 +19,7 @@ using Jellyfin.Sdk.Generated.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.Logging;
+using Siphonophore.Stolon;
 
 namespace Jellyfin.Plugin.Zooid.Tasks.HistorySync;
 
