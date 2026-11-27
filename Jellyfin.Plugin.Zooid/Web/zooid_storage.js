@@ -937,7 +937,7 @@ export default function (view) {
         apiRequest('KeptCopies/Unkeep', 'POST', { Ids: rows.map(function (row) { return row.Id; }) }).then(function (result) {
             var queued = (result && result.Queued) || 0;
             var skipped = (result && result.Skipped) || [];
-            var lines = [ZooidShared.t.plural(queued, 'ToastCopiesUnkeptOne', 'ToastCopiesUnkeptMany')];
+            var lines = [queued ? ZooidShared.t.plural(queued, 'ToastCopiesUnkeptOne', 'ToastCopiesUnkeptMany') : tr('ToastNoCopiesUnkept')];
             if (skipped.length) {
                 var picked = 0;
                 var reasons = {};
@@ -947,12 +947,15 @@ export default function (view) {
                     var reason = s.Reason || tr('StatusSkipped');
                     reasons[reason] = (reasons[reason] || 0) + 1;
                 });
-                lines.push(format('ToastUnkeepSkipped', skipped.length, Object.keys(reasons).map(function (reason) {
-                    return format('ReasonCount', reason, reasons[reason]);
-                }).join(', ')));
+                var named = Object.keys(reasons);
+                lines.push(named.length === 1
+                    ? format('ToastUnkeepSkipped', skipped.length, named[0])
+                    : format('ToastUnkeepSkippedReasons', skipped.length, named.map(function (reason) {
+                        return format('ReasonCount', reason, reasons[reason]);
+                    }).join(', ')));
                 if (picked > 0) lines.push(tr('HelpUnkeepPicked'));
             }
-            ZooidShared.setStatus('storageItemsStatus', lines.join(' '), false, { timeout: 15000 });
+            ZooidShared.setStatus('storageItemsStatus', lines.join(' '), queued === 0, { timeout: 15000 });
         }, function () {
             ZooidShared.setStatus('storageItemsStatus', tr('ErrorUnkeepCopies'), true, { timeout: 10000 });
         }).then(function () { afterBulk(btn); });
