@@ -269,7 +269,6 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 | A page with several independent groups of settings | `stolon-collapsible-section`, one per group |
 | A group that is always open | `stolon-collapsible-section fixed`, whose header is a `div` with no icon, so it matches the collapsible sections around it |
 | A heading inside a section | `stolon-subsection-title` |
-| An ordered setup, such as a server editor | `stolon-collapsible-section numbered`, which Stolon numbers in order |
 | Settings that only matter when a checkbox is on | `stolon-indent` under the checkbox, shown with `shared.bindReveal` |
 
 * A collapsible header is a `button.stolon-collapsible-header` holding `stolon-collapsible-title` and `stolon-collapsible-icon`. Stolon replaces the icon with `expand_more`.
@@ -283,7 +282,7 @@ Every section on a Settings or Troubleshooting page leads with an icon tile, and
 * Pick the Material icon that names the topic, such as `video_library` for Content, `speed` for Bandwidth. A section and the tool it belongs to use the same icon as the sidebar.
 * The tile takes the accent color when its section has no on or off switch. A section that turns its feature on or off takes `stolon-green` while it is on and `stolon-gray` while it is off, and follows the switch as it changes. The most destructive row, such as a full reset, takes `stolon-red`.
 * Give each section its own icon. Two sections on one page never share one.
-* Never use a tile for decoration alone. Leave a numbered section without one, since its number is its marker.
+* Never use a tile for decoration alone. Steps of a setup, such as a server editor, take tiles too, never numbers.
 * Start collapsibles closed, except the first one on a page someone opens to act on.
 * Give every top level group on one page the same header. A chart or a summary takes the `fixed` section, never a bare `stolon-subsection-title`.
 * Hide a whole section while its feature is off or it has nothing to show. Never show an empty section.

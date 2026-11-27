@@ -39,7 +39,7 @@ Open **Servers** and select **Add server**. A server's place in the list is its 
 | Libraries | Which library there fills which library here, and their root folders |
 | Users | Which user there maps to which user here, for history, user settings, and playlists |
 
-Steps are numbered in the order they show, so a Pull server's **Libraries** is step 3.
+Each step has an icon beside its name.
 
 **The other server needs Zooid for everything but a plain pull.** A server that runs plain Jellyfin can be a Pull server whose libraries are kept as copies, and nothing else. Saving an entry as Push or Sync, or with a library kept as links, is refused when that server answers and does not run Zooid. It is also refused when the two Zooid protocols do not overlap. A server that cannot be reached is saved, and nothing is sent to it until it answers.
 
