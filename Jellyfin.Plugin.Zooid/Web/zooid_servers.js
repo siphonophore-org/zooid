@@ -22,6 +22,23 @@ export function urlWasCleared(storedUrl, editedUrl) {
 //
 // Inputs
 // view [HTMLElement]: The page the dashboard passes to the controller.
+// peerCheckKeys
+// Lists the rows a link check answers for a direction, so the table can show them with dashes before the check runs.
+//
+// Inputs
+// mode [string]: Pull, Push, or Sync.
+//
+// Output
+// [string[]]: The string key of each row's title, in the order the check answers them.
+export function peerCheckKeys(mode) {
+    var keys = ['DetailEntryTitle'];
+    if (mode !== 'Pull') keys.push('DetailChangesHere');
+    if (mode !== 'Push') keys.push('DetailChangesThere');
+    if (mode !== 'Pull') keys.push('DetailApplies');
+    keys.push('DetailReads', 'DetailPairing');
+    return keys;
+}
+
 export default function (view) {
     'use strict';
 
@@ -309,6 +326,26 @@ export default function (view) {
         ];
     }
 
+    // placeholderRows
+    // Draws access rows that are not known yet: each title with a dash for its text and its badge.
+    //
+    // Inputs
+    // keys [string[]]: The string key of each row's title.
+    //
+    // Output
+    // [string]: The rows' markup.
+    function placeholderRows(keys) {
+        return keys.map(function (key) {
+            return '<div class="zooid-access-row zooid-access-pending">' +
+                '<div class="zooid-access-text">' +
+                    '<div class="zooid-access-title">' + escapeHtml(ZooidShared.t.tr(key)) + '</div>' +
+                    '<div class="zooid-access-description">–</div>' +
+                '</div>' +
+                '<span class="stolon-badge gray">–</span>' +
+                '</div>';
+        }).join('');
+    }
+
     // The key of each access state's badge.
     var ACCESS_LABELS = { ok: 'LabelAvailable', limited: 'BadgeLimited', no: 'BadgeUnavailable', none: 'LabelNotInstalled' };
     var ACCESS_BADGES = { ok: 'green', limited: 'orange', no: 'red', none: 'gray' };
@@ -326,7 +363,13 @@ export default function (view) {
         var level = (server && server.AccessLevel) || '';
         var known = level === 'Administrator' || level === 'User';
         setVisible('accessUnknown', !!server && !!server.Url && !known);
-        setVisible('accessSummary', known);
+        // The table always shows, with a dash in each row until a test or sign in fills it.
+        setVisible('accessSummary', true);
+        setVisible('accessHeadline', known);
+        if (!known) {
+            var empty = getEl('accessRows');
+            if (empty) empty.innerHTML = placeholderRows(['AccessSyncRoutes', 'AccessContentListing', 'AccessFileDownloads', 'AccessMetadata', 'AccessWatchHistory', 'AccessUserSettings', 'Playlists', 'AccessTwoWayHistory', 'AccessPushAndSync']);
+        }
         if (known) {
             var headline = getEl('accessHeadline');
             if (headline) {
@@ -461,7 +504,15 @@ export default function (view) {
         reflectStream();
         reflectModeLimits(selectedServer());
         ZooidShared.setStatus('peerCheckStatus', '', false);
-        setVisible('peerCheckResult', false);
+        showPeerPlaceholder();
+    }
+
+    // Shows the link check's rows for the picked direction with dashes, until a check fills them.
+    function showPeerPlaceholder() {
+        setVisible('peerCheckHeadline', false);
+        var grid = getEl('peerCheckRows');
+        if (grid) grid.innerHTML = placeholderRows(peerCheckKeys(getMode()));
+        setVisible('peerCheckResult', true);
     }
 
     // The answer to a link check: a verdict in the color of its severity, then one line for each
@@ -470,11 +521,12 @@ export default function (view) {
         var severity = (result && result.Severity) || 'error';
         var rows = (result && result.Details) || [];
         if (!rows.length) {
-            setVisible('peerCheckResult', false);
+            showPeerPlaceholder();
             ZooidShared.setStatus('peerCheckStatus', (result && result.Message) || ZooidShared.t.tr('ErrorNoAnswer'), severity !== 'ok', { timeout: 0 });
             return;
         }
         ZooidShared.setStatus('peerCheckStatus', '', false);
+        setVisible('peerCheckHeadline', true);
         var headline = getEl('peerCheckHeadline');
         if (headline) {
             headline.className = 'zooid-mb-md ' + (severity === 'ok' ? 'stolon-callout-success' : severity === 'warn' ? 'stolon-callout-warn' : 'stolon-callout-error');
@@ -505,7 +557,7 @@ export default function (view) {
             return;
         }
         ZooidShared.setStatus('peerCheckStatus', ZooidShared.t.tr('StatusCheckingWork'), false, { timeout: 0 });
-        setVisible('peerCheckResult', false);
+        showPeerPlaceholder();
         var key = server.Key;
         var request = requestFor(server);
         request.Mode = getMode();
@@ -722,6 +774,7 @@ export default function (view) {
         collectServerEditor();
         setStepOpen('serverStepConnection', true);
         setStepOpen('serverStepAuthentication', true);
+        setStepOpen('serverStepDirection', true);
         servers.push({
             Key: newServerKey(),
             Name: '',

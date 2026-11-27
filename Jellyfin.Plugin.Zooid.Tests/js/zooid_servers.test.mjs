@@ -44,3 +44,12 @@ test('urlWasCleared is true only when a saved Server URL is emptied', async func
     assert.equal(mod.urlWasCleared('', ''), false);
     assert.equal(mod.urlWasCleared(null, ''), false);
 });
+
+test('the link check table lists the rows each direction answers, so they show with dashes before a check', async function () {
+    installPage({});
+    var mod = await loadScript('zooid_servers.js');
+
+    assert.deepEqual(mod.peerCheckKeys('Pull'), ['DetailEntryTitle', 'DetailChangesThere', 'DetailReads', 'DetailPairing']);
+    assert.deepEqual(mod.peerCheckKeys('Push'), ['DetailEntryTitle', 'DetailChangesHere', 'DetailApplies', 'DetailReads', 'DetailPairing']);
+    assert.deepEqual(mod.peerCheckKeys('Sync'), ['DetailEntryTitle', 'DetailChangesHere', 'DetailChangesThere', 'DetailApplies', 'DetailReads', 'DetailPairing']);
+});

@@ -259,7 +259,7 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 * A page has no title of its own. The shell's heading names it, and `setPageTitle` changes the heading when a page needs another.
 * Entry names are short, each with a Material icon.
 * Keep the list in one place, `zooidTools` in the shared module, never copied into each page.
-* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Queue**, **Content**, **History**, **Metadata**, **People**, **Users**, **Storage**, **Servers**, **Statistics**, **Settings**, **Troubleshooting**.
+* Order entries from what is used most to what is set once. Zooid is **Dashboard**, **Queue**, **Content**, **History**, **Metadata**, **People**, **Users**, **Servers**, **Storage**, **Statistics**, **Settings**, **Troubleshooting**.
 * Each sync type has its own entry, with the icon of its Settings section, `video_library`, `history`, `info`, `recent_actors`, and `group`. An entry whose feature is off leaves the sidebar, through `TOOL_FLAG_KEYS` and `toolFlags` in the shared module.
 
 ### Sections
@@ -272,6 +272,8 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 | Settings that only matter when a checkbox is on | `stolon-indent` under the checkbox, shown with `shared.bindReveal` |
 
 * A collapsible header is a `button.stolon-collapsible-header` holding `stolon-collapsible-title` and `stolon-collapsible-icon`. Stolon replaces the icon with `expand_more`.
+
+* A row of count cards is always full size. Never add `stolon-compact` to it, so every page's cards match.
 
 #### Settings and Troubleshooting Pages
 

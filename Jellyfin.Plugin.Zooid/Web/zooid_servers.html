@@ -31,7 +31,7 @@
                             <div id="serverEditorHolder" class="stolon-hidden">
                             <div id="serverEditor">
 
-                                <!-- Step 1: Connection -->
+                                <!-- Connection -->
                                 <div class="stolon-collapsible-section">
                                     <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepConnection">
                                         <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">lan</span></span>
@@ -77,7 +77,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Step 2: Authentication -->
+                                <!-- Authentication -->
                                 <div class="stolon-collapsible-section">
                                     <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepAuthentication">
                                         <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">key</span></span>
@@ -158,8 +158,17 @@
                                             <div id="accessRows" class="zooid-access-grid zooid-mb-md"></div>
                                             <div class="fieldDescription" data-str="HelpCheckLink">Select Check link to see what that server's own key reads here.</div>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <h3 class="stolon-subsection-title" data-str="HeaderDirection">Direction</h3>
+                                <!-- Direction: whether this server pulls, pushes, or does both, and the check of that server's own key. -->
+                                <div class="stolon-collapsible-section">
+                                    <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepDirection">
+                                        <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">sync_alt</span></span>
+                                        <span class="stolon-collapsible-title" data-str="HeaderDirection">Direction</span>
+                                        <span class="stolon-collapsible-icon">&#9660;</span>
+                                    </button>
+                                    <div id="serverStepDirection" class="stolon-collapsible-content stolon-collapsed">
                                         <div class="stolon-choice-group" id="modeChoices" role="radiogroup" aria-label="Direction" data-str-label="HeaderDirection">
                                             <label class="stolon-choice" data-mode="Pull">
                                                 <input type="radio" name="serverMode" value="Pull" />
@@ -194,7 +203,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Step 3: Stream. Only for Push and Sync servers, since a Pull server may never link here. -->
+                                <!-- Linking. Only for Push and Sync servers, since a Pull server may never link here. -->
                                 <div class="stolon-collapsible-section stolon-hidden" id="serverStepStreamSection">
                                     <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepStream">
                                         <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">link</span></span>
@@ -240,7 +249,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Step 4: Libraries. -->
+                                <!-- Libraries -->
                                 <div class="stolon-collapsible-section" id="serverStepLibrariesSection">
                                     <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepLibraries">
                                         <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">video_library</span></span>
@@ -261,7 +270,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Step 5: Users -->
+                                <!-- Users -->
                                 <div class="stolon-collapsible-section">
                                     <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="serverStepUsers">
                                         <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">group</span></span>

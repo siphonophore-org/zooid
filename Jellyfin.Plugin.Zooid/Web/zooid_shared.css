@@ -764,3 +764,8 @@ div:not(.zooid-form-row) + .zooid-form-row {
 /* The check box column of a library editor's picker table, at the row's end. */
 /* Example: <div class="stolon-table-cell zooid-pick-cell"><span class="material-icons">check_box</span></div> */
 .stolon-table-cell.zooid-pick-cell { flex: none; width: 2.5rem; text-align: right; }
+
+/* zooid-access-pending */
+/* An access row whose answer is not known yet, dimmed, with a dash for its text and its badge. */
+/* Example: <div class="zooid-access-row zooid-access-pending"><div class="zooid-access-text">…</div><span class="stolon-badge gray">–</span></div> */
+.zooid-access-pending { opacity: .6; }

@@ -874,6 +874,7 @@
   "TitleDeleteItemsMany": "Delete {0} items",
   "TitleDeleteItemsOne": "Delete {0} item",
   "TitleDismissFailed": "Dismiss failed changes",
+  "TitlePendingBreakdown": "Pending: {0} (download: {1}, replacement: {2}, deletion: {3})",
   "TitleRemoveCachedMany": "Remove {0} files from the cache",
   "TitleRemoveCachedOne": "Remove {0} file from the cache",
   "TitleRemoveServer": "Remove {0}",
