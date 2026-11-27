@@ -82,14 +82,21 @@ function anyTypeOn(config) {
 
 // TOOL_VISIBLE
 // When each tool that can be hidden shows, by tool. Each sync type's tool shows while that type is on, Storage while
-// content, history, or metadata sync is on, and Statistics while any sync type is on or a server may link here.
+// content, history, or metadata sync is on and a server this one pulls from has library mappings, and Statistics while
+// any sync type is on or a server may link here.
 export var TOOL_VISIBLE = {
     content: function (config) { return !!config.EnableContentSync; },
     history: function (config) { return !!config.EnableHistorySync; },
     metadata: function (config) { return !!config.EnableMetadataSync; },
     people: function (config) { return !!config.EnablePeopleSync; },
     users: function (config) { return !!config.EnableUserSync; },
-    storage: function (config) { return !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync); },
+    storage: function (config) {
+        if (!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync)) return false;
+        return (config.Servers || []).some(function (server) {
+            var push = server && (server.Mode === 1 || server.Mode === 'Push');
+            return server && !push && (server.LibraryMappings || []).length > 0;
+        });
+    },
     statistics: function (config) {
         return anyTypeOn(config) || (config.Servers || []).some(function (server) { return server && server.OffersLinks; });
     }

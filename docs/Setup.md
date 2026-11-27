@@ -4,7 +4,7 @@ This page walks through a first setup, from opening the Zooid page to reading th
 
 ## The Zooid Page
 
-Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar. Each sync type has its own tool, which joins or leaves the sidebar as soon as that type is turned on or off.
+Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar. Each sync type has its own tool, which joins or leaves the sidebar as soon as that type is turned on or off. **Storage** shows once a server this one pulls from has library mappings.
 
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
@@ -174,4 +174,4 @@ While a server may link to this one, the page also charts **Link streams**. It s
 
 ![Troubleshooting](screenshots/Troubleshooting.png)
 
-**Troubleshooting** holds resets that forget Zooid's tracking. Media is untouched. **Reset individual tables** has a **Reset** for each of **Content sync**, **History sync**, **Metadata sync**, **People sync**, **Playlist sync**, and **User sync**. A table's tile keeps the accent color while the table holds tracking, and turns gray while it is empty, so there is nothing to reset. **Reset entire database** has **Reset all**, which forgets the tracking of every sync type. Each reset asks first in a dialog that names the table, and it cannot be undone. The next scan starts over.
+**Troubleshooting** holds resets that forget Zooid's tracking. Media is untouched. **Reset individual tables** has a **Reset** for each of **Content sync**, **History sync**, **Metadata sync**, **People sync**, **Playlist sync**, and **User sync**. A table's tile keeps the accent color while the table holds tracking, with a badge before its **Reset** that counts its records, and turns gray with no badge while it is empty, so there is nothing to reset. **Reset entire database** has **Reset all**, which forgets the tracking of every sync type. Each reset asks first in a dialog that names the table, and it cannot be undone. The next scan starts over.

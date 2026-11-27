@@ -89,7 +89,9 @@ test('a table tile keeps the accent while the table has rows and goes gray while
     var dom = page.dom;
     function row(id) {
         var tile = dom.el('span', { class: 'stolon-collapsible-tile' });
-        return { tile: tile, element: dom.el('div', { class: 'stolon-reset-row' }, [tile, dom.el('button', { id: id })]) };
+        var title = dom.el('div', {});
+        var info = dom.el('div', { class: 'stolon-reset-info' }, [title]);
+        return { tile: tile, title: title, element: dom.el('div', { class: 'stolon-reset-row' }, [tile, info, dom.el('button', { id: id })]) };
     }
     var content = row('btnResetContentTable'), history = row('btnResetHistoryTable');
     var view = dom.el('div', {}, [dom.el('div', { id: 'resetStatus' }), content.element, history.element, dom.el('button', { id: 'btnResetEntireDatabase' })]);
@@ -105,4 +107,10 @@ test('a table tile keeps the accent while the table has rows and goes gray while
 
     assert.ok(!content.tile.classList.contains('stolon-gray'));
     assert.ok(history.tile.classList.contains('stolon-gray'));
+    var badge = content.element.querySelector('.zooid-table-count');
+    assert.ok(badge, 'a table with rows shows its count');
+    assert.equal(badge.textContent, '12 records');
+    var kids = content.element.children;
+    assert.equal(kids[kids.indexOf(badge) + 1].id, 'btnResetContentTable', 'the badge sits before the Reset button');
+    assert.equal(history.element.querySelector('.zooid-table-count'), null, 'an empty table shows no badge');
 });

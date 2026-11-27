@@ -75,13 +75,27 @@ export default function (view) {
 
     // paintTables
     // Colors each table's tile by what it holds: the accent while it has rows a reset would forget, gray while it is
-    // empty. A table whose count cannot be read keeps the accent.
+    // empty. A table with rows shows how many in a badge before its Reset button. A table whose count cannot be read keeps the
+    // accent and shows no badge.
     function paintTables() {
         return ZooidShared.apiRequest('Tables', 'GET').then(function (counts) {
             Object.keys(TABLE_BUTTONS).forEach(function (table) {
                 var button = view.querySelector('#' + TABLE_BUTTONS[table]);
                 var row = button && button.closest('.stolon-reset-row');
-                if (row) zooidModule.setCollapsibleTile(row.querySelector('.stolon-collapsible-tile'), counts && counts[table] === 0 ? 'gray' : null);
+                if (!row) return;
+                var count = counts ? counts[table] : undefined;
+                zooidModule.setCollapsibleTile(row.querySelector('.stolon-collapsible-tile'), count === 0 ? 'gray' : null);
+                var badge = row.querySelector('.zooid-table-count');
+                if (typeof count === 'number' && count > 0) {
+                    if (!badge) {
+                        badge = zooidModule.make('span', 'stolon-badge stolon-blue zooid-table-count');
+                        row.insertBefore(badge, button);
+                    }
+                    badge.textContent = ZooidShared.t.format(count === 1 ? 'BadgeRecordOne' : 'BadgeRecordMany', count.toLocaleString());
+                    badge.hidden = false;
+                } else if (badge) {
+                    badge.hidden = true;
+                }
             });
         }).catch(function () { /* the tiles keep the accent */ });
     }

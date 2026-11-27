@@ -24,7 +24,7 @@ function shown(answers) {
 
 // ALL_ON
 // A config with every sync type on.
-var ALL_ON = { EnableContentSync: true, EnableHistorySync: true, EnableMetadataSync: true, EnablePeopleSync: true, EnableUserSync: true };
+var ALL_ON = { EnableContentSync: true, EnableHistorySync: true, EnableMetadataSync: true, EnablePeopleSync: true, EnableUserSync: true, Servers: [{ Key: 'p', Mode: 'Pull', LibraryMappings: [{ IsEnabled: true }] }] };
 
 // configNeverLoads
 // Keeps the config from arriving, so the sidebar shows only the stored answers.
@@ -119,7 +119,7 @@ test('the sync type tools and Statistics leave the sidebar once the stored answe
 });
 
 test('a sync type that is off leaves the sidebar once the app reads the config', async function () {
-    var view = await openApp({}, null, { EnableContentSync: true, EnableHistorySync: false, EnableMetadataSync: true, EnablePeopleSync: false, EnableUserSync: true });
+    var view = await openApp({}, null, { EnableContentSync: true, EnableHistorySync: false, EnableMetadataSync: true, EnablePeopleSync: false, EnableUserSync: true, Servers: ALL_ON.Servers });
     await flush();
     assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Content', 'Metadata', 'Users', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
     var stored = JSON.parse(view.page.store[SHOWN_KEY]);
@@ -147,7 +147,11 @@ test('each sync type tool shows for its own type, Storage for the library ones, 
     var off = { content: false, history: false, metadata: false, people: false, users: false, storage: false, statistics: false };
     assert.deepEqual(showing({}), off);
     assert.deepEqual(showing({ EnableUserSync: true }), Object.assign({}, off, { users: true, statistics: true }));
-    assert.deepEqual(showing({ EnableHistorySync: true }), Object.assign({}, off, { history: true, storage: true, statistics: true }));
+    assert.deepEqual(showing({ EnableHistorySync: true }), Object.assign({}, off, { history: true, statistics: true }));
+    var mapped = { Key: 'p', Mode: 'Pull', LibraryMappings: [{ IsEnabled: true }] };
+    assert.deepEqual(showing({ EnableHistorySync: true, Servers: [mapped] }), Object.assign({}, off, { history: true, storage: true, statistics: true }));
+    assert.equal(showing({ EnableContentSync: true, Servers: [Object.assign({}, mapped, { Mode: 'Push' })] }).storage, false);
+    assert.equal(showing({ EnableContentSync: true, Servers: [{ Key: 'p', Mode: 'Pull', LibraryMappings: [] }] }).storage, false);
     assert.deepEqual(showing({ EnablePeopleSync: true }), Object.assign({}, off, { people: true, statistics: true }));
     assert.deepEqual(showing({ Servers: [{ OffersLinks: true }] }), Object.assign({}, off, { statistics: true }));
 });

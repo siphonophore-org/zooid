@@ -24,6 +24,9 @@ artifacts:
 changelog:
   added:
   - "Recent activity, at the bottom of the Dashboard, lists Zooid's newest activity log entries with how long ago each happened"
+  changed:
+  - "The Storage tool shows in the sidebar only once a server this one pulls from has library mappings"
+  - "Troubleshooting counts the records of each table that has any in a badge before its Reset button"
   fixed:
   - "Turning copies back into links said \"0 copies will turn back\" and gave its reason in lowercase. It says why plainly"
   developer:
