@@ -9,7 +9,7 @@
             <form id="ZooidServersForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpServersIntro">Connects this server to the others it syncs with, ranked from the top down. Drag a server to move it.</div>
+                    <div class="fieldDescription" data-str="HelpServersIntro">Connects this server to the others it syncs with, ranked from the top down. Drag a server to move it.</div>
 
                     <!-- Servers -->
 
@@ -86,7 +86,7 @@
                                     </button>
                                     <div id="serverStepAuthentication" class="stolon-collapsible-content stolon-collapsed">
 
-                                        <div id="serverInfoContainer" class="stolon-record-card stolon-hidden zooid-mb-md">
+                                        <div id="serverInfoContainer" class="stolon-record-card stolon-hidden">
                                             <div class="stolon-record-row">
                                                 <span class="stolon-record-label" data-str="TabServer">Server</span>
                                                 <span id="txtSourceServerName" class="stolon-mono"></span>
@@ -124,7 +124,7 @@
 
                                         <div id="authUserPanel" class="stolon-bulk-edit-bar zooid-panel stolon-hidden">
                                             <!-- Filled by the page with the signed in user. -->
-                                            <div id="authSignedIn" class="stolon-callout-info zooid-mb-md stolon-hidden"></div>
+                                            <div id="authSignedIn" class="stolon-callout-info stolon-hidden"></div>
                                             <div class="stolon-edit-line">
                                                 <div class="stolon-field">
                                                     <label for="txtAuthUsername" data-str="LabelUsername">Username</label>
@@ -143,7 +143,7 @@
                                             </div>
                                         </div>
 
-                                        <div id="savedSecretNote" class="stolon-callout-warn zooid-mb-md stolon-hidden" role="status"></div>
+                                        <div id="savedSecretNote" class="stolon-callout-warn stolon-hidden" role="status"></div>
 
                                         <div class="stolon-collapsible-actions stolon-flush">
                                             <button is="emby-button" type="button" id="btnTestConnection" class="raised stolon-button stolon-small">
@@ -152,10 +152,10 @@
                                             <span id="connectionStatus" class="stolon-status-text"></span>
                                         </div>
 
-                                        <div id="accessUnknown" class="stolon-callout-neutral zooid-mt-md stolon-hidden" data-str="HelpTestForAccess">Test the connection to see what this key can do.</div>
-                                        <div id="accessSummary" class="zooid-mt-md stolon-hidden">
-                                            <div id="accessHeadline" class="zooid-mb-md"></div>
-                                            <div id="accessRows" class="zooid-access-grid zooid-mb-md"></div>
+                                        <div id="accessUnknown" class="stolon-callout-neutral stolon-hidden" data-str="HelpTestForAccess">Test the connection to see what this key can do.</div>
+                                        <div id="accessSummary" class="stolon-hidden">
+                                            <div id="accessHeadline"></div>
+                                            <div id="accessRows" class="zooid-access-grid"></div>
                                             <div class="fieldDescription" data-str="HelpCheckLink">Select Check link to see what that server's own key reads here.</div>
                                         </div>
                                     </div>
@@ -186,7 +186,7 @@
                                                 <span class="stolon-choice-text" data-str="HelpModeSync">Pull and Push together. Needs Zooid there set to Sync.</span>
                                             </label>
                                         </div>
-                                        <div id="modeLimited" class="stolon-callout-warn zooid-mt-sm stolon-hidden" data-str="WarnModeStandardUser">A standard user must be on that server's whitelist.</div>
+                                        <div id="modeLimited" class="stolon-callout-warn stolon-hidden" data-str="WarnModeStandardUser">A standard user must be on that server's whitelist.</div>
 
                                         <div id="peerCheckArea" class="stolon-hidden">
                                             <div class="stolon-collapsible-actions stolon-flush zooid-mt-sm">
@@ -195,8 +195,8 @@
                                                 </button>
                                                 <span id="peerCheckStatus" class="stolon-status-text"></span>
                                             </div>
-                                            <div id="peerCheckResult" class="zooid-mt-md stolon-hidden">
-                                                <div id="peerCheckHeadline" class="zooid-mb-md"></div>
+                                            <div id="peerCheckResult" class="stolon-gap-above-narrow stolon-hidden">
+                                                <div id="peerCheckHeadline"></div>
                                                 <div id="peerCheckRows" class="zooid-access-grid"></div>
                                             </div>
                                         </div>
@@ -218,7 +218,7 @@
                                             </label>
                                             <div class="fieldDescription checkboxFieldDescription" id="allowLinkingDescription" data-str="HelpAllowLinking">Let that server stream files from here for libraries it maps as Link.</div>
                                         </div>
-                                        <div id="linkingNeedsPlugin" class="stolon-callout-warn stolon-hidden zooid-mb-md"></div>
+                                        <div id="linkingNeedsPlugin" class="stolon-callout-warn stolon-hidden"></div>
 
                                         <div id="linkLimits" class="stolon-hidden">
                                             <div class="inputContainer">
@@ -257,9 +257,9 @@
                                         <span class="stolon-collapsible-icon">&#9660;</span>
                                     </button>
                                     <div id="serverStepLibraries" class="stolon-collapsible-content stolon-collapsed">
-                                        <div id="librariesLocked" class="stolon-callout-neutral zooid-mb-md" data-str="HelpLibrariesLocked">Test the connection under Authentication to load libraries.</div>
+                                        <div id="librariesLocked" class="stolon-callout-neutral" data-str="HelpLibrariesLocked">Test the connection under Authentication to load libraries.</div>
                                         <div id="librariesSection" class="stolon-hidden">
-                                            <div class="fieldDescription zooid-mb-md" data-str="HelpLibraryMappings">Map that server's libraries to local ones. Storage, Always keep, and filters are on the Storage page.</div>
+                                            <div class="fieldDescription" data-str="HelpLibraryMappings">Map that server's libraries to local ones. Storage, Always keep, and filters are on the Storage page.</div>
                                             <div id="libraryMappingsContainer"></div>
                                             <div class="stolon-collapsible-actions stolon-flush">
                                                 <button is="emby-button" type="button" id="btnAddMapping" class="raised stolon-button stolon-secondary stolon-small">
@@ -278,10 +278,10 @@
                                         <span class="stolon-collapsible-icon">&#9660;</span>
                                     </button>
                                     <div id="serverStepUsers" class="stolon-collapsible-content stolon-collapsed">
-                                        <div id="usersLocked" class="stolon-callout-neutral zooid-mb-md" data-str="HelpUsersLocked">Test the connection under Authentication to load users.</div>
+                                        <div id="usersLocked" class="stolon-callout-neutral" data-str="HelpUsersLocked">Test the connection under Authentication to load users.</div>
                                         <div id="usersSection" class="stolon-hidden">
-                                            <div class="fieldDescription zooid-mb-md" data-str="HelpUserMappings">Map that server's users to local ones. With Allow linking on, each mapping can also cap the local user's link streams and speed.</div>
-                                            <div id="usersLimited" class="stolon-callout-warn stolon-hidden zooid-mb-md"></div>
+                                            <div class="fieldDescription" data-str="HelpUserMappings">Map that server's users to local ones. With Allow linking on, each mapping can also cap the local user's link streams and speed.</div>
+                                            <div id="usersLimited" class="stolon-callout-warn stolon-hidden"></div>
                                             <div id="userMappingsContainer"></div>
                                             <div class="stolon-collapsible-actions stolon-flush">
                                                 <button is="emby-button" type="button" id="btnAddUserMapping" class="raised stolon-button stolon-secondary stolon-small">

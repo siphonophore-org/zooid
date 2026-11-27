@@ -6,7 +6,7 @@
      data-controller="__plugin/zooid_storage.js">
     <div data-role="content">
         <div class="content-primary">
-            <div class="verticalSection verticalSection-extrabottompadding zooid-storage-flow">
+            <div class="verticalSection verticalSection-extrabottompadding stolon-stack">
 
                 <div class="fieldDescription" data-str="HelpStorage">Shows what each mapped library holds, and how it keeps its files. Select a library to change it.</div>
 
@@ -24,18 +24,18 @@
                     </button>
                 </div>
 
-                <div id="storageContent" class="zooid-storage-flow stolon-hidden">
+                <div id="storageContent" class="stolon-stack stolon-hidden">
 
                     <!-- Server picker -->
                     <!-- One tab for each server with library mappings, shown when there is more than one. The picked server's
                          content moves into its tab's panel. -->
 
-                    <div id="storageServerPicker" class="stolon-hidden"></div>
+                    <div id="storageServerPicker" class="stolon-stack stolon-hidden"></div>
 
                     <!-- Picked server -->
                     <!-- Everything that belongs to the picked server. -->
 
-                    <div id="storageServerContent" class="zooid-storage-flow">
+                    <div id="storageServerContent" class="stolon-stack">
                         <div id="storageServerOff" class="stolon-callout-neutral stolon-hidden" data-str="StorageServerOff">This server is off on the Servers page, so its libraries do not sync.</div>
 
                         <!-- Summary -->
@@ -51,8 +51,8 @@
                                 <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">video_library</span></span>
                                 <span class="stolon-collapsible-title" data-str="HeaderLibraries">Libraries</span>
                             </div>
-                            <div class="stolon-collapsible-content">
-                                <div id="storageLibraryList" class="zooid-storage-libraries"></div>
+                            <div class="stolon-collapsible-content stolon-flow">
+                                <div id="storageLibraryList" class="stolon-stack stolon-narrow"></div>
                                 <div id="storageNoLibraries" class="stolon-empty-section stolon-hidden" data-str="EmptyStorageLibraries">This server has no enabled library mappings. Map libraries on the Servers page.</div>
                             </div>
                         </div>
@@ -65,7 +65,7 @@
                                 <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">folder_copy</span></span>
                                 <span class="stolon-collapsible-title" data-str="SyncTypeContent">Content</span>
                             </div>
-                            <div class="stolon-collapsible-content">
+                            <div class="stolon-collapsible-content stolon-flow">
                                 <div class="fieldDescription" data-str="HelpStorageItems">Lists every file this server syncs here, and how it is kept.</div>
                                 <div id="storageCacheLine" class="zooid-storage-cache-line stolon-hidden">
                                     <div id="storageCacheMeter" class="zooid-storage-cache-meter stolon-hidden"></div>

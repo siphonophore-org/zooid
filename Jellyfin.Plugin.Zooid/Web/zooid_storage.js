@@ -590,7 +590,7 @@ export default function (view) {
         var browsePills = null;
         var choices = null;
         var seq = ++_tableSeq;
-        var body = zooidModule.make('div', 'zooid-storage-editor');
+        var body = zooidModule.make('div', 'stolon-stack zooid-storage-editor');
 
         var status = zooidModule.make('div', 'stolon-status-text stolon-hidden');
         status.setAttribute('role', 'status');
@@ -609,10 +609,10 @@ export default function (view) {
 
         // Storage, the link cache, and Always keep are content sync's alone.
         var linkCache = null;
-        var permanentSection = zooidModule.make('div', 'zooid-storage-editor-group');
-        var linkCacheSection = zooidModule.make('div', 'zooid-storage-editor-group');
+        var permanentSection = zooidModule.make('div', 'stolon-stack');
+        var linkCacheSection = zooidModule.make('div', 'stolon-stack');
         if (contentOn) {
-            var storageSection = zooidModule.make('div', 'zooid-storage-editor-group');
+            var storageSection = zooidModule.make('div', 'stolon-stack');
             storageSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('TabStorage')));
             choices = zooidModule.createChoiceGroup(null, {
                 name: 'storageMode' + seq,
@@ -641,7 +641,7 @@ export default function (view) {
         }
 
         // The library filter applies to content, history, and metadata.
-        var filterSection = zooidModule.make('div', 'zooid-storage-editor-group');
+        var filterSection = zooidModule.make('div', 'stolon-stack');
         filterSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('HeaderLibraryFilter')));
         var filterMode = zooidModule.createSelectField({
             label: tr('LabelFilterMode'),
@@ -654,7 +654,7 @@ export default function (view) {
             value: mapping.FilterMode || 'AllowAll'
         });
         filterSection.appendChild(filterMode.element);
-        var filterBrowser = zooidModule.make('div', 'zooid-storage-editor-group');
+        var filterBrowser = zooidModule.make('div', 'stolon-stack');
         // Files, Collections, Playlists. Picking a collection or playlist picks its members.
         var browse = zooidModule.make('div', 'stolon-pill-group');
         browse.setAttribute('role', 'group');
@@ -676,7 +676,7 @@ export default function (view) {
         // Only a Sync server writes history back, so only its libraries offer negotiation, while history sync is on.
         var negotiate = null;
         if (negotiable) {
-            var historySection = zooidModule.make('div', 'zooid-storage-editor-group');
+            var historySection = zooidModule.make('div', 'stolon-stack');
             historySection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('SyncTypeHistory')));
             negotiate = zooidModule.createCheckboxField({ label: tr('LabelNegotiateHistory'), help: tr('HelpNegotiateHistory'), checked: !!mapping.NegotiateHistory });
             historySection.appendChild(negotiate.element);
@@ -767,7 +767,6 @@ export default function (view) {
             subtitle: format('LibraryFromServer', mapping.SourceLibraryName || mapping.SourceLibraryId || tr('LabelSourceLibrary'), ZooidShared.serverDisplayName(server)),
             body: built.body,
             page: made.page,
-            className: 'zooid-storage-sidecar',
             serialize: function () { return JSON.stringify(built.read()); },
             onSave: function () {
                 return saveMapping(serverKey, ref, built.read()).then(function () {

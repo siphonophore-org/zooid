@@ -9,7 +9,7 @@
             <form id="ZooidSettingsForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpSettingsIntro">How this server sends changes and who may call it.</div>
+                    <div class="fieldDescription" data-str="HelpSettingsIntro">How this server sends changes and who may call it.</div>
                     <div id="settingsStatus" class="stolon-status-text" role="status"></div>
 
                     <h3 class="stolon-subsection-title" data-str="General">General</h3>
@@ -33,7 +33,7 @@
                                 <div class="fieldDescription checkboxFieldDescription" data-str="HelpUseOtherSpeedsDuring">Use other speeds during set hours.</div>
                             </div>
 
-                            <div class="zooid-form-table zooid-form-table3 zooid-bandwidth zooid-mb-md" id="bandwidthTable">
+                            <div class="zooid-form-table zooid-form-table3 zooid-bandwidth" id="bandwidthTable">
                                 <div class="zooid-form-row zooid-form-head"><span></span><span data-str="Normal">Normal</span><span class="zooid-schedule-cell" data-str="ColumnScheduled">Scheduled</span></div>
                                 <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="DownloadManager">Downloads</span><span class="zooid-form-hint" data-str="HintSharedDownloadHere">Shared by every download to here</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtMaxDownloadSpeed" min="0" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMbps">Mbps</span></span><span class="zooid-form-cell zooid-schedule-cell"><input is="emby-input" type="number" id="txtScheduledDownloadSpeed" min="0" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMbps">Mbps</span></span></div>
                                 <div id="streamSpeedRows"></div>
@@ -61,7 +61,7 @@
                             </div>
 
                             <h3 class="stolon-subsection-title" data-str="HeaderChangeRetries">Change retries</h3>
-                            <div class="zooid-form-table zooid-form-table3 zooid-mb-md">
+                            <div class="zooid-form-table zooid-form-table3">
                                 <div class="zooid-form-row zooid-form-head"><span data-str="ColumnSetting">Setting</span><span data-str="ColumnNoAnswer">No answer</span><span data-str="ColumnRefused">Refused</span></div>
                                 <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelFirstWait">First wait</span><span class="zooid-form-hint" data-str="HintNoAnswerDoubles">No answer doubles each try</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtHintRetrySeconds" min="5" max="3600" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitSec">sec</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtHintRefusedRetryMinutes" min="1" max="1440" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMin">min</span></span></div>
                                 <div class="zooid-form-row"><span class="zooid-form-label" data-str="LabelLongestWait">Longest wait</span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtHintRetryMaxMinutes" min="1" max="1440" class="zooid-form-input" /><span class="zooid-unit" data-str="UnitMin">min</span></span><span class="zooid-form-cell zooid-form-none" data-str="StorageType.Fixed">Fixed</span></div>
@@ -115,7 +115,7 @@
                     <!-- Synchronization Header -->
 
                     <h3 class="stolon-subsection-title" data-str="HeaderSynchronization">Synchronization</h3>
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpSynchronizationIntro">Sets what each sync type copies and who can use it.</div>
+                    <div class="fieldDescription" data-str="HelpSynchronizationIntro">Sets what each sync type copies and who can use it.</div>
 
                     <!-- Content -->
 
@@ -186,7 +186,7 @@
 
                                 <h3 class="stolon-subsection-title" data-str="HeaderApprovals">Approvals</h3>
                                 <div class="zooid-settings-group">
-                                    <div class="zooid-form-table zooid-mb-md">
+                                    <div class="zooid-form-table">
                                         <div class="zooid-form-row zooid-form-head"><span data-str="ColumnChange">Change</span><span data-str="ColumnAction">Action</span></div>
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelNewFiles">New files</span><span class="zooid-form-hint" data-str="HintMissingHere">Missing here</span></span><span class="zooid-form-cell"><select is="emby-select" id="selDownloadNewContentMode" class="emby-select-withcolor emby-select zooid-form-select"><option value="Enabled" data-str="OptionEnabled">Enabled</option><option value="RequireApproval" data-str="OptionRequireApproval">Require approval</option><option value="Disabled" data-str="Disabled">Disabled</option></select></span></div>
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelChangedFiles">Changed files</span><span class="zooid-form-hint" data-str="HintDifferSource">Differ from the source</span></span><span class="zooid-form-cell"><select is="emby-select" id="selReplaceExistingContentMode" class="emby-select-withcolor emby-select zooid-form-select"><option value="Enabled" data-str="OptionEnabled">Enabled</option><option value="RequireApproval" data-str="OptionRequireApproval">Require approval</option><option value="Disabled" data-str="Disabled">Disabled</option></select></span></div>
@@ -263,15 +263,15 @@
                                         <div class="fieldDescription checkboxFieldDescription" data-str="HelpStreamLinksDirectPlay">Streams each user's direct play from the source. Turn off if a player cannot direct play links.</div>
                                     </div>
 
-                                    <div class="zooid-form-table zooid-mb-md" id="linkStreamsTable">
+                                    <div class="zooid-form-table" id="linkStreamsTable">
                                         <div class="zooid-form-row zooid-form-head"><span data-str="HeaderLinkStreams">Link streams</span><span data-str="ColumnAtOnce">At once</span></div>
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelAllServers">All servers</span><span class="zooid-form-hint" data-str="HintLinksServerStreams">Links this server streams at once, in all</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtLinkMaxStreamsTotal" min="0" max="1000" class="zooid-form-input" /></span></div>
                                         <div id="linkTakeRows"></div>
                                     </div>
-                                    <div class="fieldDescription zooid-mb-md" data-str="HelpStreamsFilmHighestRanked">Streams from the highest ranked idle server, or the one with the most streams free. 0 is no limit.</div>
+                                    <div class="fieldDescription" data-str="HelpStreamsFilmHighestRanked">Streams from the highest ranked idle server, or the one with the most streams free. 0 is no limit.</div>
 
                                     <h3 class="stolon-subsection-title" data-str="HeaderLinkCache">Link cache</h3>
-                                    <div class="fieldDescription zooid-mb-md" data-str="HelpKeepsLocalCopiesPlayed">Keeps played links and upcoming episodes here, so they play while the source is down.</div>
+                                    <div class="fieldDescription" data-str="HelpKeepsLocalCopiesPlayed">Keeps played links and upcoming episodes here, so they play while the source is down.</div>
                                     <div class="selectContainer">
                                         <label for="selLinkCacheSizing" data-str="LabelCacheSize">Cache size</label>
                                         <select is="emby-select" id="selLinkCacheSizing">
@@ -319,7 +319,7 @@
                                         <div class="fieldDescription" data-str="HelpDecidesWhichFileDropped">Decides which file is dropped first when the cache is full.</div>
                                     </div>
                                     </div>
-                                    <div id="linkCacheStatus" class="stolon-callout-neutral zooid-mb-md"></div>
+                                    <div id="linkCacheStatus" class="stolon-callout-neutral"></div>
                                 </div>
                             </div>
 
@@ -360,7 +360,7 @@
                                 </div>
                             </div>
 
-                            <div id="historyNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
+                            <div id="historyNeedsMapping" class="stolon-callout-warn stolon-hidden" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                             <div id="historySyncOptions">
 
@@ -665,7 +665,7 @@
                                     <div class="zooid-role-row"><span class="zooid-role-label" data-str="PermissionChangesDeletionsThey">Changes and deletions as they happen</span><span><span class="stolon-badge stolon-orange" data-str="BadgeLimited">Limited</span></span><span><span class="stolon-badge stolon-green" data-str="Yes">Yes</span></span></div>
                                     <div class="zooid-role-note" data-str="HelpLimitedNeedsUserServers">Limited needs the user on that server's whitelist.</div>
                                 </div>
-                                <div id="playlistNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
+                                <div id="playlistNeedsMapping" class="stolon-callout-warn stolon-hidden" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                                 <div id="playlistSyncOptions">
                                     <div class="selectContainer">
@@ -722,7 +722,7 @@
                                 </div>
                             </div>
 
-                            <div id="userNeedsMapping" class="stolon-callout-warn stolon-hidden zooid-mb-md" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
+                            <div id="userNeedsMapping" class="stolon-callout-warn stolon-hidden" data-str="HelpAddUserMappingFirst">Add a user mapping on the Servers page first.</div>
 
                             <div id="userSyncOptions">
 

@@ -219,7 +219,7 @@ export default function (view) {
             content.appendChild(title);
         }
         var note = document.createElement('div');
-        note.className = 'fieldDescription zooid-mb-md';
+        note.className = 'fieldDescription';
         note.textContent = made.shared.t.tr('LinkStreamsDescription');
         content.appendChild(note);
         var streams = streamChartData(linkStreams, made.shared.t);
@@ -243,7 +243,7 @@ export default function (view) {
         var t = made.shared.t;
         var content = addSection(t.tr('HeaderUsage'));
         var note = document.createElement('div');
-        note.className = 'fieldDescription zooid-mb-md';
+        note.className = 'fieldDescription';
         note.textContent = t.tr('HelpUsagePick');
         content.appendChild(note);
         var holder = document.createElement('div');

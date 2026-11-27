@@ -1,12 +1,6 @@
 /* zooid_shared.css */
 /* The layout the Sync, Servers, Storage, and Settings pages add to Stolon. Every class carries the zooid- prefix. */
 
-/* zooid-hidden-button */
-/* Keeps a hidden Stolon button hidden. Stolon forces a fill button to display, which outranks its own hidden class. */
-/* Example: <button class="raised stolon-button stolon-primary stolon-fill stolon-hidden"><span>Retry errors</span></button> */
-.pluginConfigurationPage .stolon-button.stolon-hidden,
-.stolon-dialog .stolon-button.stolon-hidden { display: none !important; }
-
 /* zooid-health-dashboard */
 /* Dark rounded panel holding a row of labeled figures for the last run. */
 /* Example: <div class="zooid-health-dashboard"><div class="zooid-health-row"><div class="zooid-health-card"><span class="zooid-health-label">Last sync</span><span class="zooid-health-value">Never</span></div></div></div> */
@@ -97,13 +91,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-}
-
-/* Status column */
-/* Grows to fit a long status such as Ignored (Copy to Link), so the badge stays inside the row. */
-.stolon-table-row > .stolon-table-cell.stolon-table-cell-status {
-    flex: 0 0 auto;
-    min-width: 110px;
 }
 
 /* zooid-bulk-icon-btn */
@@ -423,19 +410,13 @@ div:not(.zooid-form-row) + .zooid-form-row {
 }
 
 /* zooid-panel */
-/* Bordered sub card, with spacing helpers and muted text so no page sets them inline. */
+/* Bordered sub card, with the narrow spacing helper and muted text so no page sets them inline. */
 /* Example: <div class="zooid-panel zooid-mt-sm"><span class="zooid-muted">None</span></div> */
 .pluginConfigurationPage .zooid-mt-sm { margin-top: 8px; }
-.pluginConfigurationPage .zooid-mt-md { margin-top: 12px; }
 .pluginConfigurationPage .zooid-panel { padding: 14px; border: 1px solid var(--stolon-border); border-radius: 6px; background: rgba(255, 255, 255, 0.04); }
 .pluginConfigurationPage .zooid-muted, .stolon-dialog .zooid-muted { opacity: 0.5; }
 .pluginConfigurationPage .zooid-empty-cell, .stolon-dialog .zooid-empty-cell { text-align: center; opacity: 0.5; }
 .pluginConfigurationPage .zooid-note-cell, .stolon-dialog .zooid-note-cell { opacity: 0.6; font-size: 0.85em; }
-
-/* zooid-mb-md */
-/* Adds the space under a block that sits above other content. */
-/* Example: <div class="fieldDescription zooid-mb-md"></div> */
-.zooid-mb-md { margin-bottom: 12px; }
 
 /* zooid-sync-status */
 /* Result line under a sync type page description, spaced from the field below only while it holds a message. */
@@ -716,28 +697,11 @@ div:not(.zooid-form-row) + .zooid-form-row {
 #ZooidServersPage .zooid-settings-group > .stolon-subsection-title:not(:first-child) { margin-top: var(--stolon-gap-wide) !important; }
 #ZooidSettingsPage .stolon-collapsible-content > div > :last-child,
 #ZooidServersPage .stolon-collapsible-content > div > :last-child { margin-bottom: 0 !important; }
-/* The Storage page and its library editor take the same column. Each level of the page, the server tabs, the open
-   sections, the editor, and each group in the editor, is one column with the standard gap, and the library rows sit closer. */
-/* Example: <div class="zooid-storage-flow"><div class="stolon-cards"></div><div class="stolon-collapsible-section"></div></div> */
-#ZooidStoragePage .zooid-storage-flow,
-#ZooidStoragePage #storageServerPicker,
-#ZooidStoragePage .stolon-collapsible-content:not(.stolon-collapsed),
-.zooid-storage-editor,
-.zooid-storage-editor-group { display: flex; flex-direction: column; gap: var(--stolon-gap-wide); }
-#ZooidStoragePage .zooid-storage-flow > *,
-#ZooidStoragePage #storageServerPicker > *,
-#ZooidStoragePage .stolon-collapsible-content > *,
-.zooid-storage-sidecar .zooid-storage-editor > *,
-.zooid-storage-sidecar .zooid-storage-editor-group > * { flex: none; margin-top: 0 !important; margin-bottom: 0 !important; }
-#ZooidStoragePage .stolon-collapsible-content > div > :last-child { margin-bottom: 0 !important; }
-#ZooidStoragePage .fieldDescription,
-.zooid-storage-sidecar .zooid-storage-editor .fieldDescription { padding-left: 0; }
-.zooid-storage-sidecar .zooid-storage-editor .selectContainer > .fieldDescription,
-.zooid-storage-sidecar .zooid-storage-editor .checkboxContainer > .fieldDescription { margin-bottom: 0 !important; }
-.zooid-storage-editor-group.stolon-hidden,
-#ZooidStoragePage .zooid-storage-flow > .stolon-status-text:empty,
-#ZooidStoragePage .stolon-collapsible-content > .stolon-status-text:empty { display: none; }
-#ZooidStoragePage .zooid-storage-libraries { display: flex; flex-direction: column; gap: var(--stolon-gap-narrow); }
+
+/* zooid-storage-editor */
+/* The library editor's column, whose field descriptions line up with their fields. */
+/* Example: <div class="stolon-stack zooid-storage-editor"><div class="selectContainer"><div class="fieldDescription"></div></div></div> */
+.zooid-storage-editor .fieldDescription { padding-left: 0; }
 
 /* zooid-storage-empty */
 /* The Storage page's empty state, its sentence above the button to the Servers page. */
