@@ -347,6 +347,7 @@ function route(path, q, method, body) {
     if (path === 'MetadataItems') return page(filtered(METADATA, q), q);
     if (/^MetadataItems\/\d+$/.test(path)) return METADATA.find(function (r) { return String(r.Id) === path.split('/')[1]; }) || null;
     if (path === 'LinkCache') return { Enabled: true, LimitBytes: 500e9, UsedBytes: 318e9 };
+    if (path === 'Tables') return { Content: 1248, History: 3920, Metadata: 860, People: 412, Playlists: 6, Users: 4 };
     if (path === 'LibraryStorage') return LIBRARY_STORAGE[serverKeyName(q.get('serverKey'))] || [];
     if (path === 'KeptCopies') return page([
         { Id: 1, SourceItemId: id(0x94001), ServerKey: SERVERS[0].Key, LocalPath: '/media/tv/The Lighthouse Keepers/Season 01/The Lighthouse Keepers S01E01.mkv', Kept: 'Pick', SourceSizeFormatted: '2.1 GB', Status: 'Synced' },
