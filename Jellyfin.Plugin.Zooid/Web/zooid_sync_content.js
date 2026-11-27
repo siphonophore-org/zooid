@@ -182,10 +182,6 @@ export function createContentSyncTableModule(ctx, kit) {
                     var pendingTotal = (status.PendingDownload || 0) + (status.PendingReplacement || 0) + (status.PendingDeletion || 0);
                     show('pendingCount', 'statusGroupPending', pendingTotal,
                         t.format('TitlePendingBreakdown', pendingTotal, status.PendingDownload || 0, status.PendingReplacement || 0, status.PendingDeletion || 0));
-                    // Work held for approval waits until someone approves it, so each kind keeps a card while its setting asks for approval.
-                    show('pendingDownloadCount', 'statusGroupPendingDownload', status.PendingDownload || 0, t.format('StatusCountTitle', t.tr('StatusPendingDownload'), status.PendingDownload || 0));
-                    show('pendingReplacementCount', 'statusGroupPendingReplacement', status.PendingReplacement || 0, t.format('StatusCountTitle', t.tr('StatusPendingReplacement'), status.PendingReplacement || 0));
-                    show('pendingDeletionCount', 'statusGroupPendingDeletion', status.PendingDeletion || 0, t.format('StatusCountTitle', t.tr('StatusPendingDeletion'), status.PendingDeletion || 0));
                     show('deletingCount', 'statusGroupDeleting', status.Deleting || 0, t.format('StatusCountTitle', t.tr('StatusDeleting'), status.Deleting || 0));
                 }).catch(function() {
                     // The status endpoint is not available yet.
@@ -505,9 +501,6 @@ export function createContentSyncTableModule(ctx, kit) {
                     this.table.setFilterOptionVisible('optDeleting', showPendingDelete);
                 }
 
-                ZooidShared.setVisible('statusGroupPendingDownload', showPendingDownload);
-                ZooidShared.setVisible('statusGroupPendingReplacement', showPendingReplace);
-                ZooidShared.setVisible('statusGroupPendingDeletion', showPendingDelete);
                 ZooidShared.setVisible('statusGroupDeleting', showPendingDelete);
 
                 var showAnyPending = showPendingDownload || showPendingReplace || showPendingDelete;

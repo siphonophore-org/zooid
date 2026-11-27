@@ -72,9 +72,6 @@ test('updatePendingFilterVisibility shows the approval states only while their s
     module.updatePendingFilterVisibility({ DownloadNewContentMode: 'RequireApproval', ReplaceExistingContentMode: 'Enabled', DeleteMissingContentMode: 'Disabled' });
     assert.deepEqual(module.table.filterOptions, { optPendingDownload: true, optPendingReplacement: false, optPendingDeletion: false, optDeleting: false });
     var hidden = function (id) { return env.view.querySelector('#' + id).classList.contains('stolon-hidden'); };
-    assert.equal(hidden('statusGroupPendingDownload'), false);
-    assert.equal(hidden('statusGroupPendingReplacement'), true);
-    assert.equal(hidden('statusGroupPendingDeletion'), true);
     assert.equal(hidden('pendingStatusRow'), false);
 });
 
