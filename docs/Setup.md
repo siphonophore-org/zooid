@@ -124,7 +124,9 @@ Select a row to edit that library in a side panel, then select **Save**. The pan
 | **Library filter** | **Filter mode** syncs everything, or only what is picked, or everything but what is picked. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
 | **Negotiate history** | For a Sync server with history sync on, writes merged watch history back to that server. See [History](History.md) |
 
-Below the rows, **Permanent copies** lists the full copies held in that server's Link libraries and why each is a copy. **Turn back into links** makes the selected copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file. A copy covered by an **Always keep** pick stays a copy until the pick is removed.
+Below the rows, **Content** lists every file that server syncs here, with its library, its size, and a badge for how it is kept: **Copied**, **Linked**, **Cached** for a link whose file is in the link cache, or **Permanent copy** for a full copy in a Link library. A file that is not synced also shows its status, and a cached link shows when it was last played. Search by name, and filter by **All**, **Copied**, **Linked**, or **Cached**. While a library links, a **Link cache** bar above the table shows how much of the cache is used, and **Cache settings** opens its settings.
+
+Select rows for the bulk actions. **Turn back into links** makes the selected permanent copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file, and a copy covered by an **Always keep** pick stays a copy until the pick is removed. **Remove from cache** drops the selected cached links' files from the link cache, and the links keep playing from their sources.
 
 ## Settings
 

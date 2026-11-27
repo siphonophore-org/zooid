@@ -729,6 +729,7 @@ div:not(.zooid-form-row) + .zooid-form-row {
 #ZooidStoragePage .stolon-collapsible-content > *,
 .zooid-storage-sidecar .zooid-storage-editor > *,
 .zooid-storage-sidecar .zooid-storage-editor-group > * { flex: none; margin-top: 0 !important; margin-bottom: 0 !important; }
+#ZooidStoragePage .stolon-collapsible-content > div > :last-child { margin-bottom: 0 !important; }
 #ZooidStoragePage .fieldDescription,
 .zooid-storage-sidecar .zooid-storage-editor .fieldDescription { padding-left: 0; }
 .zooid-storage-sidecar .zooid-storage-editor .selectContainer > .fieldDescription,
@@ -742,6 +743,22 @@ div:not(.zooid-form-row) + .zooid-form-row {
 /* The Storage page's empty state, its sentence above the button to the Servers page. */
 /* Example: <div class="stolon-empty-section zooid-storage-empty"><div>No server has library mappings yet.</div><button></button></div> */
 .zooid-storage-empty { display: flex; flex-direction: column; align-items: center; gap: var(--stolon-gap-wide); }
+
+/* zooid-storage-cache-line */
+/* The bar above the Storage table that shows how much of the link cache is used, with Cache settings at its end. */
+/* Example: <div class="zooid-storage-cache-line"><div class="zooid-storage-cache-meter"></div><button></button></div> */
+.zooid-storage-cache-line { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--stolon-gap-narrow); }
+.zooid-storage-cache-line > .fieldDescription { margin: 0 !important; }
+.zooid-storage-cache-meter { flex: 1 1 16rem; min-width: 0; }
+.zooid-storage-cache-meter > * { margin: 0 !important; }
+
+/* zooid-storage-kept-cell */
+/* The Storage table's column of badges saying how each file is kept. It stays on a phone. */
+/* Example: <div class="stolon-table-cell zooid-storage-kept-cell"><span class="stolon-badge stolon-green">Link</span></div> */
+.stolon-table-cell.zooid-storage-kept-cell { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--stolon-gap-narrow) / 2); flex: none; width: 13rem; }
+@media (max-width: 600px) {
+    .stolon-table-cell.zooid-storage-kept-cell { width: auto; flex-direction: column; align-items: flex-end; }
+}
 
 /* zooid-pick-cell */
 /* The check box column of a library editor's picker table, at the row's end. */

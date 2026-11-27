@@ -11,8 +11,8 @@ globalThis.clearTimeout = function () {};
 globalThis.setInterval = function () { return 1; };
 
 var IDS = ['storageStatus', 'storageDisabled', 'storageFiltersOnly', 'storageNoServers', 'btnStorageMapLibraries', 'storageContent', 'storageServerPicker',
-    'storageServerContent', 'storageServerOff', 'storageSummary', 'storageLibraryList', 'storageNoLibraries', 'keptCopiesSection', 'keptCopiesStatus',
-    'keptCopiesTableContainer', 'storageUsageSection', 'storageUsageMeter'];
+    'storageServerContent', 'storageServerOff', 'storageSummary', 'storageLibraryList', 'storageNoLibraries', 'storageItemsSection', 'storageItemsStatus',
+    'storageItemsTableContainer', 'storageCacheLine', 'storageCacheMeter', 'storageCacheText', 'btnStorageCacheSettings'];
 
 // t
 // The strings bag the pure helpers take, in US English.
@@ -196,18 +196,48 @@ test('selecting a library opens its editor, and Save writes its Storage to that 
     assert.equal(statusText(opened.view.querySelector('#storageStatus')), 'Storage saved.');
 });
 
-test('the Usage section shows the link cache as used of its limit only while the cache is on', async function () {
+test('the Content table loads the rows of the picked server, and the cache bar shows how much of the link cache is used while a library links', async function () {
     function answer(cache) {
         return function (options) {
             if (String(options.url) === 'Sync/LinkCache') return Promise.resolve(cache);
+            if (String(options.url).indexOf('Sync/Items?') === 0) return Promise.resolve({ Items: [], TotalCount: 0 });
             return Promise.resolve([]);
         };
     }
     var on = await openPage({ config: { EnableContentSync: true, Servers: [DEN] }, answer: answer({ Enabled: true, UsedBytes: 1073741824, LimitBytes: 4294967296 }) });
-    assert.equal(hidden(on.view, 'storageUsageSection'), false);
-    var text = on.view.querySelector('#storageUsageMeter').textContent;
-    assert.match(text, /Link cache/);
-    assert.match(text, /1 GB of 4 GB used/);
+    assert.equal(hidden(on.view, 'storageItemsSection'), false);
+    var items = on.page.requests.find(function (r) { return String(r.url).indexOf('Sync/Items?') === 0; });
+    assert.ok(items, 'the table asks for the rows');
+    assert.match(String(items.url), /serverKey=den/);
+    assert.equal(hidden(on.view, 'storageCacheLine'), false);
+    assert.equal(hidden(on.view, 'storageCacheText'), true);
+    var meter = on.view.querySelector('#storageCacheMeter').textContent;
+    assert.match(meter, /Link cache/);
+    assert.match(meter, /1 GB of 4 GB used/);
     var off = await openPage({ config: { EnableContentSync: true, Servers: [DEN] }, answer: answer({ Enabled: false, UsedBytes: 0, LimitBytes: 0 }) });
-    assert.equal(hidden(off.view, 'storageUsageSection'), true);
+    assert.equal(hidden(off.view, 'storageCacheText'), false);
+    assert.equal(hidden(off.view, 'storageCacheMeter'), true);
+    var copiesOnly = { Key: 'c', Name: 'C', Url: 'u', ApiKey: 'k', Mode: 'Pull', LibraryMappings: [mapping('a', 'b')] };
+    var none = await openPage({ config: { EnableContentSync: true, Servers: [copiesOnly] }, answer: answer({ Enabled: false, UsedBytes: 0, LimitBytes: 0 }) });
+    assert.equal(hidden(none.view, 'storageCacheLine'), true);
+    var filtersOnly = await openPage({ config: { EnableContentSync: false, EnableHistorySync: true, Servers: [DEN] }, answer: answer({ Enabled: true, UsedBytes: 0, LimitBytes: 1 }) });
+    assert.equal(hidden(filtersOnly.view, 'storageItemsSection'), true);
+});
+
+test('keptBadges says how a file is kept, and its status when it is not synced', async function () {
+    var mod = await loadScript('zooid_storage.js');
+    var labels = function (item) { return mod.keptBadges(item).map(function (b) { return b.label + ':' + b.color; }); };
+    assert.deepEqual(labels({ StorageMode: 'Copy', Status: 'Synced' }), ['StatusCopied:blue']);
+    assert.deepEqual(labels({ StorageMode: 'Copy', Kept: 'Pick', Status: 'Synced' }), ['BadgePermanentCopy:blue']);
+    assert.equal(mod.keptBadges({ StorageMode: 'Copy', Kept: 'Hand', Status: 'Synced' })[0].title, 'HelpKeptHand');
+    assert.deepEqual(labels({ StorageMode: 'Link', Status: 'Synced' }), ['StatusLinked:green']);
+    assert.deepEqual(labels({ StorageMode: 'Link', Cached: true, Status: 'Errored' }), ['StatusCached:orange', 'StatusErrored:red']);
+});
+
+test('itemsParams asks for the picked server and the storage the filter names', async function () {
+    var mod = await loadScript('zooid_storage.js');
+    assert.deepEqual(mod.itemsParams('den', 'all'), { serverKey: 'den', storage: null, cached: null });
+    assert.deepEqual(mod.itemsParams('den', 'copy'), { serverKey: 'den', storage: 'Copy', cached: null });
+    assert.deepEqual(mod.itemsParams('den', 'link'), { serverKey: 'den', storage: 'Link', cached: null });
+    assert.deepEqual(mod.itemsParams('den', 'cached'), { serverKey: 'den', storage: null, cached: 'true' });
 });

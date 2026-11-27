@@ -188,6 +188,58 @@ export function libraryCard(mapping, count, type, contentOn, t, shared) {
     return spec;
 }
 
+// STATE_BADGES
+// The badge of each row status other than Synced, with its string key and color.
+var STATE_BADGES = {
+    Queued: { label: 'StatusQueued', color: 'orange' },
+    Pending: { label: 'StatusPending', color: 'purple' },
+    Errored: { label: 'StatusErrored', color: 'red' },
+    Ignored: { label: 'StatusIgnored', color: 'gray' },
+    Deleting: { label: 'StatusDeleting', color: 'red' }
+};
+
+// KEPT_TITLES
+// The string key of why a permanent copy is a copy, by the Kept reason the Items route gives.
+var KEPT_TITLES = { Pick: 'HelpKeptPick', Hand: 'HelpKeptHand', Own: 'HelpKeptOwn', Unknown: 'HelpKeptUnknown' };
+
+// keptBadges
+// The badges of one content row in the Storage table: how its file is kept here, as Copied, Linked, Cached, or
+// Permanent copy, and its status when it is not synced.
+//
+// Inputs
+// item [object]: The Items route's row.
+//
+// Output
+// [object[]]: Each badge's string key, color, and for a permanent copy the string key of its title. The filter names
+//   its options with the same keys.
+export function keptBadges(item) {
+    var badges = [];
+    var link = item.StorageMode === 'Link' || item.StorageMode === 'Promoting';
+    if (link && item.Cached) badges.push({ label: 'StatusCached', color: 'orange' });
+    else if (link) badges.push({ label: 'StatusLinked', color: 'green' });
+    else if (item.Kept) badges.push({ label: 'BadgePermanentCopy', color: 'blue', title: KEPT_TITLES[item.Kept] || 'HelpKeptUnknown' });
+    else badges.push({ label: 'StatusCopied', color: 'blue' });
+    if (STATE_BADGES[item.Status]) badges.push(STATE_BADGES[item.Status]);
+    return badges;
+}
+
+// itemsParams
+// The Items route's query for the Storage table: the picked server, and the storage the filter names.
+//
+// Inputs
+// serverKey [string]: The picked server.
+// filter [string]: all, copy, link, or cached.
+//
+// Output
+// [object]: The query parameters, where null leaves one out.
+export function itemsParams(serverKey, filter) {
+    return {
+        serverKey: serverKey,
+        storage: filter === 'copy' ? 'Copy' : filter === 'link' ? 'Link' : null,
+        cached: filter === 'cached' ? 'true' : null
+    };
+}
+
 // storedMappingFor
 // The stored mapping an editor was opened from: the same position when it still holds the same pair of libraries,
 // else the first mapping with that pair. A mapping removed meanwhile has none.
@@ -414,7 +466,7 @@ export default function (view) {
         setVisible('storageServerOff', !!server && server.IsEnabled === false);
         counts = null;
         renderLibraries();
-        reloadKeptCopies();
+        reloadItems();
         loadCounts();
     }
 
@@ -841,33 +893,33 @@ export default function (view) {
         });
     }
 
-    var keptTable = null;
-    var keptRows = {};
-    // The badge of each reason a copy is kept, with the keys of its label and its title.
-    var KEPT_BADGES = {
-        Pick: { label: 'HeaderAlwaysKeep', cls: 'stolon-blue', title: 'HelpKeptPick' },
-        Hand: { label: 'BadgeKeptByHand', cls: 'stolon-purple', title: 'HelpKeptHand' },
-        Own: { label: 'BadgeAlreadyHere', cls: 'stolon-green', title: 'HelpKeptOwn' },
-        Unknown: { label: 'BadgeEarlierCopy', cls: 'stolon-gray', title: 'HelpKeptUnknown' }
-    };
+    var itemsTable = null;
 
-    function ensureKeptTable() {
-        if (keptTable || !createPaginatedTable) return keptTable;
-        keptTable = createPaginatedTable(view, ZooidShared, {
-            containerId: 'keptCopiesTableContainer',
-            endpoint: 'KeptCopies',
+    // ensureItemsTable
+    // Builds the table of the picked server's content rows, with a search, a filter by how each file is kept, and the
+    // bulk actions Turn back into links and Remove from cache.
+    //
+    // Output
+    // [object]: The table handle, or null without the table builder.
+    function ensureItemsTable() {
+        if (itemsTable || !createPaginatedTable) return itemsTable;
+        itemsTable = createPaginatedTable(view, ZooidShared, {
+            containerId: 'storageItemsTableContainer',
+            endpoint: 'Items',
             pagination: { pageSize: 50 },
-            search: { enabled: true, placeholder: tr('PlaceholderSearchPermanentCopies') },
-            selection: {
-                enabled: true,
-                idKey: 'Id',
-                onSelectionChange: function (ids) {
-                    var btn = getEl('btnUnkeepCopies');
-                    if (btn) btn.disabled = ids.length === 0;
-                }
+            search: { enabled: true, placeholder: tr('PlaceholderSearchFiles') },
+            selection: { enabled: true, idKey: 'Id', onSelectionChange: updateBulkButtons },
+            filters: {
+                label: tr('TabStorage'),
+                allValue: 'all',
+                options: [
+                    { value: 'copy', label: tr('StatusCopied') },
+                    { value: 'link', label: tr('StatusLinked') },
+                    { value: 'cached', label: tr('StatusCached') }
+                ],
+                buildParams: function (value) { return itemsParams(selectedKey, value); }
             },
-            filters: { buildParams: function () { return { serverKey: selectedKey }; } },
-            emptyState: { message: tr('EmptyPermanentCopies') },
+            emptyState: { message: tr('EmptyStorageFiles') },
             columns: [
                 {
                     key: 'name',
@@ -876,94 +928,91 @@ export default function (view) {
                     className: 'stolon-table-cell-with-thumb',
                     image: function (item) { return ZooidShared.proxyImage(item.SourceItemId, false, item.ServerKey || selectedKey); },
                     render: function (item) {
-                        keptRows[String(item.Id)] = item;
                         var path = item.LocalPath || item.SourcePath || '';
+                        var line = [item.LocalLibraryName, item.SourceSizeFormatted].filter(Boolean).join(' · ');
                         return '<div class="zooid-item-info">' +
                                 '<div class="zooid-item-name" title="' + escapeHtml(path) + '">' + escapeHtml(ZooidShared.getFileName(path)) + '</div>' +
-                                '<div class="zooid-item-path">' + escapeHtml(path) + '</div>' +
+                                '<div class="zooid-item-path">' + escapeHtml(line) + '</div>' +
                             '</div>';
                     }
                 },
                 {
-                    key: 'details',
-                    label: tr('ColumnDetails'),
+                    key: 'kept',
+                    label: tr('TabStorage'),
+                    type: 'custom',
+                    className: 'zooid-storage-kept-cell',
+                    render: function (item) {
+                        return keptBadges(item).map(function (badge) {
+                            return '<span class="stolon-badge stolon-' + badge.color + '"' + (badge.title ? ' title="' + escapeHtml(tr(badge.title)) + '"' : '') + '>' + escapeHtml(tr(badge.label)) + '</span>';
+                        }).join(' ');
+                    }
+                },
+                {
+                    key: 'played',
+                    label: tr('LabelLastPlayed'),
                     type: 'custom',
                     className: 'zooid-details-cell',
                     render: function (item) {
-                        var badge = KEPT_BADGES[item.Kept] || KEPT_BADGES.Unknown;
-                        var size = item.SourceSizeFormatted || '';
-                        return '<span class="stolon-badge ' + badge.cls + '" title="' + escapeHtml(tr(badge.title)) + '">' + escapeHtml(tr(badge.label)) + '</span>' +
-                            (size ? ' <span class="stolon-badge stolon-purple">' + escapeHtml(size) + '</span>' : '');
+                        return item.CachedLastPlayedAt ? '<span class="zooid-item-path">' + escapeHtml(ZooidShared.formatRelativeTime(new Date(item.CachedLastPlayedAt))) + '</span>' : '';
                     }
-                },
-                { key: 'Status', label: tr('HeaderStatus'), type: 'status' }
+                }
             ]
         });
-        var bulk = keptTable.getBulkActionsContainer();
+        var bulk = itemsTable.getBulkActionsContainer();
         if (bulk) {
-            bulk.innerHTML = '<button is="emby-button" type="button" id="btnUnkeepCopies" class="raised stolon-button stolon-primary stolon-small zooid-kept-bulk-button" disabled>' +
-                '<span class="material-icons" aria-hidden="true">link</span><span>' + escapeHtml(tr('ButtonTurnBackIntoLinks')) + '</span></button>';
-            var unkeep = bulk.querySelector('#btnUnkeepCopies');
-            if (unkeep) unkeep.addEventListener('click', unkeepSelected);
+            bulk.innerHTML =
+                '<button is="emby-button" type="button" id="btnUnkeepCopies" class="raised stolon-button stolon-primary stolon-small zooid-kept-bulk-button" disabled>' +
+                    '<span class="material-icons" aria-hidden="true">link</span><span>' + escapeHtml(tr('ButtonTurnBackIntoLinks')) + '</span></button>' +
+                '<button is="emby-button" type="button" id="btnRemoveCached" class="raised stolon-button stolon-secondary stolon-small zooid-kept-bulk-button" disabled>' +
+                    '<span class="material-icons" aria-hidden="true">delete</span><span>' + escapeHtml(tr('ButtonRemoveFromCache')) + '</span></button>';
+            var unkeepButton = bulk.querySelector('#btnUnkeepCopies');
+            if (unkeepButton) unkeepButton.addEventListener('click', function () { unkeepSelected(unkeepButton); });
+            var removeButton = bulk.querySelector('#btnRemoveCached');
+            if (removeButton) removeButton.addEventListener('click', function () { removeCachedSelected(removeButton); });
         }
-        return keptTable;
+        return itemsTable;
     }
 
-    function isNotFound(err) {
-        return !!err && (err.status === 404 || (err.response && err.response.status === 404));
+    // selectedKept and selectedCached
+    // The selected rows each bulk action applies to: permanent copies, and cached links.
+    function selectedKept() {
+        return itemsTable ? itemsTable.getSelectedItems().filter(function (item) { return !!item.Kept && item.StorageMode !== 'Link'; }) : [];
     }
 
-    // Asks for one row first. A server without the kept copies endpoint answers 404, and the section
-    // stays hidden. Kept copies only exist in Link libraries, so a server without one hides it too.
-    function reloadKeptCopies() {
-        var server = selectedServer();
-        var hasLink = enabledMappings(server).some(function (e) { return isLink(e.mapping); });
-        if (!server || !hasLink || !contentOn) {
-            setVisible('keptCopiesSection', false);
-            return;
-        }
-        var key = server.Key;
-        apiRequest('KeptCopies?serverKey=' + encodeURIComponent(key) + '&skip=0&take=1', 'GET').then(function () {
-            if (key !== selectedKey) return;
-            showKeptTable(key, true);
-        }, function (err) {
-            if (key !== selectedKey) return;
-            if (isNotFound(err)) {
-                setVisible('keptCopiesSection', false);
-                return;
-            }
-            showKeptTable(key, false);
-        });
+    function selectedCached() {
+        return itemsTable ? itemsTable.getSelectedItems().filter(function (item) { return !!item.Cached; }) : [];
     }
 
-    // showKeptTable
-    // Shows the Permanent copies section and loads its table for one server.
+    // updateBulkButtons
+    // Turns on each bulk action while the selection holds a row it applies to.
+    function updateBulkButtons() {
+        var unkeepButton = getEl('btnUnkeepCopies');
+        if (unkeepButton) unkeepButton.disabled = selectedKept().length === 0;
+        var removeButton = getEl('btnRemoveCached');
+        if (removeButton) removeButton.disabled = selectedCached().length === 0;
+    }
+
+    // afterBulk
+    // Clears the selection and reads the table and the counts again after a bulk action.
+    function afterBulk(btn) {
+        if (btn) btn.disabled = false;
+        if (!itemsTable) return;
+        itemsTable.clearSelection();
+        itemsTable.reload();
+        loadCounts();
+        loadCacheLine();
+    }
+
+    // unkeepSelected
+    // Turns the selected permanent copies back into links and says what was queued and what was skipped.
     //
     // Inputs
-    // key [string]: The server's key.
-    // fresh [boolean]: Whether to clear the selection and the kept rows first.
-    function showKeptTable(key, fresh) {
-        setVisible('keptCopiesSection', true);
-        var table = ensureKeptTable();
-        if (!table) return;
-        if (fresh) {
-            keptRows = {};
-            table.clearSelection();
-        }
-        // Leaving the page disconnected the scroll observer, so showing the table again connects it.
-        table.reconnectObserver();
-        table.setFilterValue(key);
-        table.reload();
-    }
-
-    function unkeepSelected() {
-        if (!keptTable) return;
-        var selected = keptTable.getSelectedIds();
-        var ids = selected.map(function (id) { return parseInt(id, 10); }).filter(function (id) { return !isNaN(id); });
-        if (ids.length === 0) return;
-        var btn = getEl('btnUnkeepCopies');
+    // btn [HTMLElement]: The button that asked, held off while the request runs.
+    function unkeepSelected(btn) {
+        var rows = selectedKept();
+        if (rows.length === 0) return;
         if (btn) btn.disabled = true;
-        apiRequest('KeptCopies/Unkeep', 'POST', { Ids: ids }).then(function (result) {
+        apiRequest('KeptCopies/Unkeep', 'POST', { Ids: rows.map(function (row) { return row.Id; }) }).then(function (result) {
             var queued = (result && result.Queued) || 0;
             var skipped = (result && result.Skipped) || [];
             var lines = [ZooidShared.plural(queued, 'ToastCopiesUnkeptOne', 'ToastCopiesUnkeptMany')];
@@ -971,7 +1020,7 @@ export default function (view) {
                 var picked = 0;
                 var reasons = {};
                 skipped.forEach(function (s) {
-                    var row = keptRows[String(s.Id)];
+                    var row = rows.find(function (r) { return r.Id === s.Id; });
                     if (row && row.Kept === 'Pick') picked++;
                     var reason = s.Reason || tr('StatusSkipped');
                     reasons[reason] = (reasons[reason] || 0) + 1;
@@ -979,45 +1028,79 @@ export default function (view) {
                 lines.push(format('ToastUnkeepSkipped', skipped.length, Object.keys(reasons).map(function (reason) {
                     return format('ReasonCount', reason, reasons[reason]);
                 }).join(', ')));
-                if (picked > 0) {
-                    lines.push(tr('HelpUnkeepPicked'));
-                }
+                if (picked > 0) lines.push(tr('HelpUnkeepPicked'));
             }
-            ZooidShared.setStatus('keptCopiesStatus', lines.join(' '), false, { timeout: 15000 });
-        }, function (err) {
-            console.error('Unkeep failed:', err);
-            ZooidShared.setStatus('keptCopiesStatus', tr('ErrorUnkeepCopies'), true, { timeout: 10000 });
-        }).then(function () {
-            keptTable.clearSelection();
-            keptRows = {};
-            keptTable.reload();
+            ZooidShared.setStatus('storageItemsStatus', lines.join(' '), false, { timeout: 15000 });
+        }, function () {
+            ZooidShared.setStatus('storageItemsStatus', tr('ErrorUnkeepCopies'), true, { timeout: 10000 });
+        }).then(function () { afterBulk(btn); });
+    }
+
+    // removeCachedSelected
+    // Asks first, then drops the selected cached links' files from the link cache.
+    //
+    // Inputs
+    // btn [HTMLElement]: The button that asked, held off while the request runs.
+    function removeCachedSelected(btn) {
+        var rows = selectedCached();
+        if (rows.length === 0) return;
+        zooidModule.confirmDialog(tr('ConfirmRemoveFromCache'), {
+            title: ZooidShared.plural(rows.length, 'TitleRemoveCachedOne', 'TitleRemoveCachedMany'),
+            confirmText: tr('ButtonRemoveFromCache'),
+            destructive: true
+        }).then(function (confirmed) {
+            if (!confirmed) return;
+            if (btn) btn.disabled = true;
+            apiRequest('LinkCache/Remove', 'POST', { SourceItemIds: rows.map(function (row) { return row.SourceItemId; }) }).then(function (result) {
+                ZooidShared.setStatus('storageItemsStatus', ZooidShared.plural((result && result.Removed) || 0, 'ToastCachedRemovedOne', 'ToastCachedRemovedMany'), false);
+            }, function (err) {
+                ZooidShared.setStatus('storageItemsStatus', ZooidShared.errorText(err, tr('ErrorRemoveCached')), true);
+            }).then(function () { afterBulk(btn); });
         });
     }
 
-    // The Usage Meter of the link cache, or null before the first draw.
-    var usageMeter = null;
+    // reloadItems
+    // Shows the table for the picked server while content sync is on, and reads its first page again.
+    function reloadItems() {
+        var show = contentOn && !!selectedServer();
+        setVisible('storageItemsSection', show);
+        if (!show) return;
+        var table = ensureItemsTable();
+        if (!table) return;
+        // Leaving the page disconnected the scroll observer, so showing the table again connects it.
+        table.reconnectObserver();
+        table.clearSelection();
+        table.reload();
+    }
 
-    // loadUsage
-    // Draws how much of the link cache's room is used. The section shows only while the cache is on.
-    function loadUsage() {
-        if (!contentOn) {
-            setVisible('storageUsageSection', false);
+    // The Usage Meter of the link cache, or null before the first draw.
+    var cacheMeter = null;
+
+    // loadCacheLine
+    // Draws how much of the link cache is used as a bar above the table, while a library links. With the cache off it
+    // says so instead.
+    function loadCacheLine() {
+        var linking = storageServers(currentConfig).some(function (server) { return enabledMappings(server).some(function (e) { return isLink(e.mapping); }); });
+        if (!contentOn || !linking) {
+            setVisible('storageCacheLine', false);
             return;
         }
         apiRequest('LinkCache', 'GET').then(function (cache) {
-            var holder = getEl('storageUsageMeter');
-            var inUse = !!cache && !!cache.Enabled && cache.LimitBytes > 0;
-            setVisible('storageUsageSection', inUse && !!holder);
-            if (!inUse || !holder) return;
+            var on = !!cache && !!cache.Enabled && cache.LimitBytes > 0;
+            setVisible('storageCacheLine', true);
+            setVisible('storageCacheMeter', on);
+            setVisible('storageCacheText', !on);
+            if (!on) return;
             var value = { used: cache.UsedBytes || 0, total: cache.LimitBytes };
-            if (usageMeter) {
-                usageMeter.setValue(value);
+            if (cacheMeter) {
+                cacheMeter.setValue(value);
                 return;
             }
-            usageMeter = zooidModule.createUsageMeter({ label: tr('HeaderLinkCache'), bytes: true, used: value.used, total: value.total });
-            holder.appendChild(usageMeter.element);
+            cacheMeter = zooidModule.createUsageMeter({ label: tr('HeaderLinkCache'), bytes: true, used: value.used, total: value.total });
+            var holder = getEl('storageCacheMeter');
+            if (holder) holder.appendChild(cacheMeter.element);
         }).catch(function () {
-            setVisible('storageUsageSection', false);
+            setVisible('storageCacheLine', false);
         });
     }
 
@@ -1038,7 +1121,7 @@ export default function (view) {
             }
             renderServerPicker();
             renderSelected();
-            loadUsage();
+            loadCacheLine();
         }).catch(function () {
             ZooidShared.setStatus('storageStatus', tr('ErrorLoadStorage'), true, { timeout: 0 });
         });
@@ -1050,11 +1133,13 @@ export default function (view) {
         ZooidShared.initCollapsibles();
         var mapButton = getEl('btnStorageMapLibraries');
         if (mapButton) mapButton.addEventListener('click', function () { zooidModule.openTool(view, 'servers'); });
+        var settingsButton = getEl('btnStorageCacheSettings');
+        if (settingsButton) settingsButton.addEventListener('click', function () { zooidModule.openTool(view, 'settings'); });
     }
 
     // hidePage
-    // Stops the permanent copies table's observer when the page hides. Stolon closes an open editor.
+    // Stops the table's scroll observer when the page hides. Stolon closes an open editor.
     function hidePage() {
-        if (keptTable && keptTable.disconnectObserver) keptTable.disconnectObserver();
+        if (itemsTable && itemsTable.disconnectObserver) itemsTable.disconnectObserver();
     }
 }

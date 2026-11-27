@@ -86,7 +86,7 @@ const shots = {
   'settings/Linking': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepStream'), 'settings/Linking.png'); } },
   'settings/Library Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepLibraries'), 'settings/Library Mapping.png'); } },
   'settings/User Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepUsers'), 'settings/User Mapping.png'); } },
-  'settings/Storage': { page: 'storage', vp: { width: 800, height: 2400 }, act: async (p) => { await section(p, 'Permanent copies'); await p.waitForTimeout(800); await content(p, 'settings/Storage.png'); } },
+  'settings/Storage': { page: 'storage', vp: { width: 800, height: 2600 }, act: async (p) => { await p.waitForTimeout(1500); await content(p, 'settings/Storage.png'); } },
   'settings/Storage Phone': { page: 'storage', vp: { width: 375, height: 1400 }, act: async (p) => { await p.waitForTimeout(800); await contentTo(p, '#storageLibrariesSection', 'settings/Storage Phone.png'); } },
   'settings/Storage Library': { page: 'storage', vp: { width: 800, height: 1300 }, act: async (p) => {
       await p.waitForTimeout(800);

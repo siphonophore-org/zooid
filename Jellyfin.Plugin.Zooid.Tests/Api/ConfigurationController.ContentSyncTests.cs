@@ -258,6 +258,44 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     }
 
     /// <summary>
+    /// A cached link carries when it was last played since it was cached, and a plain link carries none.
+    /// True: the Storage page's table shows when each cached link last played.
+    /// False: the column would stay empty, or show a time for a link that is not cached.
+    /// </summary>
+    [Fact]
+    public void GetSyncItems_CachedLink_CarriesWhenItWasLastPlayed()
+    {
+        var cache = Cache(holding: CachedLink);
+        cache.Played(CachedLink);
+        _harness.AddContent(CachedLink, change: r => r.StorageMode = StorageMode.Link);
+        _harness.AddContent("other", change: r => r.StorageMode = StorageMode.Link);
+        using var services = _harness.Services(s => s.AddSingleton(cache));
+
+        var page = Page(_harness.Configuration(services).GetSyncItems(_harness.Content, storage: "Link"));
+
+        Assert.NotNull(page.Items.Single(i => i.SourceItemId == CachedLink).CachedLastPlayedAt);
+        Assert.Null(page.Items.Single(i => i.SourceItemId == "other").CachedLastPlayedAt);
+    }
+
+    /// <summary>
+    /// Removing cached links drops only the named files that the cache holds, and an empty request is refused.
+    /// True: Remove from cache frees exactly what was selected.
+    /// False: a removal would miss its file, or count files the cache never held.
+    /// </summary>
+    [Fact]
+    public void RemoveCachedLinks_NamedFiles_DropsOnlyThose()
+    {
+        var cache = Cache(holding: CachedLink);
+
+        var refused = _harness.Configuration().RemoveCachedLinks(cache, new BulkItemsRequest());
+        var result = _harness.Configuration().RemoveCachedLinks(cache, new BulkItemsRequest { SourceItemIds = { CachedLink, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } });
+
+        Assert.IsType<BadRequestObjectResult>(refused);
+        Assert.Equal(1, Read<int>(result, "Removed"));
+        Assert.False(cache.Holds(CachedLink));
+    }
+
+    /// <summary>
     /// Library storage answers an empty list for a server key that names no entry, or none at all.
     /// True: a server removed on another tab shows no counts on the Storage page.
     /// False: a missing key would count every server's rows, or fail the page.
@@ -663,6 +701,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     [InlineData(nameof(ConfigurationController.QueueItems), "POST", "QueueItems")]
     [InlineData(nameof(ConfigurationController.GetLinkCache), "GET", "LinkCache")]
     [InlineData(nameof(ConfigurationController.ClearLinkCache), "POST", "LinkCache/Clear")]
+    [InlineData(nameof(ConfigurationController.RemoveCachedLinks), "POST", "LinkCache/Remove")]
     [InlineData(nameof(ConfigurationController.PromoteItems), "POST", "PromoteItems")]
     [InlineData(nameof(ConfigurationController.GetLibraryStorage), "GET", "LibraryStorage")]
     [InlineData(nameof(ConfigurationController.GetKeptCopies), "GET", "KeptCopies")]

@@ -180,6 +180,16 @@ var CONTENT = [
     contentRow(4, '/data/family/The Brave Little Kite (2018)/The Brave Little Kite (2018).mp4', ['Family Movies', 'Kids'], 'Errored', { ErrorMessage: 'Not enough free space on /media/kids.' })
 ];
 
+// Basement's content rows as the Storage tab's table lists them: copies, links, cached links, and permanent copies.
+var STORAGE_ROWS = CONTENT.concat([
+    contentRow(5, '/data/shows/Garden Detectives/Season 02/Garden Detectives S02E07.mkv', ['Shows', 'TV Shows'], 'Synced', { StorageMode: 'Copy', Kept: 'Hand', SourceSizeFormatted: '1.4 GB' }),
+    contentRow(6, '/data/shows/Garden Detectives/Season 02/Garden Detectives S02E08.mkv', ['Shows', 'TV Shows'], 'Synced', { StorageMode: 'Link', Cached: true, CachedLastPlayedAt: ago(180), SourceSizeFormatted: '1.3 GB' }),
+    contentRow(7, '/data/shows/Small Town Bakers/Season 01/Small Town Bakers S01E02.mkv', ['Shows', 'TV Shows'], 'Synced', { StorageMode: 'Link', SourceSizeFormatted: '980 MB' }),
+    contentRow(8, '/data/shows/Small Town Bakers/Season 01/Small Town Bakers S01E03.mkv', ['Shows', 'TV Shows'], 'Synced', { StorageMode: 'Link', SourceSizeFormatted: '1.1 GB' }),
+    contentRow(9, '/data/movies/Northern Static (2019)/Northern Static (2019).mkv', ['Movies', 'Movies'], 'Synced', { SourceSizeFormatted: '5.2 GB' }),
+    contentRow(10, '/data/shows/The Lighthouse Keepers/Season 01/The Lighthouse Keepers S01E01.mkv', ['Shows', 'TV Shows'], 'Synced', { StorageMode: 'Copy', Kept: 'Pick', SourceSizeFormatted: '2.1 GB' })
+]).map(function (row) { return Object.assign({ SourceSizeFormatted: '4.6 GB' }, row, { SourceSizeFormatted: row.SourceSizeFormatted || '4.6 GB' }); });
+
 // Metadata rows on the Sync tab, and the detail of each.
 function meta(o) {
     return Object.assign({ Name: '', OriginalTitle: null, Overview: '', OfficialRating: 'PG-13', CommunityRating: 7.4, PremiereDate: '2022-03-18T00:00:00Z', ProductionYear: 2022,
@@ -320,6 +330,16 @@ function route(path, q, method, body) {
     if (path === 'PendingSize') return { TotalPendingBytes: 7.3e9 };
     if (path === 'Items') {
         var storage = q.get('storage');
+        if (q.get('serverKey')) {
+            if (q.get('serverKey') !== SERVERS[0].Key) return page([], q);
+            return page(filtered(STORAGE_ROWS, q).filter(function (r) {
+                var link = r.StorageMode === 'Link';
+                if (storage === 'Copy' && link) return false;
+                if (storage === 'Link' && !link) return false;
+                if (q.get('cached') && !r.Cached) return false;
+                return true;
+            }), q);
+        }
         if (storage) return { Items: [], TotalCount: storage === 'Copy' ? 1284 : q.get('cached') ? 96 : 3410 };
         return page(filtered(CONTENT, q), q);
     }

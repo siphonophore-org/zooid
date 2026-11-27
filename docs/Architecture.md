@@ -250,7 +250,7 @@ Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's too
 | **Users** | `zooid_users.html` and `zooid_sync_users.js` | The `UserSyncUsers` routes, `UserStatus`, and `Tasks/{taskKey}/Run` |
 | **Queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
-| **Storage** | `zooid_storage.html` | `LibraryStorage`, `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep`, `LinkCache` |
+| **Storage** | `zooid_storage.html` | `LibraryStorage`, `Items`, `SourceLibraryItems`, `KeptCopies/Unkeep`, `LinkCache`, `LinkCache/Remove` |
 | **Statistics** | `zooid_statistics.html` | `Statistics` |
 | **Settings** | `zooid_settings.html` | `GetSourceUsers`, `LinkCache`, `LinkCache/Clear` |
 | **Troubleshooting** | `zooid_troubleshooting.html` | `Reset/{table}` |

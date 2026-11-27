@@ -66,7 +66,8 @@ public partial class ConfigurationController
             pendingTypeFilter = parsedPendingType;
         }
 
-        var cachedIds = cached ? cache?.List().Select(e => e.LinkId).ToList() ?? new List<string>() : null;
+        var cacheEntries = cache?.List().ToDictionary(e => e.LinkId, StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, Services.Links.CacheEntry>(StringComparer.OrdinalIgnoreCase);
+        var cachedIds = cached ? cacheEntries.Keys.ToList() : null;
         bool? links = string.Equals(storage, "Link", StringComparison.OrdinalIgnoreCase) ? true
             : string.Equals(storage, "Copy", StringComparison.OrdinalIgnoreCase) ? false
             : null;
@@ -115,6 +116,7 @@ public partial class ConfigurationController
                     CompanionFiles = i.CompanionFiles,
                     StorageMode = i.StorageMode.ToString(),
                     Cached = i.StorageMode == Models.ContentSync.StorageMode.Link && cache?.Holds(i.SourceItemId) == true,
+                    CachedLastPlayedAt = i.StorageMode == Models.ContentSync.StorageMode.Link && cacheEntries.TryGetValue(i.SourceItemId, out var entry) ? entry.LastPlayedAt : null,
                     Kept = i.Kept == Models.ContentSync.KeptReason.None ? null : i.Kept.ToString()
                 };
             }).ToList(),
@@ -318,6 +320,38 @@ public partial class ConfigurationController
         cache.Wipe();
         _logger.LogInformation("The link cache was emptied from the dashboard");
         return NoContent();
+    }
+
+    /// <summary>
+    /// Drops the named files from the link cache. Their links keep playing from their sources.
+    /// </summary>
+    /// <param name="cache">Reads and empties the link cache.</param>
+    /// <param name="request">The link ids of the files to drop.</param>
+    /// <returns>How many files were dropped.</returns>
+    [HttpPost("LinkCache/Remove")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult RemoveCachedLinks([FromServices] Services.Links.LinkCache cache, [FromBody] BulkItemsRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(cache);
+        if (request?.SourceItemIds == null || request.SourceItemIds.Count == 0)
+        {
+            return BadRequest(Text(TranslationKeys.ErrorSelectItems));
+        }
+
+        var listed = cache.List().Select(entry => entry.LinkId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var removed = 0;
+        foreach (var id in request.SourceItemIds.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (listed.Contains(id))
+            {
+                cache.Remove(id);
+                removed++;
+            }
+        }
+
+        _logger.LogInformation("{Count} files were removed from the link cache from the dashboard", removed);
+        return Ok(new { Removed = removed });
     }
 
     /// <summary>

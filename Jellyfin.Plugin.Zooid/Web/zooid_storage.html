@@ -19,7 +19,7 @@
 
                 <div id="storageNoServers" class="stolon-empty-section zooid-storage-empty stolon-hidden">
                     <div data-str="EmptyStorageServers">No server has library mappings yet. Map libraries on the Servers page.</div>
-                    <button is="emby-button" type="button" id="btnStorageMapLibraries" class="raised stolon-button primary">
+                    <button is="emby-button" type="button" id="btnStorageMapLibraries" class="raised stolon-button stolon-primary">
                         <span class="material-icons" aria-hidden="true">dns</span><span data-str="ButtonMapLibraries">Map libraries</span>
                     </button>
                 </div>
@@ -57,33 +57,26 @@
                             </div>
                         </div>
 
-                        <!-- Permanent copies -->
+                        <!-- Content -->
+                        <!-- Every content row of the picked server, filtered by how its file is kept, with the link cache's use above while a library links. -->
 
-                        <div id="keptCopiesSection" class="stolon-collapsible-section stolon-hidden">
-                            <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="keptCopiesContent">
-                                <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">content_copy</span></span>
-                                <span class="stolon-collapsible-title" data-str="HeaderPermanentCopies">Permanent copies</span>
-                                <span class="stolon-collapsible-icon">&#9660;</span>
-                            </button>
-                            <div id="keptCopiesContent" class="stolon-collapsible-content stolon-collapsed">
-                                <div class="fieldDescription" data-str="HelpPermanentCopies">Lists the full copies in this server's Link libraries. Turning one back into a link moves the copy into the link cache.</div>
-                                <div id="keptCopiesStatus" class="stolon-status-text" role="status"></div>
-                                <div id="keptCopiesTableContainer"></div>
+                        <div id="storageItemsSection" class="stolon-collapsible-section stolon-fixed stolon-hidden">
+                            <div class="stolon-collapsible-header">
+                                <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">folder_copy</span></span>
+                                <span class="stolon-collapsible-title" data-str="SyncTypeContent">Content</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Link cache -->
-                    <!-- Shows how much of the link cache's room is used, while the cache is on. It counts every server. -->
-
-                    <div id="storageUsageSection" class="stolon-collapsible-section stolon-hidden">
-                        <button type="button" class="stolon-collapsible-header stolon-collapsed" aria-expanded="false" data-target="storageUsageContent">
-                            <span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">cached</span></span>
-                            <span class="stolon-collapsible-title" data-str="HeaderLinkCache">Link cache</span>
-                            <span class="stolon-collapsible-icon">&#9660;</span>
-                        </button>
-                        <div id="storageUsageContent" class="stolon-collapsible-content stolon-collapsed">
-                            <div id="storageUsageMeter"></div>
+                            <div class="stolon-collapsible-content">
+                                <div class="fieldDescription" data-str="HelpStorageItems">Lists every file this server syncs here, and how it is kept.</div>
+                                <div id="storageCacheLine" class="zooid-storage-cache-line stolon-hidden">
+                                    <div id="storageCacheMeter" class="zooid-storage-cache-meter stolon-hidden"></div>
+                                    <span id="storageCacheText" class="fieldDescription stolon-hidden" data-str="HelpLinkCacheOff">The link cache is off. Turn it on under Settings to keep played links here.</span>
+                                    <button is="emby-button" type="button" id="btnStorageCacheSettings" class="raised stolon-button stolon-secondary stolon-small">
+                                        <span class="material-icons" aria-hidden="true">settings</span><span data-str="ButtonCacheSettings">Cache settings</span>
+                                    </button>
+                                </div>
+                                <div id="storageItemsStatus" class="stolon-status-text" role="status"></div>
+                                <div id="storageItemsTableContainer"></div>
+                            </div>
                         </div>
                     </div>
 

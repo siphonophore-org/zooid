@@ -596,7 +596,7 @@ Turns links into full copies, the **Keep a full local copy** action on the **Con
 { "Promoted": 2, "FromCache": 1, "Skipped": 0 }
 ```
 
-Content rows from `GET /Sync/Items` carry `StorageMode`, which is `Copy`, `Link`, `Promoting` for a link on its way to a copy, or `Unkeeping` for a copy on its way back to a link. They also carry `Cached`, true for a link whose file is in the link cache. On `GET /Sync/Items`, `cached=true` lists only those, and `storage=Copy` or `storage=Link` lists only copies or links. `serverKey={key}` lists only one server entry's rows.
+Content rows from `GET /Sync/Items` carry `StorageMode`, which is `Copy`, `Link`, `Promoting` for a link on its way to a copy, or `Unkeeping` for a copy on its way back to a link. They also carry `Cached`, true for a link whose file is in the link cache, and `CachedLastPlayedAt`, when such a link was last played since it was cached. On `GET /Sync/Items`, `cached=true` lists only those, and `storage=Copy` or `storage=Link` lists only copies or links. `serverKey={key}` lists only one server entry's rows.
 
 #### GET /Sync/LibraryStorage?serverKey={key}
 
@@ -608,7 +608,19 @@ What each library mapping of one server entry holds here, for the **Storage** pa
 
 #### GET /Sync/KeptCopies?serverKey={key}&search={text}&skip={n}&take={n}
 
-The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Content** tool, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
+The full copies held in one server entry's Link mappings, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Content** tool, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
+
+#### POST /Sync/LinkCache/Remove
+
+Drops the named links' files from the link cache, as **Remove from cache** on the **Storage** page does. The links keep playing from their sources. An id the cache does not hold is passed over, and an empty list is refused.
+
+```json
+{ "SourceItemIds": [ "080a862966d3a9f10dedfa49cfe085a2" ] }
+```
+
+```json
+{ "Removed": 1 }
+```
 
 #### POST /Sync/KeptCopies/Unkeep
 

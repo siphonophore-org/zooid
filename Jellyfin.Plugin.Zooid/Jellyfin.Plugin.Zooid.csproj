@@ -128,4 +128,10 @@
     <JellyfinString Include="Yes" />
   </ItemGroup>
 
+  <!-- Local strings whose English matches a Jellyfin string of another meaning. Jellyfin's Copied is a clipboard copy, and
+       StatusCopied is a file kept as a full copy. -->
+  <ItemGroup>
+    <JellyfinTextMatch Include="StatusCopied" />
+  </ItemGroup>
+
 </Project>
