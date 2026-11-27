@@ -4,7 +4,7 @@ This page walks through a first setup, from opening the Zooid page to reading th
 
 ## The Zooid Page
 
-Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar. Each sync type has its own tool, which joins or leaves the sidebar as soon as that type is turned on or off.
+Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar. Each sync type has its own tool, which joins or leaves the sidebar as soon as that type is turned on or off. **Storage** shows once a server this one pulls from has library mappings.
 
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
