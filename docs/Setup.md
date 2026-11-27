@@ -152,6 +152,8 @@ Each sync type's page describes its options. See [Sync Types](SyncTypes.md).
 
 The **Dashboard** shows how the servers, the change queue, and each sync type stand. The servers card shows how many servers are turned on and whether each one runs Zooid, answers without it, or cannot be reached. The **Queue** card counts the changes received and failing. Each sync type has a card with its counts, or a note to turn it on under **Settings**. Select a card to open its tool.
 
+**Recent activity**, under the cards, lists Zooid's newest entries in Jellyfin's activity log, newest first, each with how long ago it happened and an icon for its kind. An error is marked red and a warning orange, and other entries take no mark. It reads the latest 500 entries of the activity log and lists up to 20 of Zooid's, all at once with no scrolling. The cards and **Recent activity** are read each time the **Dashboard** opens. See [Activity Log](LiveChanges.md#activity-log) for what each entry means.
+
 ## Statistics
 
 ![Statistics](screenshots/Statistics.png)

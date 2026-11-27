@@ -100,6 +100,7 @@ Write fakes by hand and share them.
 | `ScriptedHandler` | An `HttpMessageHandler` that answers in sequence |
 | `ManualTimeProvider` | The clock, moved by the test |
 | `InterfaceStub` | Any interface a test needs but does not exercise |
+| `ActivityLogStub` | Jellyfin's activity log, read back by `ActivityFeed` |
 
 * Keep each fake in `Fakes/`, one per file, with a header comment like any other class.
 * Never copy a fake into a test file. Extend the shared one.

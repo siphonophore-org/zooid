@@ -669,6 +669,18 @@ What the **Statistics** page charts.
 
 `Types` lists only the sync types that are on, as `Content`, `History`, `Metadata`, `People`, and `User`, each with up to its last 10 scans, oldest first. `LinkStreams` is null unless a server entry may link to this server. It does not depend on any sync type being on. It holds 30 days, oldest first and in this server's own time, and one entry for each such server with a count for every day.
 
+### Activity
+
+#### GET /Sync/Activity?limit={n}
+
+Zooid's newest entries in Jellyfin's activity log, newest first, for **Recent activity** on the **Dashboard**. It reads the latest 500 entries of the log and keeps those of type `ZooidAttention` or starting `Zooid.`. `limit` is 20 by default and is held between 1 and 50.
+
+```json
+[ { "Date": "2026-11-27T17:42:10.0000000Z", "Name": "Items synced", "Overview": "Synced 12 items from source-a", "Type": "Zooid.HintsApplied", "Severity": "Information" } ]
+```
+
+`Severity` is `Information`, `Warning`, or `Error`. `Overview` is null when the entry has none.
+
 ### Tasks, Resets, and Strings
 
 #### POST /Sync/Tasks/{taskKey}/Run

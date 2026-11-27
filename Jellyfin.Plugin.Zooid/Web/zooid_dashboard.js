@@ -1,6 +1,7 @@
 // zooid_dashboard.js
-// The Dashboard tool: one status card for the servers, one for the change queue, and one for each sync type.
-// A card opens the tool it sums up, and a sync type card opens that sync type's tool. The page only reads.
+// The Dashboard tool: one status card for the servers, one for the change queue, and one for each sync type, then
+// Zooid's recent activity. A card opens the tool it sums up, and a sync type card opens that sync type's tool. The
+// page only reads.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
@@ -138,13 +139,59 @@ export function queueCard(t, hints) {
     return Object.assign(card, { status: t.tr('PriorityIdle'), statusColor: 'gray' });
 }
 
+// ACTIVITY_ICONS
+// The marker icon of each kind of activity log entry Zooid writes, by its type.
+var ACTIVITY_ICONS = {
+    'Zooid.HintsApplied': 'sync',
+    'Zooid.HintsDropped': 'sync_disabled',
+    'Zooid.HintsRetrying': 'sync_problem',
+    'Zooid.PeerPaused': 'pause_circle',
+    'Zooid.HintRejected': 'block',
+    'Zooid.HintResent': 'replay',
+    'ZooidAttention': 'report_problem'
+};
+
+// SEVERITY_STATUS
+// The timeline status of an entry's severity: red for errors and orange for warnings. Other entries take none.
+var SEVERITY_STATUS = { Critical: 'red', Error: 'red', Warning: 'orange' };
+
+// activityItems
+// Turns Zooid's activity log entries into timeline events, each with how long ago it happened, marked with its
+// kind's icon, and with its severity when it is a warning or an error.
+//
+// Inputs
+// entries [object[]]: What the Activity route answered, newest first, or null when it could not be read.
+// shared [object]: The helper bag, for formatRelativeTime.
+//
+// Output
+// [object[]]: Timeline items of { time, datetime, title, body, status, icon }.
+export function activityItems(entries, shared) {
+    return (Array.isArray(entries) ? entries : []).map(function (entry) {
+        const item = {
+            time: shared.formatRelativeTime(new Date(entry.Date)),
+            datetime: entry.Date,
+            title: entry.Name,
+            icon: ACTIVITY_ICONS[entry.Type] || 'sync'
+        };
+        if (SEVERITY_STATUS[entry.Severity]) item.status = SEVERITY_STATUS[entry.Severity];
+        if (entry.Overview) item.body = entry.Overview;
+        return item;
+    });
+}
+
 export default function (view) {
     'use strict';
 
     var apiRequest, getEl, requestFor;
     var grid = null;
+    var timeline = null;
 
-    var made = zooidModule.createZooidPage(view, { page: 'zooid_dashboard', load: function () { load(); }, onHide: function () { clear(); } });
+    var made = zooidModule.createZooidPage(view, {
+        page: 'zooid_dashboard',
+        bind: function (shared) { buildActivity(shared.t); },
+        load: function () { load(); },
+        onHide: function () { clear(); }
+    });
     ({ apiRequest, getEl, requestFor } = made.shared.pageHelpers());
 
     function clear() {
@@ -152,6 +199,13 @@ export default function (view) {
         grid = null;
         var holder = getEl('dashboardCards');
         if (holder) holder.innerHTML = '';
+    }
+
+    // Builds the Recent activity section once, empty until the page loads its entries.
+    function buildActivity(t) {
+        timeline = zooidModule.createTimeline({ items: [], emptyText: t.tr('DashboardEmptyActivity') });
+        const section = zooidModule.createCollapsibleSection({ title: t.tr('DashboardHeaderActivity'), icon: 'receipt_long', collapsible: false, content: timeline.element });
+        getEl('dashboardActivity').appendChild(section.element);
     }
 
     // Reads a route, answering null when it fails, so one card that cannot load never hides the others.
@@ -196,7 +250,7 @@ export default function (view) {
     }
 
     function load() {
-        loads++;
+        const current = ++loads;
         var status = getEl('dashboardStatus');
         if (status) status.textContent = '';
         var t = made.shared.t;
@@ -205,8 +259,10 @@ export default function (view) {
             return Promise.all([
                 read('Hints'),
                 read('Statistics'),
-                Promise.all(types.map(function (entry) { return entry.on ? read(entry.type.route) : Promise.resolve(null); }))
+                Promise.all(types.map(function (entry) { return entry.on ? read(entry.type.route) : Promise.resolve(null); })),
+                read('Activity')
             ]).then(function (answers) {
+                if (current !== loads) return;
                 var stats = answers[1];
                 var runsOf = function (key) {
                     var found = stats && stats.Types ? stats.Types.filter(function (type) { return type.Key === key; })[0] : null;
@@ -216,6 +272,7 @@ export default function (view) {
                     return syncTypeCard(t, entry.type, entry.on, answers[2][i], runsOf(entry.type.stats));
                 })));
                 checkServers(config, handles && handles[0]);
+                timeline.setItems(activityItems(answers[3], made.shared));
             });
         }).catch(function () {
             clear();

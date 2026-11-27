@@ -271,6 +271,21 @@ var STATISTICS = {
     }
 };
 
+// Zooid's newest activity log entries, as the Activity route gives them, newest first.
+function activityEntry(minutesAgo, name, overview, type, severity) {
+    return { Date: new Date(now - minutesAgo * 60000).toISOString(), Name: name, Overview: overview, Type: type, Severity: severity || 'Information' };
+}
+var ACTIVITY = [
+    activityEntry(4, 'Items synced', 'Synced 12 items from Basement (9) and Cabin (3)', 'Zooid.HintsApplied'),
+    activityEntry(38, 'Changes paused', 'Paused 3 changes to Office until 6:30 PM because it could not be reached', 'Zooid.PeerPaused', 'Warning'),
+    activityEntry(125, 'Items synced', 'Synced 4 items from Cabin', 'Zooid.HintsApplied'),
+    activityEntry(310, 'Items not applied yet', '2 items from Basement could not be applied yet and will be retried', 'Zooid.HintsRetrying', 'Warning'),
+    activityEntry(1500, 'Items failed for a day', '3 items have failed on every run for a day and are still being retried. Filter each sync type\'s table by Errored to see each one', 'ZooidAttention', 'Warning'),
+    activityEntry(2900, 'Changes rejected', 'Marked 2 changes failed, since Office rejected the request as malformed', 'Zooid.HintRejected', 'Error'),
+    activityEntry(4400, 'Changes resent', 'Resent 5 changes that Basement lost before finishing', 'Zooid.HintResent', 'Warning'),
+    activityEntry(5800, 'Items not synced', 'Did not sync 3 items from Cabin: filtered out (2) and ignored here', 'Zooid.HintsDropped')
+];
+
 // The server answers for each route a page calls, by path under Sync/ or Jellyfin's own.
 function testConnection(body) {
     var s = SERVERS.find(function (x) { return x.Key === body.ServerKey; }) || SERVERS[0];
@@ -324,6 +339,7 @@ function route(path, q, method, body) {
     if (path === 'Library/VirtualFolders') return LOCAL_LIBRARIES;
     if (path === 'Users') return LOCAL_USERS;
     if (path === 'Statistics') return STATISTICS;
+    if (path === 'Activity') return ACTIVITY.slice(0, +(q.get('limit') || 20));
     if (path === 'Hints') return HINTS;
     if (path === 'Hints/Version') { var m = METADATA.find(function (r) { return r.LocalItemId === q.get('localItemId'); }); return m && m.Version || {}; }
     if (path === 'Status') return Object.assign(counts(CONTENT), { PendingDownload: 0, PendingReplacement: 0, PendingDeletion: 0, Deleting: 0 });
