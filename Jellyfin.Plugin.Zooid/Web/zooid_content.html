@@ -12,7 +12,7 @@
 
                 <!-- Status summary cards -->
                 <div id="syncStatusSummary">
-                    <div class="stolon-cards stolon-compact" id="mainStatusRow">
+                    <div class="stolon-cards" id="mainStatusRow">
                         <div class="stolon-card stolon-green" id="statusGroupSynced" title="">
                             <span class="stolon-card-count" id="syncedCount">0</span>
                             <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
@@ -28,6 +28,14 @@
                         <div class="stolon-card stolon-gray" id="statusGroupIgnored" title="">
                             <span class="stolon-card-count" id="ignoredCount">0</span>
                             <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                        </div>
+                        <div class="stolon-card stolon-blue stolon-hidden" id="statusGroupPendingDownload" title="">
+                            <span class="stolon-card-count" id="pendingDownloadCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPendingDownload">Pending download</span>
+                        </div>
+                        <div class="stolon-card stolon-yellow stolon-hidden" id="statusGroupPendingReplacement" title="">
+                            <span class="stolon-card-count" id="pendingReplacementCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusPendingReplacement">Pending replacement</span>
                         </div>
                         <div class="stolon-card stolon-pink stolon-hidden" id="statusGroupPendingDeletion" title="">
                             <span class="stolon-card-count" id="pendingDeletionCount">0</span>
