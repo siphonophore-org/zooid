@@ -273,6 +273,8 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 
 * A collapsible header is a `button.stolon-collapsible-header` holding `stolon-collapsible-title` and `stolon-collapsible-icon`. Stolon replaces the icon with `expand_more`.
 
+* A row of count cards is always full size. Never add `stolon-compact` to it, so every page's cards match.
+
 #### Settings and Troubleshooting Pages
 
 Every section on a Settings or Troubleshooting page leads with an icon tile, and so does every reset or action row. The tile names the topic at a glance, and makes a long page easy to scan.
