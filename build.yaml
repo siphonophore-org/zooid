@@ -30,6 +30,7 @@ changelog:
   - "Live changes travel between servers that both run Zooid, through a queue with retries"
   - "Dashboard, Statistics, Storage and Troubleshooting tools sit beside the sync tools on one page"
   - "Each sync type has its own tool in the sidebar, shown while that type is on"
+  - "The Storage tool shows what each mapped library holds, and edits a library in a side panel"
   changed:
   - "The logo and catalog artwork are temporary and will be replaced"
   developer:

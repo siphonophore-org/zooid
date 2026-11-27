@@ -52,7 +52,7 @@ Save the server. The source then advertises links to servers that ask.
 
 ### On the Linking Server
 
-Map the source's libraries under **Libraries** on its entry in the **Servers** page. Then open the **Storage** page, pick the source, and set **Storage** on a library:
+Map the source's libraries under **Libraries** on its entry in the **Servers** page. Then open the **Storage** page, select the source's tab when there are several, select a library, and set its **Storage**:
 
 * **Copy** downloads each file. This is the default.
 * **Link** writes a `.strm` for each new video.
@@ -232,7 +232,7 @@ On the linking server, under **Link cache** in **Settings > Synchronization > Co
 
 Below them the page shows how many files are cached, how much of the size is used, how many wait, and where they are kept.
 
-On each library mapping set to **Link**, on the **Storage** page:
+In the side panel of each library mapping set to **Link**, on the **Storage** page:
 
 * **Cache this library's links** lets that library's links into the cache. On by default.
 * **Always keep** picks shows and films that are full copies in the library instead of links, synced like any copy. Every episode of a picked show and every version of a picked film is copied. It works whether or not the cache is on, and its copies count toward the library's disk, not the cache's size. See [Turning Links Into Copies](#turning-links-into-copies).

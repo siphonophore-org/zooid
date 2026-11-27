@@ -86,7 +86,14 @@ const shots = {
   'settings/Linking': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepStream'), 'settings/Linking.png'); } },
   'settings/Library Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepLibraries'), 'settings/Library Mapping.png'); } },
   'settings/User Mapping': { page: 'servers', act: async (p) => { await firstServer(p); await element(p, await section(p, 'serverStepUsers'), 'settings/User Mapping.png'); } },
-  'settings/Storage': { page: 'storage', vp: { width: 800, height: 4200 }, act: async (p) => { await section(p, 'Libraries'); await section(p, 'Permanent copies'); await p.waitForTimeout(800); await content(p, 'settings/Storage.png'); } },
+  'settings/Storage': { page: 'storage', vp: { width: 800, height: 2400 }, act: async (p) => { await section(p, 'Permanent copies'); await p.waitForTimeout(800); await content(p, 'settings/Storage.png'); } },
+  'settings/Storage Phone': { page: 'storage', vp: { width: 375, height: 1400 }, act: async (p) => { await p.waitForTimeout(800); await contentTo(p, '#storageLibrariesSection', 'settings/Storage Phone.png'); } },
+  'settings/Storage Library': { page: 'storage', vp: { width: 800, height: 1300 }, act: async (p) => {
+      await p.waitForTimeout(800);
+      await p.evaluate(() => [...document.querySelectorAll('#storageLibraryList .stolon-media-card')].find((c) => c.offsetParent && /TV Shows/.test(c.textContent)).click());
+      await p.waitForTimeout(1500);
+      await sidecar(p, await p.evaluateHandle(() => document.querySelector('.zooid-storage-editor').closest('.stolon-sidecar-panel, .stolon-dialog-content')), 'settings/Storage Library.png');
+    } },
   'Statistics': { page: 'statistics', vp: { width: 800, height: 3000 }, act: (p) => content(p, 'Statistics.png') },
   'settings/Settings': { page: 'settings', act: (p) => content(p, 'settings/Settings.png') },
   'settings/Metadata': { page: 'settings', act: async (p) => element(p, await section(p, 'Metadata'), 'settings/Metadata.png') },

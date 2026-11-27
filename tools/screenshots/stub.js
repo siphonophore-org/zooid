@@ -131,6 +131,16 @@ function posterSvg(seed, wide) {
 }
 function posterUrl(seed, wide) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(posterSvg(seed, wide)); }
 
+// What each server's library mappings hold here, as the LibraryStorage route counts them for the Storage tab.
+var LIBRARY_STORAGE = {
+    basement: [
+        { SourceLibraryId: SOURCE_LIBRARIES.basement[0].Id, LocalLibraryId: LOCAL_LIBRARIES[0].ItemId, Copies: 1284, Links: 0, CachedLinks: 0, Queued: 3, Pending: 0, Errored: 0, CopyBytes: 6.42e12 },
+        { SourceLibraryId: SOURCE_LIBRARIES.basement[1].Id, LocalLibraryId: LOCAL_LIBRARIES[1].ItemId, Copies: 38, Links: 3314, CachedLinks: 96, Queued: 0, Pending: 0, Errored: 2, CopyBytes: 81.2e9 },
+        { SourceLibraryId: SOURCE_LIBRARIES.basement[2].Id, LocalLibraryId: LOCAL_LIBRARIES[2].ItemId, Copies: 212, Links: 0, CachedLinks: 0, Queued: 0, Pending: 4, Errored: 0, CopyBytes: 905e9 }
+    ],
+    cabin: [{ SourceLibraryId: SOURCE_LIBRARIES.cabin[0].Id, LocalLibraryId: LOCAL_LIBRARIES[0].ItemId, Copies: 47, Links: 0, CachedLinks: 0, Queued: 0, Pending: 0, Errored: 0, CopyBytes: 212e9 }]
+};
+
 // What each of Basement's libraries holds, for the Always keep and Library filter pickers on the Storage tab.
 var SOURCE_ITEMS = {
     b2000000000000000000000000000001: [
@@ -317,6 +327,7 @@ function route(path, q, method, body) {
     if (path === 'MetadataItems') return page(filtered(METADATA, q), q);
     if (/^MetadataItems\/\d+$/.test(path)) return METADATA.find(function (r) { return String(r.Id) === path.split('/')[1]; }) || null;
     if (path === 'LinkCache') return { Enabled: true, LimitBytes: 500e9, UsedBytes: 318e9 };
+    if (path === 'LibraryStorage') return LIBRARY_STORAGE[serverKeyName(q.get('serverKey'))] || [];
     if (path === 'KeptCopies') return page([
         { Id: 1, SourceItemId: id(0x94001), ServerKey: SERVERS[0].Key, LocalPath: '/media/tv/The Lighthouse Keepers/Season 01/The Lighthouse Keepers S01E01.mkv', Kept: 'Pick', SourceSizeFormatted: '2.1 GB', Status: 'Synced' },
         { Id: 2, SourceItemId: id(0x94002), ServerKey: SERVERS[0].Key, LocalPath: '/media/tv/Garden Detectives/Season 02/Garden Detectives S02E07.mkv', Kept: 'Hand', SourceSizeFormatted: '1.4 GB', Status: 'Synced' },

@@ -15,7 +15,7 @@ Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tool
 | **Metadata** | The metadata sync table | Metadata sync is on |
 | **People** | The people sync table | People sync is on |
 | **Users** | The user sync table | User sync is on |
-| **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
+| **Storage** | What each mapped library holds, how it keeps its files, and which items it syncs | Content, history, or metadata sync is on |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Statistics** | How the synced files are kept, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
 | **Settings** | Bandwidth, processing, the whitelist, and one section for each sync type | Always |
@@ -106,9 +106,15 @@ Add each other server the same way. Their order in the list is their rank. For m
 
 ## Storage
 
-![Storage](screenshots/settings/Storage.png)
+| Storage | Storage on a phone |
+| :--- | :--- |
+| ![Storage](screenshots/settings/Storage.png) | ![Storage on a phone](screenshots/settings/Storage%20Phone.png) |
 
-Open **Storage** and pick a server. Each of its enabled library mappings has a card. With content sync off, only the filter and history settings show.
+Open **Storage**. With more than one server mapping libraries, a tab for each picks the server. Cards at the top count its libraries, copies, links, cached links, the space its copies use, and any errored files. Below them, each enabled library mapping has a row with the icon of its library type, the library it fills, the source library, its **Storage** as a **Copy** or **Link** badge, what it holds, and anything waiting or failed. With no library mapped yet, **Map libraries** opens the **Servers** page.
+
+Select a row to edit that library in a side panel, then select **Save**. The panel shows the two libraries and their root folders above the settings. With content sync off, only the library count, the filter, and the history setting show.
+
+![Storage library](screenshots/settings/Storage%20Library.png)
 
 | Setting | What it holds |
 | :--- | :--- |
@@ -118,7 +124,7 @@ Open **Storage** and pick a server. Each of its enabled library mappings has a c
 | **Library filter** | **Filter mode** syncs everything, or only what is picked, or everything but what is picked. It applies to content, history, and metadata. See [Content](Content.md#collection-syncing) |
 | **Negotiate history** | For a Sync server with history sync on, writes merged watch history back to that server. See [History](History.md) |
 
-Below the cards, **Permanent copies** lists the full copies held in that server's Link libraries and why each is a copy. **Turn back into links** makes the selected copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file. A copy covered by an **Always keep** pick stays a copy until the pick is removed.
+Below the rows, **Permanent copies** lists the full copies held in that server's Link libraries and why each is a copy. **Turn back into links** makes the selected copies links again. The link is written, then the copy moves into the link cache, or is removed when the cache is off or full. The source must still have the file. A copy covered by an **Always keep** pick stays a copy until the pick is removed.
 
 ## Settings
 

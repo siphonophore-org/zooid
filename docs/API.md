@@ -598,6 +598,14 @@ Turns links into full copies, the **Keep a full local copy** action on the **Con
 
 Content rows from `GET /Sync/Items` carry `StorageMode`, which is `Copy`, `Link`, `Promoting` for a link on its way to a copy, or `Unkeeping` for a copy on its way back to a link. They also carry `Cached`, true for a link whose file is in the link cache. On `GET /Sync/Items`, `cached=true` lists only those, and `storage=Copy` or `storage=Link` lists only copies or links. `serverKey={key}` lists only one server entry's rows.
 
+#### GET /Sync/LibraryStorage?serverKey={key}
+
+What each library mapping of one server entry holds here, for the **Storage** page's rows and count cards. There is one entry for each pair of source and local library that has content rows. `Copies`, `Links`, and `CachedLinks` count synced rows, and a row changing storage counts under the storage it is leaving. `Queued`, `Pending`, and `Errored` count the rows in those statuses. `CopyBytes` is the size of the synced copies. An unknown or missing key answers an empty list.
+
+```json
+[ { "SourceLibraryId": "0c7f…", "LocalLibraryId": "f137…", "Copies": 9, "Links": 0, "CachedLinks": 0, "Queued": 0, "Pending": 0, "Errored": 0, "CopyBytes": 40806956 } ]
+```
+
 #### GET /Sync/KeptCopies?serverKey={key}&search={text}&skip={n}&take={n}
 
 The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Content** tool, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.

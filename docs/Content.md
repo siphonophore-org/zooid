@@ -23,7 +23,7 @@ Under **Settings > Synchronization > Content**:
 
 Elsewhere:
 
-* **Storage** and **Library filter**, on each library mapping in the **Storage** page. Storage holds the source's files as full **Copy** files, the default, or as **Link** files that stream from the source. See [Links](Links.md). The filter is covered below. **Link cache** shows how much of the link cache is used, while the cache is on. How the synced files are kept, as copies, links, and cached links, is charted under **Usage** in the **Statistics** tool, beside what the last scans of each sync type found.
+* **Storage** and **Library filter**, in the side panel of each library mapping on the **Storage** page, which also shows what each library holds. Storage holds the source's files as full **Copy** files, the default, or as **Link** files that stream from the source. See [Links](Links.md). The filter is covered below. **Link cache** shows how much of the link cache is used, while the cache is on. How the synced files are kept, as copies, links, and cached links, is charted under **Usage** in the **Statistics** tool, beside what the last scans of each sync type found.
 * **Downloads** under **Settings > Bandwidth** caps the total rate of every download to this server, in Mbps, where 0 means no limit. With **Scheduled speed** on, the **Scheduled** rate applies during the set hours, in the server's time. A download already running follows the hours as they begin and end. Downloads into the link cache are held to it too.
 * **Failed item retries** under **Settings > Processing** sets how many times a failed download or item is tried within one run. One that still fails is tried again on the next run, and is raised on the Activity page once it has failed for a day. See [When something goes wrong](#when-something-goes-wrong). A retry picks up where the failed attempt stopped when the source supports it, and starts over if the file changed on the source in between.
 
@@ -38,7 +38,7 @@ A `.strm` on the source is never copied or linked, whether it is one of the sour
 
 Each library mapping has a **Library filter** on the **Storage** page. Its **Filter mode** is **Allow all**, or a **Whitelist** or **Blacklist** of files, collections, and playlists. It applies to content, history, and metadata alike.
 
-A source collection can be used as a sync list. On the **Storage** page, set a library mapping's **Filter mode** to **Whitelist**, switch the browse toggle to **Collections**, and select the collection. From then on:
+A source collection can be used as a sync list. On the **Storage** page, select a library mapping, set its **Filter mode** to **Whitelist**, select **Collections** above the list, select the collection, and select **Save**. From then on:
 
 * Everything in the collection syncs through the normal content pipeline. A series in the collection picks up new episodes automatically, because membership is resolved on every scan.
 * Anyone with collection-management permission on the source can add or remove items from the collection in Jellyfin, with no plugin access needed. Removing an item removes it from the whitelist. Its local copy waits for approval to be deleted when **Removed files** is **Delete** or **Delete after approval**, since a membership change is not a removal from the source.
