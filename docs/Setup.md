@@ -4,12 +4,16 @@ This page walks through a first setup, from opening the Zooid page to reading th
 
 ## The Zooid Page
 
-Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar.
+Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tools, and it opens on the **Dashboard**. The button at the top of the sidebar folds it to its icons. A tool with nothing to show is left out of the sidebar. Each sync type has its own tool, which joins or leaves the sidebar as soon as that type is turned on or off.
 
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
 | **Dashboard** | A card for the servers, the queue, and each sync type. A card opens its tool | Always |
-| **Synchronization** | Each sync type's table | A sync type is on |
+| **Content** | The content sync table | Content sync is on |
+| **History** | The history sync table | History sync is on |
+| **Metadata** | The metadata sync table | Metadata sync is on |
+| **People** | The people sync table | People sync is on |
+| **Users** | The user sync table | User sync is on |
 | **Queue** | The changes sent between servers as they happen | Always |
 | **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
@@ -151,7 +155,7 @@ The **Dashboard** shows how the servers, the change queue, and each sync type st
 | Updated | Items that were in step and that the scan found changed on a source |
 | Removed | Items the scan stopped tracking, since no source holds them any more |
 
-A scan of a sync type runs from its scheduled task or from **Refresh** on **Synchronization**. An item that is already waiting to sync is not counted again by a later scan.
+A scan of a sync type runs from its scheduled task or from **Refresh** on its tool. An item that is already waiting to sync is not counted again by a later scan.
 
 While a server may link to this one, the page also charts **Link streams**. It shows how many streams this server started for each such server on each of the last 30 days, one line for each server. It sits under **Content** when content sync is on and in a section of its own when it is off. A film counts once however often its player seeks. See [Links](Links.md).
 

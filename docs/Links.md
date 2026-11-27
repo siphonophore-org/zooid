@@ -202,7 +202,7 @@ A link can keep a full local copy of its file in the link cache. The `.strm` nev
 
 * It plays from the linking server, under the linking server's own rules. The source is not asked, its limits do not apply, and the link plays while the source is down.
 * Playback is not reported to the source, since it sends nothing. History sync carries played state there.
-* The **Synchronization** tool shows the row as **Linked (cached)**.
+* The **Content** tool shows the row as **Linked (cached)**.
 
 The cache is one folder with one size limit, whichever servers its links stream from. It is off until it is given a size.
 
@@ -245,7 +245,7 @@ The cache is kept across restarts. At startup, downloads cut short and cache fil
 
 ## The Link Check
 
-Every **Sync Content** run asks each connected server about the links that stream from it. A link whose file is gone from the source, or whose source no longer allows linking, shows in the **Synchronization** tool as an error starting with `Link check:` and the source's reason, before anyone presses play. The `.strm` is left in place, and the row is settled again on the first run where the source can stream the file. A source that cannot be reached flags nothing, since play falls back to another server and the next run checks again. A link whose file was removed for good is removed on the next full scan. See [When the File Is Gone](#when-the-file-is-gone).
+Every **Sync Content** run asks each connected server about the links that stream from it. A link whose file is gone from the source, or whose source no longer allows linking, shows in the **Content** tool as an error starting with `Link check:` and the source's reason, before anyone presses play. The `.strm` is left in place, and the row is settled again on the first run where the source can stream the file. A source that cannot be reached flags nothing, since play falls back to another server and the next run checks again. A link whose file was removed for good is removed on the next full scan. See [When the File Is Gone](#when-the-file-is-gone).
 
 The reasons a row can show are `the file is no longer on the source`, `the item is a link on the source, not a file`, `the source cannot read the file`, and `linking is not allowed for *server* here`.
 
@@ -271,7 +271,7 @@ These still follow **Removed files**, as a copy does:
 
 A link becomes a full copy in any of three ways:
 
-* **Keep a copy**, the pin on the **Synchronization** tool's toolbar for the selected rows, or **Download** in a link's details. These are queued at once, whatever **New files** is set to, since choosing them is the approval. When any of them is cached, a **Sync Content** run starts at once, or right after the one already running, to move it into place.
+* **Keep a copy**, the pin on the **Content** tool's toolbar for the selected rows, or **Download** in a link's details. These are queued at once, whatever **New files** is set to, since choosing them is the approval. When any of them is cached, a **Sync Content** run starts at once, or right after the one already running, to move it into place.
 * Picking it under **Always keep** on its mapping in the **Storage** page. The next refresh marks it under the **New files** approval, the same as below, and a new file under a pick is added as a copy. A pick removed before its copy is approved leaves it a link. A copy made for a pick goes back to being a link when the pick is removed. The next sync checks that the source still has the file and offers links, writes the link, and moves the copy into the link cache, or removes it when the cache is off or cannot hold it. A copy kept by hand stays until you select it under **Permanent copies** on the **Storage** page and choose **Turn back into links**.
 * Setting the mapping's **Storage** back to **Copy**. The next refresh marks its links under the **New files** approval. They are queued when new files download on their own, wait as Pending replacement when they need approval, and stay links when new files are switched off. Setting it back to Link before approving keeps them links. A link still waiting for its own first approval is left until that is settled.
 
@@ -325,7 +325,7 @@ When the source refuses, the player shows `This item streams from another server
 | this server could not tell who is playing | The request carried no signed in user |
 | press play again, so this server can ask the source | The client streamed without asking for playback first. See Limitations |
 
-A link row that errors in the **Synchronization** tool says why:
+A link row that errors in the **Content** tool says why:
 
 | Reason | Meaning |
 | :--- | :--- |

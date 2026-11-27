@@ -73,7 +73,7 @@ Two visible tasks run every six hours. Each runs hidden tasks in order. Each ste
 | **Sync Content** (`SyncContentTask`) | `UpdateSyncTablesTask`, then `SyncMissingContentTask` when the refresh succeeded, then `SyncCollectionsTask` |
 | **Sync Information** (`SyncInformationTask`) | Metadata, People, Users, and History, each a refresh then an apply, then `SyncPlaylistsTask` |
 
-**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Sync/Tasks/{taskKey}/Run` starts a single refresh or apply step from the **Synchronization** page.
+**Empty Recycling bin** and **Clean Temporary Directory** run daily. `POST /Sync/Tasks/{taskKey}/Run` starts a single refresh or apply step from a sync type's tool.
 
 The task bases live in `Tasks/Common/`.
 
@@ -238,12 +238,16 @@ The five sync table managers extend `SyncTableManagerBase`, and every other stor
 
 ## Config Pages
 
-Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's tool app. The app shows a sidebar of tools, swaps each tool in place, and keeps the open tool in the address as `tool=`. Each tool is its own page in `Web/` with a script of the same name, loaded the first time it opens. Each tool's script calls `createZooidPage` in `zooid_shared.js`, which runs it through Stolon's `createConfigPage` and builds the helper bag with the `Zooid` route prefix. The tool list is `zooidTools` in the same file. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the tool is left with unsaved changes. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
+Zooid is one dashboard page, `zooid.html`, that holds every tool in Stolon's tool app. The app shows a sidebar of tools, swaps each tool in place, and keeps the open tool in the address as `tool=`. Each tool is its own page in `Web/` with a script of the same name, loaded the first time it opens. Each tool's script calls `createZooidPage` in `zooid_shared.js`, which runs it through Stolon's `createConfigPage` and builds the helper bag with the `Zooid` route prefix. The tool list is `zooidTools` in the same file. Each sync type's tool is listed while that type is on. The app reads the config when it opens and each time a tool shows, so a type turned on or off joins or leaves the sidebar without a reload. Each sync type's page has a script of the same name that calls `createSyncTypePage` in `zooid_sync_page.js`, which builds the type's table from the kit in `zooid_sync_table.js` and the type's own `zooid_sync_*.js` module. Settings load and save through Jellyfin's plugin configuration route. Each section that saves ends in Stolon's Save Bar from `createSaveBars`, which saves through `saveSection` and asks before the tool is left with unsaved changes. Thumbnails of a source's items load through `ImageProxy`, so the page never holds a source's API key.
 
 | Tool | Page | Calls |
 | :--- | :--- | :--- |
 | **Dashboard** | `zooid_dashboard.html` | Each sync type's status route, `Hints`, `Statistics` |
-| **Synchronization** | `zooid_sync.html` and the `zooid_sync_*.js` modules | Each sync table's routes and `Tasks/{taskKey}/Run` |
+| **Content** | `zooid_content.html` and `zooid_sync_content.js` | `Items`, `Status`, the content actions, and `Tasks/{taskKey}/Run` |
+| **History** | `zooid_history.html` and `zooid_sync_history.js` | The `HistoryItems` routes, `HistoryStatus`, and `Tasks/{taskKey}/Run` |
+| **Metadata** | `zooid_metadata.html` and `zooid_sync_metadata.js` | The `MetadataItems` routes, `MetadataStatus`, and `Tasks/{taskKey}/Run` |
+| **People** | `zooid_people.html` and `zooid_sync_people.js` | The `PeopleItems` routes, `PeopleStatus`, and `Tasks/{taskKey}/Run` |
+| **Users** | `zooid_users.html` and `zooid_sync_users.js` | The `UserSyncUsers` routes, `UserStatus`, and `Tasks/{taskKey}/Run` |
 | **Queue** | `zooid_queue.html` and `zooid_sync_queue.js` | The `Hints` routes |
 | **Servers** | `zooid_servers.html` | `TestConnection`, `Authenticate`, `GetSourceLibraries`, `GetSourceUsers`, `Hints/CheckPeer`, `Servers/{key}/Rows` |
 | **Storage** | `zooid_storage.html` | `SourceLibraryItems`, `KeptCopies`, `KeptCopies/Unkeep` |
