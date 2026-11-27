@@ -89,8 +89,17 @@ validate_resources() {
     
     local missing_files=()
     local config_files=(
-        "$PROJECT_DIR/Web/zooid_sync.html"
-        "$PROJECT_DIR/Web/zooid_sync.js"
+        "$PROJECT_DIR/Web/zooid_content.html"
+        "$PROJECT_DIR/Web/zooid_content.js"
+        "$PROJECT_DIR/Web/zooid_history.html"
+        "$PROJECT_DIR/Web/zooid_history.js"
+        "$PROJECT_DIR/Web/zooid_metadata.html"
+        "$PROJECT_DIR/Web/zooid_metadata.js"
+        "$PROJECT_DIR/Web/zooid_people.html"
+        "$PROJECT_DIR/Web/zooid_people.js"
+        "$PROJECT_DIR/Web/zooid_users.html"
+        "$PROJECT_DIR/Web/zooid_users.js"
+        "$PROJECT_DIR/Web/zooid_sync_page.js"
         "$PROJECT_DIR/Web/zooid_sync_table.js"
         "$PROJECT_DIR/Web/zooid_sync_content.js"
         "$PROJECT_DIR/Web/zooid_sync_history.js"

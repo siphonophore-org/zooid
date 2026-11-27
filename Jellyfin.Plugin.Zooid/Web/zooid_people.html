@@ -1,0 +1,131 @@
+<!-- zooid_people.html -->
+<!-- The People tool: the people sync table, its counts, and the details of one person. -->
+
+<div id="ZooidPeoplePage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_people.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="DescSyncPeople">Biographies, provider IDs, and photos of people, matched by name.</div>
+                <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                <!-- Status summary cards -->
+                <div id="peopleSyncStatusSummary">
+                    <div class="stolon-cards">
+                        <div class="stolon-card stolon-green" id="peopleStatusGroupSynced" title="">
+                            <span class="stolon-card-count" id="peopleSyncedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                        </div>
+                        <div class="stolon-card stolon-orange" id="peopleStatusGroupQueued" title="">
+                            <span class="stolon-card-count" id="peopleQueuedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                        </div>
+                        <div class="stolon-card stolon-red" id="peopleStatusGroupErrored" title="">
+                            <span class="stolon-card-count" id="peopleErroredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                        </div>
+                        <div class="stolon-card stolon-gray" id="peopleStatusGroupIgnored" title="">
+                            <span class="stolon-card-count" id="peopleIgnoredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health dashboard -->
+                <div id="peopleHealthDashboard" class="zooid-health-dashboard">
+                    <div class="zooid-health-row">
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                            <span class="zooid-health-value" id="peopleHealthLastSync" data-str="Never">Never</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelPeopleTracked">People tracked</span>
+                            <span class="zooid-health-value" id="peopleHealthPersonCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="stolon-button-row">
+                    <button is="emby-button" type="button" id="btnRefreshPeopleItems" class="raised stolon-button stolon-secondary stolon-fill">
+                        <span data-str="Refresh">Refresh</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnTriggerPeopleSync" class="raised stolon-button stolon-primary stolon-fill">
+                        <span data-str="TabSync">Sync</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnRetryPeopleErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                        <span data-str="ButtonRetryErrors">Retry errors</span>
+                    </button>
+                </div>
+
+                <div class="stolon-divider stolon-divider-plain"></div>
+
+                <!-- Table -->
+                <div id="peopleSyncItemsTableContainer">
+                    <!-- The table builds its own markup here. -->
+                </div>
+
+                <!-- People Item Detail Sidecar -->
+                <div id="peopleSyncItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                    <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="peopleSyncModalTitle">
+                        <div class="stolon-sidecar-head">
+                            <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="peopleSyncModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                            <button type="button" id="btnPeopleSyncModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                        </div>
+                        <div class="stolon-sidecar-body">
+                            <div class="zooid-modal-top-row">
+                                <span id="peopleSyncModalStatusBadge" class="stolon-table-status-badge"></span>
+                                <span id="peopleSyncModalServerMapping" class="zooid-modal-server-mapping"></span>
+                            </div>
+                            <div id="peopleSyncModalInfoGrid" class="zooid-modal-info-grid">
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                    <div id="peopleSyncModalLastSync" class="zooid-modal-info-value">-</div>
+                                </div>
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                    <div id="peopleSyncModalVersion" class="zooid-modal-info-value">-</div>
+                                </div>
+                            </div>
+                            <div id="peopleSyncModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                <div id="peopleSyncModalError" class="stolon-error-message"></div>
+                            </div>
+                            <div id="peopleSyncModalChangesSummary" class="zooid-modal-changes-summary"></div>
+
+                            <!-- Comparison table -->
+                            <div class="zooid-modal-table-container">
+                                <table class="zooid-compare-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                            <th id="peopleSyncModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                            <th id="peopleSyncModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                            <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="peopleSyncModalTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="stolon-sidecar-shelf">
+                            <button is="emby-button" type="button" id="btnPeopleSyncModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                <span data-str="ButtonIgnore">Ignore</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnPeopleSyncModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                <span data-str="ButtonQueue">Queue</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

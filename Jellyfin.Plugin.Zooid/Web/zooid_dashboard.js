@@ -1,17 +1,17 @@
 // zooid_dashboard.js
 // The Dashboard tool: one status card for the servers, one for the change queue, and one for each sync type.
-// A card opens the tool it sums up, and a sync type card opens the Sync tool on that sync type. The page only reads.
+// A card opens the tool it sums up, and a sync type card opens that sync type's tool. The page only reads.
 
 import * as zooidModule from './configurationpage?name=zooid_shared.js';
 
 // SYNC_TYPES
-// Each sync type in the order the Sync tool lists them: its config switch, its status route, the Sync view it
-// opens, the key the Statistics route names it by, its title's string key, and its icon.
+// Each sync type in the order the sidebar lists them: its config switch, its status route, the tool it opens, the
+// key the Statistics route names it by, its title's string key, and its icon, the same as its tool's.
 var SYNC_TYPES = [
-    { enable: 'EnableContentSync', route: 'Status', view: 'content', stats: 'Content', title: 'SyncTypeContent', icon: 'movie' },
+    { enable: 'EnableContentSync', route: 'Status', view: 'content', stats: 'Content', title: 'SyncTypeContent', icon: 'video_library' },
     { enable: 'EnableHistorySync', route: 'HistoryStatus', view: 'history', stats: 'History', title: 'SyncTypeHistory', icon: 'history' },
-    { enable: 'EnableMetadataSync', route: 'MetadataStatus', view: 'metadata', stats: 'Metadata', title: 'LabelMetadata', icon: 'description' },
-    { enable: 'EnablePeopleSync', route: 'PeopleStatus', view: 'people', stats: 'People', title: 'People', icon: 'person' },
+    { enable: 'EnableMetadataSync', route: 'MetadataStatus', view: 'metadata', stats: 'Metadata', title: 'LabelMetadata', icon: 'info' },
+    { enable: 'EnablePeopleSync', route: 'PeopleStatus', view: 'people', stats: 'People', title: 'People', icon: 'people' },
     { enable: 'EnableUserSync', route: 'UserStatus', view: 'users', stats: 'User', title: 'HeaderUsers', icon: 'group' }
 ];
 
@@ -31,14 +31,13 @@ var EMPTY_CHART = { sparkline: [0, 0], sparklineColor: 'gray' };
 // runs [object[]]: Its last scans from the Statistics route, oldest first, or nothing.
 //
 // Output
-// [object]: The status card's options, with tool and param for the tool it opens.
+// [object]: The status card's options, with tool for the tool it opens.
 export function syncTypeCard(t, type, on, status, runs) {
     var card = Object.assign({ icon: type.icon, title: t.tr(type.title) }, EMPTY_CHART);
     if (!on) {
         return Object.assign(card, { value: '\u2014', status: t.tr('Off'), statusColor: 'gray', detail: t.tr('DashboardTypeOff'), tool: 'settings' });
     }
-    card.tool = 'sync';
-    card.param = type.view;
+    card.tool = type.view;
     if (!status) return Object.assign(card, { value: '\u2014', status: t.tr('HeaderError'), statusColor: 'red', detail: t.tr('DashboardLoadFailed') });
     var waiting = (status.Pending || 0) + (status.Queued || 0);
     var failed = status.Errored || 0;
@@ -168,8 +167,7 @@ export default function (view) {
         return grid.setCards(cards.map(function (card) {
             var options = Object.assign({}, card);
             delete options.tool;
-            delete options.param;
-            options.onClick = function () { zooidModule.openTool(view, card.tool, card.param); };
+            options.onClick = function () { zooidModule.openTool(view, card.tool); };
             return options;
         }));
     }
@@ -203,7 +201,6 @@ export default function (view) {
         if (status) status.textContent = '';
         var t = made.shared.t;
         made.shared.getConfig().then(function (config) {
-            made.shared.rememberContentSync(config);
             var types = SYNC_TYPES.map(function (type) { return { type: type, on: !!config[type.enable] }; });
             return Promise.all([
                 read('Hints'),

@@ -11,7 +11,7 @@ Two scheduled tasks do the work, and two daily housekeeping tasks, **Empty Recyc
 | Users | User mapping | No, scheduled only | [Users](Users.md) |
 | Playlists | Owner mapping, items by file path | Yes, including deletions | [Playlists](Playlists.md) |
 
-Content, History, Metadata, People, and Users each have a table in the **Synchronization** tool. Pick one under **Sync type**. Playlists have no table. Their live changes show in the **Queue** tool, with every other live change.
+Content, History, Metadata, People, and Users each have their own tool, **Content**, **History**, **Metadata**, **People**, and **Users**, with that type's table. A tool shows while its type is on. Playlists have no table. Their live changes show in the **Queue** tool, with every other live change.
 
 ## The Sync Table
 

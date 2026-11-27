@@ -1,12 +1,12 @@
 // zooid_sync_content.js
-// The Content sync table and the controller that opens it. Built by zooid_sync.js from the
+// The Content sync table and the controller that opens it. Built by zooid_sync_page.js from the
 // page context and the table kit in zooid_sync_table.js.
 
 // createContentSyncTableModule
-// Builds the Content sync view: its table, status counts, health figures, detail modal, and bulk actions.
+// Builds the Content tool: its table, status counts, health figures, detail modal, and bulk actions.
 //
 // Inputs
-// ctx [object]: The page context from zooid_sync.js.
+// ctx [object]: The page context from zooid_sync_page.js.
 // kit [object]: The table kit from createSyncTableKit.
 //
 // Output
@@ -524,10 +524,10 @@ export function createContentSyncTableModule(ctx, kit) {
 }
 
 // createContentPageController
-// Builds the controller that opens the Content sync view the first time it is shown.
+// Builds the controller that opens the Content tool's table the first time it is shown.
 //
 // Inputs
-// ctx [object]: The page context from zooid_sync.js.
+// ctx [object]: The page context from zooid_sync_page.js.
 // SyncTableModule [object]: The view's module from createContentSyncTableModule.
 //
 // Output

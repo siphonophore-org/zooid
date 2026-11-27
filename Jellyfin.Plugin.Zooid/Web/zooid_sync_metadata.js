@@ -1,12 +1,12 @@
 // zooid_sync_metadata.js
-// The Metadata sync table and its detail modal. Built by zooid_sync.js from the page context
+// The Metadata sync table and its detail modal. Built by zooid_sync_page.js from the page context
 // and the table kit in zooid_sync_table.js.
 
 // createMetadataSyncTableModule
-// Builds the Metadata sync view: its table, status counts, health figures, and detail modal.
+// Builds the Metadata tool: its table, status counts, health figures, and detail modal.
 //
 // Inputs
-// ctx [object]: The page context from zooid_sync.js.
+// ctx [object]: The page context from zooid_sync_page.js.
 // kit [object]: The table kit from createSyncTableKit.
 //
 // Output

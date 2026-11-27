@@ -447,7 +447,7 @@ public sealed class ContentSyncTableManagerTests : IDisposable
 
     /// <summary>
     /// Rows come back with pending first, then errored, queued, deleting, ignored, and synced, and by local path within a status.
-    /// True: the work that needs an operator is at the top of the Synchronization page.
+    /// True: the work that needs an operator is at the top of the Content tool's table.
     /// False: pending approvals would be buried under thousands of synced rows.
     /// </summary>
     [Fact]
@@ -574,7 +574,7 @@ public sealed class ContentSyncTableManagerTests : IDisposable
 
     /// <summary>
     /// The request's status and search reach the query, and a missing request is refused.
-    /// True: the generic list path filters like the Synchronization page does.
+    /// True: the generic list path filters like the Content tool does.
     /// False: a filtered request would return every row.
     /// </summary>
     [Fact]

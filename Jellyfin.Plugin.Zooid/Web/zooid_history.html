@@ -1,0 +1,177 @@
+<!-- zooid_history.html -->
+<!-- The History tool: the history sync table, its counts, and the details of one row. -->
+
+<div id="ZooidHistoryPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox"
+     data-controller="__plugin/zooid_history.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="verticalSection verticalSection-extrabottompadding">
+                <div class="fieldDescription zooid-mb-md" data-str="DescSyncHistory">Watch state of mapped users, such as played status, play count, resume position, last played date, and favorites.</div>
+                <div id="syncStatus" class="stolon-status-text zooid-sync-status" role="status"></div>
+
+                <!-- Status summary cards -->
+                <div id="historySyncStatusSummary">
+                    <div class="stolon-cards" id="historyStatusRow">
+                        <div class="stolon-card stolon-green" id="historyStatusGroupSynced" title="">
+                            <span class="stolon-card-count" id="historySyncedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusSynced">Synced</span>
+                        </div>
+                        <div class="stolon-card stolon-orange" id="historyStatusGroupQueued" title="">
+                            <span class="stolon-card-count" id="historyQueuedCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusQueued">Queued</span>
+                        </div>
+                        <div class="stolon-card stolon-red" id="historyStatusGroupErrored" title="">
+                            <span class="stolon-card-count" id="historyErroredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusErrored">Errored</span>
+                        </div>
+                        <div class="stolon-card stolon-gray" id="historyStatusGroupIgnored" title="">
+                            <span class="stolon-card-count" id="historyIgnoredCount">0</span>
+                            <span class="stolon-card-label" data-str="StatusIgnored">Ignored</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health dashboard -->
+                <div id="historyHealthDashboard" class="zooid-health-dashboard">
+                    <div class="zooid-health-row">
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLastSync">Last sync</span>
+                            <span class="zooid-health-value" id="historyHealthLastSync" data-str="Never">Never</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelUsersMapped">Users mapped</span>
+                            <span class="zooid-health-value" id="historyHealthUserCount">0</span>
+                        </div>
+                        <div class="zooid-health-card">
+                            <span class="zooid-health-label" data-str="LabelLibrariesMapped">Libraries mapped</span>
+                            <span class="zooid-health-value" id="historyHealthLibraryCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="stolon-button-row">
+                    <button is="emby-button" type="button" id="btnRefreshHistoryItems" class="raised stolon-button stolon-secondary stolon-fill">
+                        <span data-str="Refresh">Refresh</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnTriggerHistorySync" class="raised stolon-button stolon-primary stolon-fill">
+                        <span data-str="TabSync">Sync</span>
+                    </button>
+                    <button is="emby-button" type="button" id="btnRetryHistoryErrors" class="raised stolon-button stolon-primary stolon-fill stolon-hidden">
+                        <span data-str="ButtonRetryErrors">Retry errors</span>
+                    </button>
+                </div>
+
+                <div class="stolon-divider stolon-divider-plain"></div>
+
+                <!-- Table -->
+                <div id="historyItemsTableContainer">
+                    <!-- The table builds its own markup here. -->
+                </div>
+
+                <!-- History Item Detail Sidecar -->
+                <div id="historyItemDetailModal" class="stolon-dialog stolon-sidecar stolon-hidden">
+                    <div class="stolon-dialog-content stolon-sidecar-panel stolon-large" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+                        <div class="stolon-sidecar-head">
+                            <div class="stolon-sidecar-heading"><div class="stolon-sidecar-title-row"><h2 id="historyModalTitle" class="stolon-sidecar-title"></h2></div></div>
+                            <button type="button" id="btnHistoryModalClose" class="stolon-row-btn stolon-dialog-close" title="Close" data-str-title="ButtonClose" aria-label="Close" data-str-label="ButtonClose"><span class="material-icons" aria-hidden="true">close</span></button>
+                        </div>
+                        <div id="historyModalContent" class="stolon-sidecar-body">
+                            <div class="zooid-modal-top-row">
+                                <span id="historyModalStatusBadge" class="stolon-table-status-badge"></span>
+                                <span id="historyModalServerMapping" class="zooid-modal-server-mapping"></span>
+                            </div>
+                            <div id="historyModalInfoGrid" class="zooid-modal-info-grid">
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="LabelLastSync">Last sync</div>
+                                    <div id="historyModalLastSync" class="zooid-modal-info-value">-</div>
+                                </div>
+                                <div class="zooid-modal-info-item">
+                                    <div class="zooid-modal-info-label" data-str="ColumnLastEdited">Last edited</div>
+                                    <div id="historyModalVersion" class="zooid-modal-info-value">-</div>
+                                </div>
+                            </div>
+                            <div id="historyModalErrorSection" class="stolon-modal-field stolon-hidden">
+                                <div class="stolon-modal-field-label" data-str="HeaderError">Error</div>
+                                <div id="historyModalError" class="stolon-error-message"></div>
+                            </div>
+                            <div class="zooid-history-user-section">
+                                <div class="zooid-history-user-row">
+                                    <div class="zooid-history-user-block">
+                                        <div class="zooid-history-user-label" data-str="LabelSourceUser">Source user</div>
+                                        <div id="historyModalSourceUserName" class="zooid-history-user-name"></div>
+                                        <div id="historyModalSourceUserId" class="zooid-history-user-guid"></div>
+                                    </div>
+                                    <div class="zooid-history-user-block">
+                                        <div class="zooid-history-user-label" data-str="LabelLocalUser">Local user</div>
+                                        <div id="historyModalLocalUserName" class="zooid-history-user-name"></div>
+                                        <div id="historyModalLocalUserId" class="zooid-history-user-guid"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="zooid-modal-table-container">
+                                <table class="zooid-compare-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="zooid-compare-table-property" data-str="ColumnProperty">Property</th>
+                                            <th id="historyModalSourceHeader" class="zooid-compare-table-server" data-str="LabelSource">Source</th>
+                                            <th id="historyModalLocalHeader" class="zooid-compare-table-server" data-str="ServerLocal">Local</th>
+                                            <th class="zooid-compare-table-merged" data-str="ColumnAfterSync">After sync</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr id="historyModalRowPlayed">
+                                            <td class="zooid-compare-table-property" data-str="Played">Played</td>
+                                            <td id="historyModalSourcePlayed" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalLocalPlayed" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalMergedPlayed" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                        </tr>
+                                        <tr id="historyModalRowFavorite">
+                                            <td class="zooid-compare-table-property" data-str="Favorite">Favorite</td>
+                                            <td id="historyModalSourceFavorite" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalLocalFavorite" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalMergedFavorite" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                        </tr>
+                                        <tr id="historyModalRowPlayCount">
+                                            <td class="zooid-compare-table-property" data-str="OptionPlayCount">Play count</td>
+                                            <td id="historyModalSourcePlayCount" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalLocalPlayCount" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalMergedPlayCount" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                        </tr>
+                                        <tr id="historyModalRowPosition">
+                                            <td class="zooid-compare-table-property" data-str="LabelPosition">Position</td>
+                                            <td id="historyModalSourcePosition" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalLocalPosition" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalMergedPosition" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                        </tr>
+                                        <tr id="historyModalRowLastPlayed">
+                                            <td class="zooid-compare-table-property" data-str="LabelLastPlayed">Last played</td>
+                                            <td id="historyModalSourceLastPlayed" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalLocalLastPlayed" class="zooid-compare-table-value">-</td>
+                                            <td id="historyModalMergedLastPlayed" class="zooid-compare-table-value zooid-compare-table-merged">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="stolon-sidecar-shelf">
+                            <button is="emby-button" type="button" id="btnHistoryModalIgnore" class="raised stolon-button stolon-secondary stolon-modal-button">
+                                <span data-str="ButtonIgnore">Ignore</span>
+                            </button>
+                            <button is="emby-button" type="button" id="btnHistoryModalQueue" class="raised stolon-button stolon-primary stolon-modal-button">
+                                <span data-str="ButtonQueue">Queue</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="configurationpage?name=zooid_stolon.css">
+    <link rel="stylesheet" href="configurationpage?name=zooid_shared.css">
+
+</div>

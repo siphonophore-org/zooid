@@ -153,7 +153,7 @@ public static VersionDecision Decide(ObjectVersion? local, ObjectVersion incomin
 
 ```js
 // createSyncTableModule
-// Builds the Sync tab's content table and its filters.
+// Builds the Content tool's table and its filters.
 //
 // Inputs
 // view [HTMLElement]: The page that holds the table.

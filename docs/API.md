@@ -523,7 +523,7 @@ Streams an item's primary image, or with `user=true` a user's profile image, fro
 
 ### Lists and Counts
 
-The **Synchronization** page reads each sync type's table through a list route and a count route. A list takes `search`, `status`, `skip`, and `take`, and a page holds at most 200 rows. It answers Stolon's paged result.
+Each sync type's tool reads its table through a list route and a count route. A list takes `search`, `status`, `skip`, and `take`, and a page holds at most 200 rows. It answers Stolon's paged result.
 
 ```json
 { "Items": [ … ], "TotalCount": 1200, "Page": 1, "PageSize": 50, "TotalPages": 24, "HasMore": true }
@@ -586,7 +586,7 @@ Marks the rows named by `SourceItemIds` as Synced after checking each local file
 Deletes the files of the rows named by `SourceItemIds` from this server only, and keeps each handled row as Ignored so the next scan does not download it again. The source is never touched. Answers `{ "Deleted": 2, "Failed": 0, "Skipped": 0 }`.
 #### POST /Sync/PromoteItems
 
-Turns links into full copies, the **Keep a full local copy** action on the **Synchronization** page and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
+Turns links into full copies, the **Keep a full local copy** action on the **Content** tool and **Download** in an item's details. A link whose whole file is in the link cache, at the size the source reports, has the cached file moved into place by a **Sync Content** run that starts now, or right after the one already running. Any other copy downloads on the next **Sync Content** run. The `.strm` is removed once the copy is in place. Rows that are not links, are ignored, or are on their way to deletion are skipped. `FromCache` counts the promoted links that come from the cache.
 
 ```json
 { "SourceItemIds": ["9c1e0f…", "77ab12…"] }
@@ -600,7 +600,7 @@ Content rows from `GET /Sync/Items` carry `StorageMode`, which is `Copy`, `Link`
 
 #### GET /Sync/KeptCopies?serverKey={key}&search={text}&skip={n}&take={n}
 
-The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Synchronization** page, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
+The full copies held in one server entry's Link mappings, the **Storage** page's **Permanent copies**, as content rows, including copies already on their way back to links. `Kept` says why each is a copy. It is `Pick` for an Always keep pick, `Hand` for one kept from the **Content** tool, `Own` for a file that was already here, or `Unknown` for one whose reason was not recorded. `take` is at most 200.
 
 #### POST /Sync/KeptCopies/Unkeep
 
@@ -653,7 +653,7 @@ What the **Statistics** page charts.
 
 #### POST /Sync/Tasks/{taskKey}/Run
 
-Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on the **Synchronization** page do. Answers `404` for any other key.
+Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync** buttons on each sync type's tool do. Answers `404` for any other key.
 
 | Sync type | Refresh | Sync |
 | :--- | :--- | :--- |

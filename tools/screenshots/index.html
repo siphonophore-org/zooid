@@ -19,7 +19,7 @@
 <script src="upgrade.js"></script>
 <script src="stub.js"></script>
 <script type="module">
-var page = new URLSearchParams(location.search).get('page') || 'sync';
+var page = new URLSearchParams(location.search).get('page') || 'dashboard';
 var html = await (await fetch('/configurationpage?name=zooid_' + page)).text();
 var host = document.getElementById('host');
 host.innerHTML = html;

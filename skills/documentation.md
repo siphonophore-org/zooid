@@ -53,7 +53,7 @@ Leave out compatibility notes for peers the plugin does not support. The plugin 
 
 * Write a label exactly as the page shows it, in bold. **Send changes after (seconds)**.
 * Write a path through the UI with `>` between the steps, in bold. **Dashboard > Plugins > Zooid > Settings**.
-* Write a tab as its label, in bold. **Sync**, **Servers**, **Storage**, **Statistics**, **Settings**.
+* Write a tab as its label, in bold. **Content**, **Servers**, **Storage**, **Statistics**, **Settings**.
 * Quote activity log names and on-screen messages in double quotes. "Zooid needs attention".
 * Write routes, files, settings keys, and values in code. `POST /Sync/Tasks/{taskKey}/Run`.
 
