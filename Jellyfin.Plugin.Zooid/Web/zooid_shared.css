@@ -833,3 +833,10 @@ div:not(.zooid-form-row) + .zooid-form-row {
     margin-bottom: 0;
     padding-bottom: 0;
 }
+
+/* zooid-section-intro */
+/* The lines that open a settings section, read as one block: a narrow gap between them, no inset, and the standard
+   gap before the first field. */
+/* Example: <div class="zooid-section-intro"><div class="fieldDescription">Sets how fast files move.</div></div> */
+.zooid-section-intro { display: flex; flex-direction: column; gap: var(--stolon-gap-narrow); margin-bottom: var(--stolon-gap-wide); }
+.pluginConfigurationPage .zooid-section-intro > .fieldDescription { margin: 0 !important; padding-left: 0; }
