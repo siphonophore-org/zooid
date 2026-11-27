@@ -184,14 +184,14 @@ function tabName(key, english) {
 export function zooidTools() {
     var tools = [
         { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
+        { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
         { key: 'content', name: tabName('SyncTypeContent', 'Content'), icon: 'video_library', page: 'zooid_content' },
         { key: 'history', name: tabName('SyncTypeHistory', 'History'), icon: 'history', page: 'zooid_history' },
         { key: 'metadata', name: tabName('LabelMetadata', 'Metadata'), icon: 'info', page: 'zooid_metadata' },
         { key: 'people', name: tabName('People', 'People'), icon: 'recent_actors', page: 'zooid_people' },
         { key: 'users', name: tabName('HeaderUsers', 'Users'), icon: 'group', page: 'zooid_users' },
-        { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
-        { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
         { key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' },
+        { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
         { key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' }
     ].filter(function (tool) { return !TOOL_FLAG_KEYS[tool.key] || readToolFlag(tool.key) !== '0'; });
     tools.push({ key: 'settings', name: tabName('Settings', 'Settings'), icon: 'settings', page: 'zooid_settings' });

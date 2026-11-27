@@ -663,6 +663,14 @@ Starts one of Zooid's refresh or sync tasks now, as the **Refresh** and **Sync**
 | People | `ZooidRefreshPeopleTable` | `ZooidMissingPeople` |
 | Users | `ZooidRefreshUserTable` | `ZooidMissingUserData` |
 
+#### GET /Sync/Tables
+
+Counts the rows each sync table holds, by the name its reset takes. **Troubleshooting** grays the tile of a table that is empty.
+
+```json
+{ "Content": 128, "History": 4210, "Metadata": 96, "People": 0, "Playlists": 3, "Users": 0 }
+```
+
 #### POST /Sync/Reset/{table}
 
 Empties one sync table, as the resets on the **Troubleshooting** page do. `table` is `Content`, `History`, `Metadata`, `People`, `Playlists`, or `Users`. `Playlists` forgets which playlists are copies of another server's, which the next playlist sync works out again from the copies themselves. `All` deletes the whole sync database and creates it again. Tracking is forgotten and media is never touched. Answers `404` for any other name.

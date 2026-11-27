@@ -83,3 +83,26 @@ test('a reset that fails shows an error on the reset status', async function () 
     assert.equal(statusText(status), 'Could not reset the database.');
     assert.ok(status.classList.contains('stolon-status-bad'));
 });
+
+test('a table tile keeps the accent while the table has rows and goes gray while it is empty', async function () {
+    var page = installPage({ config: { Servers: [] } });
+    var dom = page.dom;
+    function row(id) {
+        var tile = dom.el('span', { class: 'stolon-collapsible-tile' });
+        return { tile: tile, element: dom.el('div', { class: 'stolon-reset-row' }, [tile, dom.el('button', { id: id })]) };
+    }
+    var content = row('btnResetContentTable'), history = row('btnResetHistoryTable');
+    var view = dom.el('div', {}, [dom.el('div', { id: 'resetStatus' }), content.element, history.element, dom.el('button', { id: 'btnResetEntireDatabase' })]);
+    dom.document.documentElement.appendChild(view);
+    globalThis.ApiClient.fetch = function (options) {
+        page.requests.push(options);
+        return Promise.resolve(/Tables$/.test(options.url) ? { Content: 12, History: 0 } : {});
+    };
+    var mod = await loadScript('zooid_troubleshooting.js');
+    mod.default(view);
+    view.dispatch('viewshow');
+    await settle(20);
+
+    assert.ok(!content.tile.classList.contains('stolon-gray'));
+    assert.ok(history.tile.classList.contains('stolon-gray'));
+});

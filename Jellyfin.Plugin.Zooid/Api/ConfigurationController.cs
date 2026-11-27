@@ -235,6 +235,26 @@ public partial class ConfigurationController : ControllerBase
     }
 
     /// <summary>
+    /// Counts the rows each sync table holds, so Troubleshooting shows which tables a reset would empty.
+    /// </summary>
+    /// <returns>The row count of each table, by the name its reset takes.</returns>
+    [HttpGet("Tables")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<Dictionary<string, int>> Tables()
+    {
+        var services = HttpContext.RequestServices;
+        return Ok(new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["Content"] = services.GetRequiredService<ContentSyncTableManager>().Count(),
+            ["History"] = services.GetRequiredService<HistorySyncTableManager>().Count(),
+            ["Metadata"] = services.GetRequiredService<MetadataSyncTableManager>().Count(),
+            ["People"] = services.GetRequiredService<PeopleSyncTableManager>().Count(),
+            ["Playlists"] = Services.Playlists.PlaylistCopyStore.Count(),
+            ["Users"] = services.GetRequiredService<UserSyncTableManager>().Count()
+        });
+    }
+
+    /// <summary>
     /// Empties one sync table, or with <c>All</c> deletes the whole sync database and creates it again.
     /// </summary>
     /// <param name="table">Content, History, Metadata, People, Playlists, Users, or All.</param>

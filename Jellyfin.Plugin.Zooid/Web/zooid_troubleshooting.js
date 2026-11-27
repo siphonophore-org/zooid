@@ -11,7 +11,7 @@ export default function (view) {
     var confirmDialog = zooidModule.confirmDialog;
     var escapeHtml, bindClick;
 
-    var made = zooidModule.createZooidPage(view, { page: 'zooid_troubleshooting', bind: function () { bindPage(); } });
+    var made = zooidModule.createZooidPage(view, { page: 'zooid_troubleshooting', bind: function () { bindPage(); }, load: function () { paintTables(); } });
     ZooidShared = made.shared;
     ({ escapeHtml, bindClick } = ZooidShared.pageHelpers());
 
@@ -46,6 +46,7 @@ export default function (view) {
 
             ZooidShared.apiRequest('Reset/' + table, 'POST').then(function() {
                 ZooidShared.setStatus('resetStatus', done, false);
+                paintTables();
             }).catch(function(err) {
                 console.error('Reset ' + table + ' error:', err);
                 ZooidShared.setStatus('resetStatus', failed, true, { timeout: 10000 });
@@ -61,11 +62,29 @@ export default function (view) {
 
             ZooidShared.apiRequest('Reset/All', 'POST').then(function() {
                 ZooidShared.setStatus('resetStatus', ZooidShared.t.tr('ToastDatabaseReset'), false);
+                paintTables();
             }).catch(function(err) {
                 console.error('Reset all error:', err);
                 ZooidShared.setStatus('resetStatus', ZooidShared.t.tr('ErrorResetDatabase'), true, { timeout: 10000 });
             });
         });
+    }
+
+    // Each table's reset button, by the name the counts route gives the table.
+    var TABLE_BUTTONS = { Content: 'btnResetContentTable', History: 'btnResetHistoryTable', Metadata: 'btnResetMetadataTable', People: 'btnResetPeopleTable', Playlists: 'btnResetPlaylistTable', Users: 'btnResetUserTable' };
+
+    // paintTables
+    // Colors each table's tile by what it holds: the accent while it has rows a reset would forget, gray while it is
+    // empty. A table whose count cannot be read keeps the accent.
+    function paintTables() {
+        return ZooidShared.apiRequest('Tables', 'GET').then(function (counts) {
+            Object.keys(TABLE_BUTTONS).forEach(function (table) {
+                var button = view.querySelector('#' + TABLE_BUTTONS[table]);
+                var row = button && button.closest('.stolon-reset-row');
+                var tile = row && row.querySelector('.stolon-collapsible-tile');
+                if (tile) tile.classList.toggle('stolon-gray', counts && counts[table] === 0);
+            });
+        }).catch(function () { /* the tiles keep the accent */ });
     }
 
     // bindPage

@@ -9,14 +9,14 @@ Open **Zooid** from the dashboard menu. Zooid is one page with a sidebar of tool
 | Tool | What it holds | Shows while |
 | :--- | :--- | :--- |
 | **Dashboard** | A card for the servers, the queue, and each sync type. A card opens its tool | Always |
+| **Queue** | The changes sent between servers as they happen | Always |
 | **Content** | The content sync table | Content sync is on |
 | **History** | The history sync table | History sync is on |
 | **Metadata** | The metadata sync table | Metadata sync is on |
 | **People** | The people sync table | People sync is on |
 | **Users** | The user sync table | User sync is on |
-| **Queue** | The changes sent between servers as they happen | Always |
-| **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Storage** | How each mapped library keeps its files, and which items it syncs | Content, history, or metadata sync is on |
+| **Servers** | The one time setup of the servers this one syncs with | Always |
 | **Statistics** | How the synced files are kept, what the last scans found, and the link streams served | A sync type is on, or a server may link here |
 | **Settings** | Bandwidth, processing, the whitelist, and one section for each sync type | Always |
 | **Troubleshooting** | Resets that forget Zooid's tracking. Media is untouched | Always |
@@ -163,4 +163,4 @@ While a server may link to this one, the page also charts **Link streams**. It s
 
 ![Troubleshooting](screenshots/Troubleshooting.png)
 
-**Troubleshooting** holds resets that forget Zooid's tracking. Media is untouched. **Reset individual tables** has a **Reset** for each of **Content sync**, **History sync**, **Metadata sync**, **People sync**, **Playlist sync**, and **User sync**. **Reset entire database** has **Reset all**, which forgets the tracking of every sync type. Each reset asks first in a dialog that names the table, and it cannot be undone. The next scan starts over.
+**Troubleshooting** holds resets that forget Zooid's tracking. Media is untouched. **Reset individual tables** has a **Reset** for each of **Content sync**, **History sync**, **Metadata sync**, **People sync**, **Playlist sync**, and **User sync**. A table's tile keeps the accent color while the table holds tracking, and turns gray while it is empty, so there is nothing to reset. **Reset entire database** has **Reset all**, which forgets the tracking of every sync type. Each reset asks first in a dialog that names the table, and it cannot be undone. The next scan starts over.
