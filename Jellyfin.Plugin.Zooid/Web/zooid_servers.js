@@ -341,7 +341,7 @@ export default function (view) {
                     '<div class="zooid-access-title">' + escapeHtml(ZooidShared.t.tr(key)) + '</div>' +
                     '<div class="zooid-access-description">–</div>' +
                 '</div>' +
-                '<span class="stolon-badge gray">–</span>' +
+                '<span class="stolon-badge stolon-gray">–</span>' +
                 '</div>';
         }).join('');
     }
