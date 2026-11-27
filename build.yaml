@@ -35,4 +35,4 @@ changelog:
   - "The logo and catalog artwork are temporary and will be replaced"
   developer:
   - "Every route is under /Sync. The database schema and the peer protocol are both version 1"
-  - "Uses Siphonophore.Stolon 12.4.8"
+  - "Uses Siphonophore.Stolon 12.4.9, in place of the local metered stream, per run lookup, write probe, free space read, Server URL match, tool switches, save bars, plural, field builders, dot and tile painting, and storage layout"

@@ -49,7 +49,10 @@ At the repository root, `tools/integration/` holds the Docker pool and matrix, `
 | Comparing a presented secret | `SecretCompare.FixedTimeEquals` |
 | Writing a file whole or not at all | `AtomicFile`, with `ownerOnly: true` for a key or secret |
 | Paths inside a folder | `PathContainment` |
-| Streams | `StreamUtilities.CopyWithIdleTimeoutAsync` and `CopyThrottledAsync`, `SpeedBucket`, `ThrottledReadStream`, `CappedReadStream`, `ProgressReportingStream`, `StreamLimits` |
+| Streams | `StreamUtilities.CopyWithIdleTimeoutAsync` and `CopyThrottledAsync`, `SpeedBucket`, `ThrottledReadStream`, `CappedReadStream`, `MeteredReadStream`, `ProgressReportingStream`, `StreamLimits` |
+| One answer per key for a run | `PerRunLookup<TKey, TValue>` |
+| Whether two Server URLs name one server | `UrlUtilities.SameServer` |
+| Whether a folder can be written, and its free space | `FolderProbe.CanWrite`, `DiskSpace.TryGetFreeBytes` |
 | Hashes and sizes | `HashUtilities`, `ByteSize` |
 | The clock | `TimeProvider`, and `UtcTime` for stored times |
 | Activity log | `ActivityLogger`, `ActivitySummary`, `ActivityText` |
@@ -62,6 +65,11 @@ At the repository root, `tools/integration/` holds the Docker pool and matrix, `
 | Tables | `createPaginatedTable` |
 | Lists and row editors | `createCheckboxList`, `createRepeater`, `createSortableCardList` |
 | Charts | `createPieChart`, `createUsageMeter`, `createBarChart` |
+| Fields built in script | `createCheckboxField`, `createSelectField`, `createChoiceGroup` with `choices`, `make` |
+| Dots and section tiles | `setDotColor`, `setCollapsibleTile`, `bindTileToSwitch` |
+| Tools that a setting hides | `visibleWhen` on each tool, through `zooidTools` |
+| Counted text | `t.plural` |
+| A column of blocks with the standard gap | `stolon-stack`, `stolon-flow`, `stolon-narrow` |
 | Dialogs and sidecars | `openSidecar` and `bindSidecar` for item details and inputs, `confirmDialog` and `openDialog` for confirmations, `createDialogItem` for a poster and name context |
 
 ### Move Code Into Stolon
