@@ -272,6 +272,16 @@ Every tool page uses Jellyfin's page shell. The tool app takes the page's view o
 | Settings that only matter when a checkbox is on | `stolon-indent` under the checkbox, shown with `shared.bindReveal` |
 
 * A collapsible header is a `button.stolon-collapsible-header` holding `stolon-collapsible-title` and `stolon-collapsible-icon`. Stolon replaces the icon with `expand_more`.
+
+#### Settings and Troubleshooting Pages
+
+Every section on a Settings or Troubleshooting page leads with an icon tile, and so does every reset or action row. The tile names the topic at a glance, and makes a long page easy to scan.
+
+* A section header holds `<span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">…</span></span>` before its `stolon-collapsible-title`. A section built in script passes `icon` to `createCollapsibleSection`, which draws the same tile.
+* A reset or action row holds the same tile before its `stolon-reset-info`.
+* Pick the Material icon that names the topic, such as `video_library` for Content, `speed` for Bandwidth. A section and the tool it belongs to use the same icon as the sidebar.
+* The tile takes the accent color. The most destructive row, such as a full reset, takes `stolon-red`.
+* Never use a tile for decoration alone. Leave a numbered section without one, since its number is its marker.
 * Start collapsibles closed, except the first one on a page someone opens to act on.
 * Give every top level group on one page the same header. A chart or a summary takes the `fixed` section, never a bare `stolon-subsection-title`.
 * Hide a whole section while its feature is off or it has nothing to show. Never show an empty section.
@@ -495,5 +505,6 @@ Run every new or changed string through this list.
 * [ ] The word matches [Words to Use](#words-to-use).
 * [ ] Stolon's typings were searched before any markup was built by hand.
 * [ ] The component comes from Stolon, unchanged.
+* [ ] Each Settings or Troubleshooting section, and each reset row, leads with its icon tile.
 * [ ] Colors come from Stolon tokens and mean what [Meaning](#meaning) says.
 * [ ] The docs use the same label.
