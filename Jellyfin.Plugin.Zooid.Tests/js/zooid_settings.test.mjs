@@ -241,3 +241,33 @@ test('the two media segment switches show off when never saved, and the Metadata
     assert.equal(saved.MetadataSyncReplaceSegments, true);
     assert.equal(saved.MetadataSyncRemoveSegments, false);
 });
+
+test('a sync type tile is green while its switch is on, gray while it is off, and follows the switch', async function () {
+    var page = installPage({ config: { Servers: [], EnableContentSync: true, EnableHistorySync: false } });
+    var dom = page.dom;
+    function section(box) {
+        var tile = dom.el('span', { class: 'stolon-collapsible-tile' });
+        return { tile: tile, element: dom.el('div', { class: 'stolon-collapsible-section' }, [dom.el('button', { class: 'stolon-collapsible-header' }, [tile]), dom.el('div', {}, [box])]) };
+    }
+    var content = dom.el('input', { id: 'chkEnableContentSync', type: 'checkbox' });
+    var history = dom.el('input', { id: 'chkEnableHistorySync', type: 'checkbox' });
+    var a = section(content), b = section(history);
+    var children = IDS.map(function (id) { return dom.el('div', { id: id }); }).concat(BUTTONS.map(function (id) { return dom.el('button', { id: id }); }))
+        .concat([dom.el('input', { id: 'txtMaxDownloadSpeed' }), a.element, b.element]);
+    var view = dom.el('div', {}, children);
+    dom.document.documentElement.appendChild(view);
+    var mod = await loadScript('zooid_settings.js');
+    mod.default(view);
+    view.dispatch('viewshow');
+    await settle();
+
+    assert.equal(content.checked, true);
+    assert.ok(a.tile.classList.contains('stolon-green'));
+    assert.ok(!a.tile.classList.contains('stolon-gray'));
+    assert.ok(b.tile.classList.contains('stolon-gray'));
+
+    history.checked = true;
+    history.dispatchEvent(new globalThis.Event('change'));
+    assert.ok(b.tile.classList.contains('stolon-green'));
+    assert.ok(!b.tile.classList.contains('stolon-gray'));
+});

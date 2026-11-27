@@ -280,7 +280,8 @@ Every section on a Settings or Troubleshooting page leads with an icon tile, and
 * A section header holds `<span class="stolon-collapsible-tile" aria-hidden="true"><span class="material-icons">…</span></span>` before its `stolon-collapsible-title`. A section built in script passes `icon` to `createCollapsibleSection`, which draws the same tile.
 * A reset or action row holds the same tile before its `stolon-reset-info`.
 * Pick the Material icon that names the topic, such as `video_library` for Content, `speed` for Bandwidth. A section and the tool it belongs to use the same icon as the sidebar.
-* The tile takes the accent color. The most destructive row, such as a full reset, takes `stolon-red`.
+* The tile takes the accent color when its section has no on or off switch. A section that turns its feature on or off takes `stolon-green` while it is on and `stolon-gray` while it is off, and follows the switch as it changes. The most destructive row, such as a full reset, takes `stolon-red`.
+* Give each section its own icon. Two sections on one page never share one.
 * Never use a tile for decoration alone. Leave a numbered section without one, since its number is its marker.
 * Start collapsibles closed, except the first one on a page someone opens to act on.
 * Give every top level group on one page the same header. A chart or a summary takes the `fixed` section, never a bare `stolon-subsection-title`.
