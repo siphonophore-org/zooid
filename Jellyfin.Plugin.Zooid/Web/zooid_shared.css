@@ -684,13 +684,6 @@ div:not(.zooid-form-row) + .zooid-form-row {
     padding-bottom: 0;
 }
 
-/* zooid-section-intro */
-/* The lines that open a settings section, read as one block: a narrow gap between them, no inset, and the standard
-   gap before the first field. */
-/* Example: <div class="zooid-section-intro"><div class="fieldDescription">Sets how fast files move.</div></div> */
-.zooid-section-intro { display: flex; flex-direction: column; gap: var(--stolon-gap-narrow); margin-bottom: var(--stolon-gap-wide); }
-.pluginConfigurationPage .zooid-section-intro > .fieldDescription { margin: 0 !important; padding-left: 0; }
-
 /* zooid-section-flow */
 /* Settings and the server editor lay each open section and each group in it out as one column with the standard
    gap, so every field, checkbox, table, and list sits the same distance from the next. Stolon and Jellyfin give fields their own margins,

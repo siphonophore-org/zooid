@@ -9,7 +9,7 @@
             <form id="ZooidSettingsForm">
                 <div class="verticalSection verticalSection-extrabottompadding">
 
-                    <div class="fieldDescription zooid-mb-md" data-str="HelpSettingsIntro">Sets how this server sends changes and who may call it. Each section saves on its own.</div>
+                    <div class="fieldDescription zooid-mb-md" data-str="HelpSettingsIntro">How this server sends changes and who may call it.</div>
                     <div id="settingsStatus" class="stolon-status-text" role="status"></div>
 
                     <h3 class="stolon-subsection-title" data-str="General">General</h3>
@@ -23,10 +23,7 @@
                             <span class="stolon-collapsible-icon">&#9660;</span>
                         </button>
                         <div id="bandwidthConfigContent" class="stolon-collapsible-content stolon-collapsed">
-                            <div class="zooid-section-intro">
-                                <div class="fieldDescription" data-str="HelpSetsHowFastFiles">Sets how fast files move to this server and to each server allowed to link.</div>
-                                <div class="fieldDescription" data-str="HelpSetStreamSpeedsAbove">Set stream speeds above your files' bitrate, or playback buffers. 0 is no limit, and a user mapping can set a lower one.</div>
-                            </div>
+                            <div class="fieldDescription" data-str="HelpSetsHowFastFiles">How fast files move here and to servers allowed to link. 0 is no limit.</div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
@@ -54,9 +51,7 @@
                             <span class="stolon-collapsible-icon">&#9660;</span>
                         </button>
                         <div id="processingConfigContent" class="stolon-collapsible-content stolon-collapsed">
-                            <div class="zooid-section-intro">
-                                <div class="fieldDescription" data-str="HelpSetsHowMuchWork">Sets how much work runs at once and how fast changes are sent.</div>
-                            </div>
+                            <div class="fieldDescription" data-str="HelpSetsHowMuchWork">Sets how much work runs at once and how fast changes are sent.</div>
 
                             <div id="hintSettings">
                             <div class="inputContainer">
@@ -77,13 +72,13 @@
                             <div class="inputContainer">
                                 <label for="txtMaxRetryCount" data-str="LabelFailedItemRetries">Failed item retries</label>
                                 <input is="emby-input" type="number" id="txtMaxRetryCount" min="1" max="10" />
-                                <div class="fieldDescription" data-str="HelpSetsTriesFailedDownload">Sets the tries for a failed download or item within one run. One that still fails is tried again on the next run. 1 to 10.</div>
+                                <div class="fieldDescription" data-str="HelpSetsTriesFailedDownload">Tries per failed download in one run, from 1 to 10.</div>
                             </div>
 
                             <div class="inputContainer">
                                 <label for="txtRefreshParallelism" data-str="LabelRefreshParallelism">Refresh parallelism</label>
                                 <input is="emby-input" type="number" id="txtRefreshParallelism" min="1" max="16" />
-                                <div class="fieldDescription" data-str="HelpSetsHowManyMetadata">Sets how many Metadata and People items refresh at once, and how many requests a Metadata scan sends to a server at once. Lower it when a server is slow.</div>
+                                <div class="fieldDescription" data-str="HelpSetsHowManyMetadata">How many Metadata and People items refresh at once. Lower it for a slow server.</div>
                             </div>
 
                             <div class="inputContainer">
@@ -111,10 +106,7 @@
                             <span class="stolon-collapsible-icon">&#9660;</span>
                         </button>
                         <div id="callerAccessContent" class="stolon-collapsible-content stolon-collapsed">
-                            <div class="zooid-section-intro">
-                                <div class="fieldDescription" data-str="HelpLimitsWhoMayCall">Limits who may call this server's sync routes. An administrator or API Key calling from an enabled server's address always may.</div>
-                                <div class="fieldDescription" data-str="HelpAcceptsHostsURLsIPs">Accepts hosts, URLs, IPs, or ranges, separated by commas. Empty allows every location.</div>
-                            </div>
+                            <div class="fieldDescription" data-str="HelpLimitsWhoMayCall">Hosts, URLs, IPs, or ranges that may call this server, separated by commas. Empty allows all.</div>
 
                             <div id="callerGrants"></div>
                         </div>
@@ -151,7 +143,7 @@
                                     <div class="zooid-role-row"><span class="zooid-role-label" data-str="PermissionFolderPathsLibrary">Folder paths in the library picker</span><span><span class="stolon-badge stolon-red" data-str="No">No</span></span><span><span class="stolon-badge stolon-green" data-str="Yes">Yes</span></span></div>
                                     <div class="zooid-role-row"><span class="zooid-role-label" data-str="AccessFileDownloads">File downloads</span><span><span class="stolon-badge stolon-orange" data-str="BadgeLimited">Limited</span></span><span><span class="stolon-badge stolon-green" data-str="Yes">Yes</span></span></div>
                                     <div class="zooid-role-row"><span class="zooid-role-label" data-str="PermissionNewFilesThey">New files as they happen</span><span><span class="stolon-badge stolon-orange" data-str="BadgeLimited">Limited</span></span><span><span class="stolon-badge stolon-green" data-str="Yes">Yes</span></span></div>
-                                    <div class="zooid-role-note" data-str="HelpSignedUsersNeedAllow">Signed in users need Allow media downloading. Limited live changes need the user on that server's whitelist.</div>
+                                    <div class="zooid-role-note" data-str="HelpSignedUsersNeedAllow">Signed in users need Allow media downloading.</div>
                                 </div>
                             </div>
 
@@ -165,7 +157,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkDetectUpdatedFiles" />
                                             <span class="checkboxLabel" data-str="LabelDetectUpdatedFiles">Detect updated files</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpDownloadSyncedFileAgain">Download a synced file again when it is missing here or its size differs from the source's.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpDownloadSyncedFileAgain">Downloads a file again when it is missing or its size differs.</div>
                                     </div>
 
                                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -173,7 +165,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkMirrorSyncedCollections" />
                                             <span class="checkboxLabel" data-str="LabelMirrorSyncedCollections">Mirror synced collections</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpRecreateCollectionsWhitelistedLibrary">Recreate collections whitelisted in a library filter on the Storage page, with their synced items.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpRecreateCollectionsWhitelistedLibrary">Recreates collections whitelisted in a Storage library filter.</div>
                                     </div>
 
                                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -199,7 +191,7 @@
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelNewFiles">New files</span><span class="zooid-form-hint" data-str="HintMissingHere">Missing here</span></span><span class="zooid-form-cell"><select is="emby-select" id="selDownloadNewContentMode" class="emby-select-withcolor emby-select zooid-form-select"><option value="Enabled" data-str="OptionEnabled">Enabled</option><option value="RequireApproval" data-str="OptionRequireApproval">Require approval</option><option value="Disabled" data-str="Disabled">Disabled</option></select></span></div>
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelChangedFiles">Changed files</span><span class="zooid-form-hint" data-str="HintDifferSource">Differ from the source</span></span><span class="zooid-form-cell"><select is="emby-select" id="selReplaceExistingContentMode" class="emby-select-withcolor emby-select zooid-form-select"><option value="Enabled" data-str="OptionEnabled">Enabled</option><option value="RequireApproval" data-str="OptionRequireApproval">Require approval</option><option value="Disabled" data-str="Disabled">Disabled</option></select></span></div>
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelRemovedFiles">Removed files</span><span class="zooid-form-hint" data-str="HintGoneSource">Gone from the source</span></span><span class="zooid-form-cell"><select is="emby-select" id="selMissingContent" class="emby-select-withcolor emby-select zooid-form-select"><option value="Keep" data-str="OptionKeep">Keep</option><option value="Delete" data-str="Delete">Delete</option><option value="DeleteAfterApproval" data-str="OptionDeleteAfterApproval">Delete after approval</option><option value="Ignore" data-str="ButtonIgnore">Ignore</option></select></span></div>
-                                        <div class="zooid-role-note" data-str="HelpIgnoreKeepsFilesHides">Ignore keeps the files and hides an emptied movie or show folder with a .ignore file. Uncertain deletions always wait for approval.</div>
+                                        <div class="zooid-role-note" data-str="HelpIgnoreKeepsFilesHides">Ignore keeps the files and hides emptied folders. Uncertain deletions always wait for approval.</div>
                                     </div>
 
                                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -245,13 +237,13 @@
                                     <div class="inputContainer">
                                         <label for="txtTempDownloadPath" data-str="LabelTemporaryFolder">Temporary folder</label>
                                         <input is="emby-input" type="text" id="txtTempDownloadPath" placeholder="Default" data-str-placeholder="Default" />
-                                        <div class="fieldDescription" data-str="HelpSetsWhereDownloadsWait">Sets where downloads wait before they move into place. Empty uses a zooid folder in Jellyfin's cache folder.</div>
+                                        <div class="fieldDescription" data-str="HelpSetsWhereDownloadsWait">Where downloads wait before moving into place. Empty uses Jellyfin's cache folder.</div>
                                     </div>
 
                                     <div class="inputContainer">
                                         <label for="txtMinFreeDiskSpace" data-str="LabelMinimumFreeSpace">Minimum free space (GB)</label>
                                         <input is="emby-input" type="number" id="txtMinFreeDiskSpace" min="0" max="1000" />
-                                        <div class="fieldDescription" data-str="HelpKeepsMuchSpaceFree">Keeps this much space free on the library's disk. A file that would leave less is not downloaded.</div>
+                                        <div class="fieldDescription" data-str="HelpKeepsMuchSpaceFree">Space to keep free on a library's disk. A file that would leave less is not downloaded.</div>
                                     </div>
 
                                     <h3 class="stolon-subsection-title" data-str="ChartLinks">Links</h3>
@@ -260,7 +252,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkTakeLinkImagesFromSource" />
                                             <span class="checkboxLabel" data-str="LabelTakeLinkImages">Take link images from the source</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpGiveLinksTrickplayChapter">Give links the trickplay and chapter images their source made. Jellyfin makes neither for a link.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpGiveLinksTrickplayChapter">Gives links the trickplay and chapter images their source made.</div>
                                     </div>
 
                                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -268,7 +260,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkStreamLinksDirectly" />
                                             <span class="checkboxLabel" data-str="LabelStreamDirectPlay">Stream direct play of links per user</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpStreamLinksDirectPlay">Stream a link's direct play from its source per user, so two viewers are counted apart. Turn off if a player cannot direct play links.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpStreamLinksDirectPlay">Streams each user's direct play from the source. Turn off if a player cannot direct play links.</div>
                                     </div>
 
                                     <div class="zooid-form-table zooid-mb-md" id="linkStreamsTable">
@@ -276,10 +268,10 @@
                                         <div class="zooid-form-row"><span class="zooid-form-label"><span data-str="LabelAllServers">All servers</span><span class="zooid-form-hint" data-str="HintLinksServerStreams">Links this server streams at once, in all</span></span><span class="zooid-form-cell"><input is="emby-input" type="number" id="txtLinkMaxStreamsTotal" min="0" max="1000" class="zooid-form-input" /></span></div>
                                         <div id="linkTakeRows"></div>
                                     </div>
-                                    <div class="fieldDescription zooid-mb-md" data-str="HelpStreamsFilmHighestRanked">Streams a film from the highest ranked server that is idle for this server, or else the one with the most streams free. 0 is no limit.</div>
+                                    <div class="fieldDescription zooid-mb-md" data-str="HelpStreamsFilmHighestRanked">Streams from the highest ranked idle server, or the one with the most streams free. 0 is no limit.</div>
 
                                     <h3 class="stolon-subsection-title" data-str="HeaderLinkCache">Link cache</h3>
-                                    <div class="fieldDescription zooid-mb-md" data-str="HelpKeepsLocalCopiesPlayed">Keeps local copies of played links and upcoming episodes, which play from here even while the source is down. Each library can opt out on the Storage page.</div>
+                                    <div class="fieldDescription zooid-mb-md" data-str="HelpKeepsLocalCopiesPlayed">Keeps played links and upcoming episodes here, so they play while the source is down.</div>
                                     <div class="selectContainer">
                                         <label for="selLinkCacheSizing" data-str="LabelCacheSize">Cache size</label>
                                         <select is="emby-select" id="selLinkCacheSizing">
@@ -288,7 +280,7 @@
                                             <option value="Fixed" data-str="OptionUseUpFixed">Use up to a fixed amount</option>
                                             <option value="Percent" data-str="OptionUsePercentageAvailable">Use a percentage of available space</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpSetsMostDiskCache">Sets the most disk the cache may use, across all servers. Available space is what the cache holds plus what is free on its disk, less Minimum free space. Off empties the cache.</div>
+                                        <div class="fieldDescription" data-str="HelpSetsMostDiskCache">The most disk the cache may use across all servers. Off empties the cache.</div>
                                     </div>
                                     <div class="inputContainer" id="linkCacheFixedRow">
                                         <label for="txtLinkCacheSizeGb" data-str="LabelFixedAmountGB">Fixed amount (GB)</label>
@@ -304,17 +296,17 @@
                                     <div class="inputContainer">
                                         <label for="txtLinkCachePath" data-str="LabelCacheLocation">Cache location</label>
                                         <input is="emby-input" type="text" id="txtLinkCachePath" placeholder="Default" data-str-placeholder="Default" />
-                                        <div class="fieldDescription" data-str="HelpKeepsFilesZooidLinks">Keeps files in a zooid-links folder here. Empty uses Jellyfin's cache folder. Changing it empties the old location.</div>
+                                        <div class="fieldDescription" data-str="HelpKeepsFilesZooidLinks">Where cached files are kept. Empty uses Jellyfin's cache folder.</div>
                                     </div>
                                     <div class="inputContainer">
                                         <label for="txtLinkCacheRetentionDays" data-str="LabelCacheRetentionDays">Cache retention (days)</label>
                                         <input is="emby-input" type="number" id="txtLinkCacheRetentionDays" min="0" max="3650" />
-                                        <div class="fieldDescription" data-str="HelpKeepsFileManyDays">Keeps a file this many days after it was last played, or after it was cached if never played. 0 keeps files until the space is needed.</div>
+                                        <div class="fieldDescription" data-str="HelpKeepsFileManyDays">Days to keep a file after it was last played. 0 keeps it until the space is needed.</div>
                                     </div>
                                     <div class="inputContainer">
                                         <label for="txtLinkCachePreCacheEpisodes" data-str="LabelPreCacheEpisodes">Pre-cache episodes</label>
                                         <input is="emby-input" type="number" id="txtLinkCachePreCacheEpisodes" min="0" max="50" />
-                                        <div class="fieldDescription" data-str="HelpCachesManyEpisodesAhead">Caches this many episodes ahead of the one a user is watching. 0 caches none ahead.</div>
+                                        <div class="fieldDescription" data-str="HelpCachesManyEpisodesAhead">Episodes to cache ahead of the one being watched.</div>
                                     </div>
                                     <div class="selectContainer">
                                         <label for="selLinkCacheRemovalOrder" data-str="LabelRemovalOrder">Removal order</label>
@@ -356,7 +348,7 @@
                                         <input type="checkbox" is="emby-checkbox" id="chkEnableHistorySync" />
                                         <span class="checkboxLabel" data-str="LabelEnableHistorySync">Enable history sync</span>
                                     </label>
-                                    <div class="fieldDescription checkboxFieldDescription" data-str="HelpCopiesPlayedStateProgress">Copies played state, progress, play count, last played date, and favorites.</div>
+                                    <div class="fieldDescription checkboxFieldDescription" data-str="HelpCopiesPlayedStateProgress">Copies played state, progress, play count, and favorites.</div>
                                 </div>
                                 <div class="zooid-role-table">
                                     <div class="zooid-role-row zooid-role-head"><span data-str="ColumnPermission">Permission</span><span data-str="HeaderUser">User</span><span data-str="ColumnAdmin">Admin</span></div>
@@ -458,7 +450,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Which server wins for an item several servers hold. Ranked follows the Servers order.</div>
                                     </div>
                                 </div>
 
@@ -530,14 +522,14 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncProvider" checked />
                                             <span class="checkboxLabel" data-str="LabelEnableMetadataProvider">Enable metadata provider</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsLibraryFillItems">Lets a library fill items from the servers this one pulls from, where Zooid is on in its metadata or image fetchers.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsLibraryFillItems">Fills items from source servers where Zooid is on in a library's fetchers.</div>
                                     </div>
                                     <div class="checkboxContainer checkboxContainer-withDescription">
                                         <label class="emby-checkbox-label">
                                             <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncSegmentProvider" />
                                             <span class="checkboxLabel" data-str="LabelEnableMediaSegment">Enable media segment provider</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsJellyfinsMediaSegment">Lets Jellyfin's media segment scan copy intros, credits, and other segments from the same file on the servers this one pulls from.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsJellyfinsMediaSegment">Copies intros, credits, and other segments from the same file on source servers.</div>
                                     </div>
 
                                     <div id="segmentProviderOptions" class="stolon-indent stolon-hidden">
@@ -546,35 +538,35 @@
                                                 <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncReplaceSegments" />
                                                 <span class="checkboxLabel" data-str="LabelReplaceExistingSegments">Replace existing segments</span>
                                             </label>
-                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpReplacesSegmentsAnotherProvider">Replaces the segments another provider gave a file with the ones copied from a server, type by type.</div>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpReplacesSegmentsAnotherProvider">Replaces another provider's segments with copied ones, type by type.</div>
                                         </div>
                                         <div class="checkboxContainer checkboxContainer-withDescription">
                                             <label class="emby-checkbox-label">
                                                 <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncRemoveSegments" />
                                                 <span class="checkboxLabel" data-str="LabelRemoveSegmentsNo">Remove segments no server has</span>
                                             </label>
-                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpRemovesSegmentsZooid">Removes the segments Zooid copied to a file when no server this one pulls from has any for it. Segments another provider made here are never removed.</div>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpRemovesSegmentsZooid">Removes copied segments when no source server has any for the file.</div>
                                         </div>
                                         <div class="checkboxContainer checkboxContainer-withDescription">
                                             <label class="emby-checkbox-label">
                                                 <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncConsolidateIntros" />
                                                 <span class="checkboxLabel" data-str="LabelConsolidateDuplicateIntros">Consolidate duplicate intros</span>
                                             </label>
-                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpShrinksIntrosOverlapPart">Shrinks intros that overlap to the part they share, so 0:00 to 0:30 and 0:05 to 0:45 become 0:05 to 0:30.</div>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpShrinksIntrosOverlapPart">Shrinks overlapping intros to the part they share.</div>
                                         </div>
                                         <div class="checkboxContainer checkboxContainer-withDescription">
                                             <label class="emby-checkbox-label">
                                                 <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncConsolidateOutros" />
                                                 <span class="checkboxLabel" data-str="LabelConsolidateDuplicateOutros">Consolidate duplicate outros</span>
                                             </label>
-                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpShrinksOutrosOverlapPart">Shrinks outros that overlap to the part they share, the same way as intros.</div>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpShrinksOutrosOverlapPart">Shrinks overlapping outros to the part they share.</div>
                                         </div>
                                         <div class="checkboxContainer checkboxContainer-withDescription">
                                             <label class="emby-checkbox-label">
                                                 <input type="checkbox" is="emby-checkbox" id="chkMetadataSyncConsolidateOtherSegments" />
                                                 <span class="checkboxLabel" data-str="LabelConsolidateOtherSegments">Consolidate other segments</span>
                                             </label>
-                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpJoinsOverlappingSegmentsSame">Joins overlapping segments of the same type, other than intros and outros, into one that covers both, so 1:00 to 1:30 and 1:05 to 1:45 become 1:00 to 1:45.</div>
+                                            <div class="fieldDescription checkboxFieldDescription" data-str="HelpJoinsOverlappingSegmentsSame">Joins overlapping segments of the same type into one, other than intros and outros.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -618,7 +610,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Which server wins for an item several servers hold. Ranked follows the Servers order.</div>
                                     </div>
                                 </div>
 
@@ -641,7 +633,7 @@
                                             <input type="checkbox" is="emby-checkbox" id="chkPeopleSyncProvider" checked />
                                             <span class="checkboxLabel" data-str="LabelEnableMetadataProvider">Enable metadata provider</span>
                                         </label>
-                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsLibraryFillPeople">Lets a library fill people from the servers this one pulls from, where Zooid is on in its metadata or image fetchers.</div>
+                                        <div class="fieldDescription checkboxFieldDescription" data-str="HelpLetsLibraryFillPeople">Fills people from source servers where Zooid is on in a library's fetchers.</div>
                                     </div>
                                 </div>
                             </div>
@@ -682,7 +674,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Which server wins for an item several servers hold. Ranked follows the Servers order.</div>
                                     </div>
                                     <div class="selectContainer">
                                         <label for="selPlaylistRemovedAction" data-str="LabelRemovedPlaylists">Removed playlists</label>
@@ -742,7 +734,7 @@
                                             <option value="Newest" data-str="OptionNewest">Newest</option>
                                             <option value="Rank" data-str="OptionRanked">Ranked</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Decides which server speaks for an item that several servers hold. Ranked follows the Servers page order.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesWhichServerSpeaks">Which server wins for an item several servers hold. Ranked follows the Servers order.</div>
                                     </div>
                                     <div class="selectContainer">
                                         <label for="selUserSyncConflict" data-str="LabelUserConflicts">User conflicts</label>
@@ -751,7 +743,7 @@
                                             <option value="Permissive" data-str="OptionPermissive">Permissive</option>
                                             <option value="Restrictive" data-str="OptionRestrictive">Restrictive</option>
                                         </select>
-                                        <div class="fieldDescription" data-str="HelpDecidesUsersPermissionsBoth">Decides a user's permissions when both servers changed them. Other server takes theirs, Permissive allows the most, and Restrictive allows the least.</div>
+                                        <div class="fieldDescription" data-str="HelpDecidesUsersPermissionsBoth">Which permissions win when both servers changed a user.</div>
                                     </div>
                                 </div>
 

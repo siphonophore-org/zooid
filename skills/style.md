@@ -285,6 +285,7 @@ Every section on a Settings or Troubleshooting page leads with an icon tile, and
 * The tile takes the accent color when its section has no on or off switch. A section that turns its feature on or off takes `stolon-green` while it is on and `stolon-gray` while it is off, and follows the switch as it changes. The most destructive row, such as a full reset, takes `stolon-red`.
 * Give each section its own icon. Two sections on one page never share one.
 * Never use a tile for decoration alone. Steps of a setup, such as a server editor, take tiles too, never numbers.
+* A section opens with at most one help line, and a field has at most one description. Fold two into one of one or two sentences, and move detail to the docs.
 * Start collapsibles closed, except the first one on a page someone opens to act on.
 * Give every top level group on one page the same header. A chart or a summary takes the `fixed` section, never a bare `stolon-subsection-title`.
 * Hide a whole section while its feature is off or it has nothing to show. Never show an empty section.
