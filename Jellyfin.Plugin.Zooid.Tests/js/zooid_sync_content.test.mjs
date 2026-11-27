@@ -9,7 +9,7 @@ import { createSyncContext, loadScript, flush, statusText } from './support.mjs'
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
 
-var IDS = ['statusGroupPendingDownload', 'statusGroupPendingReplacement', 'statusGroupPendingDeletion', 'statusGroupDeleting', 'pendingStatusRow'];
+var IDS = ['statusGroupPending', 'pendingCount', 'pendingDownloadCount', 'pendingReplacementCount', 'pendingDeletionCount', 'deletingCount', 'statusGroupPendingDownload', 'statusGroupPendingReplacement', 'statusGroupPendingDeletion', 'statusGroupDeleting', 'pendingStatusRow'];
 
 var env;
 var module;
@@ -207,4 +207,13 @@ test('the controller initializes the table once and loads its rows', async funct
     assert.deepEqual(calls.slice(0, 1), ['init']);
     assert.ok(calls.includes('loadAll'));
     assert.ok(calls.includes('visibility'));
+});
+
+test('Pending counts everything waiting to download, be replaced, or be deleted, with each kind in its title', async function () {
+    env.responses.push({ PendingDownload: 2, PendingReplacement: 1, PendingDeletion: 3, Deleting: 0 });
+    await module.loadStatus();
+    await flush();
+
+    assert.equal(env.view.querySelector('#pendingCount').textContent, '6');
+    assert.match(env.view.querySelector('#statusGroupPending').getAttribute('title'), /download: 2, replacement: 1, deletion: 3/);
 });

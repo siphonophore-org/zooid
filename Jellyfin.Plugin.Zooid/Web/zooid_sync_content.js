@@ -178,6 +178,10 @@ export function createContentSyncTableModule(ctx, kit) {
                         view.querySelector('#' + groupId).setAttribute('title', title);
                     };
 
+                    // Pending counts everything waiting to download, be replaced, or be deleted, with each kind in its title.
+                    var pendingTotal = (status.PendingDownload || 0) + (status.PendingReplacement || 0) + (status.PendingDeletion || 0);
+                    show('pendingCount', 'statusGroupPending', pendingTotal,
+                        t.format('TitlePendingBreakdown', pendingTotal, status.PendingDownload || 0, status.PendingReplacement || 0, status.PendingDeletion || 0));
                     // Work held for approval waits until someone approves it, so each kind keeps a card while its setting asks for approval.
                     show('pendingDownloadCount', 'statusGroupPendingDownload', status.PendingDownload || 0, t.format('StatusCountTitle', t.tr('StatusPendingDownload'), status.PendingDownload || 0));
                     show('pendingReplacementCount', 'statusGroupPendingReplacement', status.PendingReplacement || 0, t.format('StatusCountTitle', t.tr('StatusPendingReplacement'), status.PendingReplacement || 0));

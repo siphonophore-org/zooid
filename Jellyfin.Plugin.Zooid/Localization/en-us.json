@@ -863,6 +863,7 @@
   "TitleDeleteItemsMany": "Delete {0} items",
   "TitleDeleteItemsOne": "Delete {0} item",
   "TitleDismissFailed": "Dismiss failed changes",
+  "TitlePendingBreakdown": "Pending: {0} (download: {1}, replacement: {2}, deletion: {3})",
   "TitleRemoveServer": "Remove {0}",
   "TitleResetContentTable": "Reset the content sync table",
   "TitleResetDatabase": "Reset the sync database",
