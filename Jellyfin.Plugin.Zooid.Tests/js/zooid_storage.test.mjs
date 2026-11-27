@@ -12,7 +12,7 @@ globalThis.setInterval = function () { return 1; };
 
 var IDS = ['storageStatus', 'storageDisabled', 'storageFiltersOnly', 'storageNoServers', 'btnStorageMapLibraries', 'storageContent', 'storageServerPicker',
     'storageServerContent', 'storageServerOff', 'storageSummary', 'storageLibraryList', 'storageNoLibraries', 'storageItemsSection', 'storageItemsStatus',
-    'storageItemsTableContainer', 'storageCacheLine', 'storageCacheMeter', 'storageCacheText', 'btnStorageCacheSettings'];
+    'storageItemsTableContainer', 'storageCacheLine', 'storageCacheMeter', 'storageCacheText'];
 
 // t
 // The strings bag the pure helpers take, in US English.
@@ -228,7 +228,7 @@ test('keptBadges says how a file is kept, and its status when it is not synced',
     var mod = await loadScript('zooid_storage.js');
     var labels = function (item) { return mod.keptBadges(item).map(function (b) { return b.label + ':' + b.color; }); };
     assert.deepEqual(labels({ StorageMode: 'Copy', Status: 'Synced' }), ['StatusCopied:blue']);
-    assert.deepEqual(labels({ StorageMode: 'Copy', Kept: 'Pick', Status: 'Synced' }), ['BadgePermanentCopy:blue']);
+    assert.deepEqual(labels({ StorageMode: 'Copy', Kept: 'Pick', Status: 'Synced' }), ['StatusCopied:blue']);
     assert.equal(mod.keptBadges({ StorageMode: 'Copy', Kept: 'Hand', Status: 'Synced' })[0].title, 'HelpKeptHand');
     assert.deepEqual(labels({ StorageMode: 'Link', Status: 'Synced' }), ['StatusLinked:green']);
     assert.deepEqual(labels({ StorageMode: 'Link', Cached: true, Status: 'Errored' }), ['StatusCached:orange', 'StatusErrored:red']);

@@ -203,8 +203,8 @@ var STATE_BADGES = {
 var KEPT_TITLES = { Pick: 'HelpKeptPick', Hand: 'HelpKeptHand', Own: 'HelpKeptOwn', Unknown: 'HelpKeptUnknown' };
 
 // keptBadges
-// The badges of one content row in the Storage table: how its file is kept here, as Copied, Linked, Cached, or
-// Permanent copy, and its status when it is not synced.
+// The badges of one content row in the Storage table: how its file is kept here, as Copied, Linked, or Cached, and
+// its status when it is not synced. A permanent copy shows as Copied, with why it is a copy as the badge title.
 //
 // Inputs
 // item [object]: The Items route's row.
@@ -217,7 +217,7 @@ export function keptBadges(item) {
     var link = item.StorageMode === 'Link' || item.StorageMode === 'Promoting';
     if (link && item.Cached) badges.push({ label: 'StatusCached', color: 'orange' });
     else if (link) badges.push({ label: 'StatusLinked', color: 'green' });
-    else if (item.Kept) badges.push({ label: 'BadgePermanentCopy', color: 'blue', title: KEPT_TITLES[item.Kept] || 'HelpKeptUnknown' });
+    else if (item.Kept) badges.push({ label: 'StatusCopied', color: 'blue', title: KEPT_TITLES[item.Kept] || 'HelpKeptUnknown' });
     else badges.push({ label: 'StatusCopied', color: 'blue' });
     if (STATE_BADGES[item.Status]) badges.push(STATE_BADGES[item.Status]);
     return badges;
@@ -1133,8 +1133,6 @@ export default function (view) {
         ZooidShared.initCollapsibles();
         var mapButton = getEl('btnStorageMapLibraries');
         if (mapButton) mapButton.addEventListener('click', function () { zooidModule.openTool(view, 'servers'); });
-        var settingsButton = getEl('btnStorageCacheSettings');
-        if (settingsButton) settingsButton.addEventListener('click', function () { zooidModule.openTool(view, 'settings'); });
     }
 
     // hidePage

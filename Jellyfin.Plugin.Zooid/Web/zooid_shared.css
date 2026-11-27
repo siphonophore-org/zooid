@@ -99,6 +99,13 @@
     gap: 6px;
 }
 
+/* Status column */
+/* Grows to fit a long status such as Ignored (Copy to Link), so the badge stays inside the row. */
+.stolon-table-row > .stolon-table-cell.stolon-table-cell-status {
+    flex: 0 0 auto;
+    min-width: 110px;
+}
+
 /* zooid-bulk-icon-btn */
 /* Compact icon button in a table's bulk action bar. */
 /* Example: <button class="raised zooid-bulk-icon-btn"><span class="material-icons">block</span></button> */
@@ -745,9 +752,9 @@ div:not(.zooid-form-row) + .zooid-form-row {
 .zooid-storage-empty { display: flex; flex-direction: column; align-items: center; gap: var(--stolon-gap-wide); }
 
 /* zooid-storage-cache-line */
-/* The bar above the Storage table that shows how much of the link cache is used, with Cache settings at its end. */
-/* Example: <div class="zooid-storage-cache-line"><div class="zooid-storage-cache-meter"></div><button></button></div> */
-.zooid-storage-cache-line { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--stolon-gap-narrow); }
+/* The bar above the Storage table that shows how much of the link cache is used. */
+/* Example: <div class="zooid-storage-cache-line"><div class="zooid-storage-cache-meter"></div></div> */
+.zooid-storage-cache-line { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--stolon-gap-narrow); }
 .zooid-storage-cache-line > .fieldDescription { margin: 0 !important; }
 .zooid-storage-cache-meter { flex: 1 1 16rem; min-width: 0; }
 .zooid-storage-cache-meter > * { margin: 0 !important; }
