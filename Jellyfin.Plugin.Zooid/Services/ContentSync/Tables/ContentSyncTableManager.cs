@@ -520,6 +520,69 @@ public sealed class ContentSyncTableManager : SyncTableManagerBase<SyncItem, str
     }
 
     /// <summary>
+    /// Counts one server's rows by library mapping: synced copies, links, and cached links, the rows waiting and failed,
+    /// and the bytes the synced copies take. A row changing storage counts under the storage it is leaving, as
+    /// <see cref="CountSyncedStorage"/> counts it.
+    /// </summary>
+    /// <param name="serverKey">The key of the server entry whose rows are counted.</param>
+    /// <param name="cachedSourceIds">The source item ids whose file is in the link cache.</param>
+    /// <returns>One entry for each pair of source and local library that has rows, in no set order.</returns>
+    public List<LibraryStorage> CountLibraryStorage(string serverKey, IReadOnlyCollection<string> cachedSourceIds)
+    {
+        ArgumentNullException.ThrowIfNull(cachedSourceIds);
+        var cached = new HashSet<string>(cachedSourceIds, StringComparer.OrdinalIgnoreCase);
+        return ExecuteRead(
+            conn =>
+            {
+                var byLibrary = new Dictionary<(string, string), LibraryStorage>();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT SourceLibraryId, LocalLibraryId, Status, StorageMode IN (1, 2), SourceItemId, SourceSize FROM SyncItems WHERE ServerKey = @server";
+                cmd.Parameters.AddWithValue("@server", serverKey ?? string.Empty);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    var source = reader.GetString(0);
+                    var local = reader.GetString(1);
+                    var key = (source.ToUpperInvariant(), local.ToUpperInvariant());
+                    if (!byLibrary.TryGetValue(key, out var entry))
+                    {
+                        entry = new LibraryStorage { SourceLibraryId = source, LocalLibraryId = local };
+                        byLibrary[key] = entry;
+                    }
+
+                    var status = (SyncStatus)reader.GetInt32(2);
+                    var link = reader.GetInt32(3) != 0;
+                    var item = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+                    switch (status)
+                    {
+                        case SyncStatus.Synced when !link:
+                            entry.Copies++;
+                            entry.CopyBytes += reader.GetInt64(5);
+                            break;
+                        case SyncStatus.Synced when cached.Contains(item):
+                            entry.CachedLinks++;
+                            break;
+                        case SyncStatus.Synced:
+                            entry.Links++;
+                            break;
+                        case SyncStatus.Queued:
+                            entry.Queued++;
+                            break;
+                        case SyncStatus.Pending:
+                            entry.Pending++;
+                            break;
+                        case SyncStatus.Errored:
+                            entry.Errored++;
+                            break;
+                    }
+                }
+
+                return byLibrary.Values.ToList();
+            },
+            fallback: new List<LibraryStorage>());
+    }
+
+    /// <summary>
     /// Returns counts of Pending rows grouped by <see cref="PendingType"/>.
     /// </summary>
     /// <returns>The count for each pending type that has rows.</returns>

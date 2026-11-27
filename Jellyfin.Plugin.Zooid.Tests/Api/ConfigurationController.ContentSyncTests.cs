@@ -234,6 +234,47 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     }
 
     /// <summary>
+    /// Library storage counts the named server's rows by library, with a cached link counted apart from the others.
+    /// True: each library row on the Storage page shows its own copies, links, and failures.
+    /// False: another server's rows would show under this one, or a cached link would count as a plain link.
+    /// </summary>
+    [Fact]
+    public void GetLibraryStorage_Server_CountsItsRowsByLibrary()
+    {
+        var cache = Cache(holding: CachedLink);
+        _harness.AddPeer(key: "other");
+        _harness.AddContent("a", change: r => r.SourceSize = 400);
+        _harness.AddContent(CachedLink, change: r => r.StorageMode = StorageMode.Link);
+        _harness.AddContent("b", change: r => r.StorageMode = StorageMode.Link);
+        _harness.AddContent("c", SyncStatus.Errored);
+        _harness.AddContent("d", serverKey: "other");
+        using var services = _harness.Services(s => s.AddSingleton(cache));
+
+        var result = _harness.Configuration(services).GetLibraryStorage(_harness.Content, "peer");
+
+        var entry = Assert.Single(Assert.IsType<List<LibraryStorage>>(Assert.IsType<OkObjectResult>(result.Result).Value));
+        Assert.Equal(("lib", "local"), (entry.SourceLibraryId, entry.LocalLibraryId));
+        Assert.Equal((1, 1, 1, 1, 400L), (entry.Copies, entry.Links, entry.CachedLinks, entry.Errored, entry.CopyBytes));
+    }
+
+    /// <summary>
+    /// Library storage answers an empty list for a server key that names no entry, or none at all.
+    /// True: a server removed on another tab shows no counts on the Storage page.
+    /// False: a missing key would count every server's rows, or fail the page.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("missing")]
+    public void GetLibraryStorage_UnknownServer_AnswersAnEmptyList(string? serverKey)
+    {
+        _harness.AddContent("a");
+
+        var result = _harness.Configuration().GetLibraryStorage(_harness.Content, serverKey);
+
+        Assert.Empty(Assert.IsType<List<LibraryStorage>>(Assert.IsType<OkObjectResult>(result.Result).Value));
+    }
+
+    /// <summary>
     /// Disk space is an empty list when no library is mapped.
     /// True: a server with no mappings shows no disks.
     /// False: the Content tool would fail before any library is mapped.
@@ -623,6 +664,7 @@ public sealed class ConfigurationControllerContentSyncTests : IDisposable
     [InlineData(nameof(ConfigurationController.GetLinkCache), "GET", "LinkCache")]
     [InlineData(nameof(ConfigurationController.ClearLinkCache), "POST", "LinkCache/Clear")]
     [InlineData(nameof(ConfigurationController.PromoteItems), "POST", "PromoteItems")]
+    [InlineData(nameof(ConfigurationController.GetLibraryStorage), "GET", "LibraryStorage")]
     [InlineData(nameof(ConfigurationController.GetKeptCopies), "GET", "KeptCopies")]
     [InlineData(nameof(ConfigurationController.UnkeepCopies), "POST", "KeptCopies/Unkeep")]
     [InlineData(nameof(ConfigurationController.MarkSynced), "POST", "MarkSynced")]

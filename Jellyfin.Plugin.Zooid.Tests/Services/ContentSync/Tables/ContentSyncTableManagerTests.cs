@@ -88,6 +88,34 @@ public sealed class ContentSyncTableManagerTests : IDisposable
     }
 
     /// <summary>
+    /// One server's rows are counted per pair of libraries: synced copies with their bytes, links, cached links, and the
+    /// rows queued, pending, and errored. Ignored rows and other servers' rows are left out, and a promotion still counts as a link.
+    /// True: each library on the Storage page shows what it holds and what needs attention.
+    /// False: a library would show another server's files, or a link's size as disk used.
+    /// </summary>
+    [Fact]
+    public void CountLibraryStorage_SplitsOneServerByLibrary()
+    {
+        Add("a1", serverKey: "alpha", size: 300);
+        Add("a2", serverKey: "alpha", storage: StorageMode.Unkeeping, size: 200);
+        Add("a3", serverKey: "alpha", storage: StorageMode.Promoting);
+        Add("a4", serverKey: "alpha", storage: StorageMode.Link);
+        Add("a5", serverKey: "alpha", status: SyncStatus.Queued);
+        Add("a6", serverKey: "alpha", status: SyncStatus.Pending, pending: PendingType.Download);
+        Add("a7", serverKey: "alpha", status: SyncStatus.Errored);
+        Add("a8", serverKey: "alpha", status: SyncStatus.Ignored);
+        Add("a9", serverKey: "alpha", library: "shows");
+        Add("b1", serverKey: "beta");
+
+        var counts = _table.CountLibraryStorage("alpha", new[] { "A4" }).ToDictionary(c => c.SourceLibraryId);
+
+        var films = counts["lib"];
+        Assert.Equal((2, 1, 1, 1, 1, 1, 500L), (films.Copies, films.Links, films.CachedLinks, films.Queued, films.Pending, films.Errored, films.CopyBytes));
+        Assert.Equal(("local-lib", 1), (counts["shows"].LocalLibraryId, counts["shows"].Copies));
+        Assert.Equal(2, counts.Count);
+    }
+
+    /// <summary>
     /// A row moves to a new source item, and stays where it is when that item already has a row or there is no row to move.
     /// True: a renamed file keeps its row, its status, and its local file under the new id.
     /// False: a rename leaves a dangling row, or merges two rows into one.

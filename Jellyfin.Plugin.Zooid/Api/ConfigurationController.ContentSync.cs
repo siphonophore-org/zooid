@@ -379,6 +379,31 @@ public partial class ConfigurationController
     }
 
     /// <summary>
+    /// Counts what each library mapping of one server holds here, for the Storage page. The link cache is read from
+    /// the request's services, so a caller without it counts every link as not cached.
+    /// </summary>
+    /// <param name="manager">Reads and writes the Content sync table.</param>
+    /// <param name="serverKey">The key of the server entry whose libraries are counted.</param>
+    /// <returns>One entry for each pair of libraries that has rows, or none for an unknown server.</returns>
+    [HttpGet("LibraryStorage")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<List<LibraryStorage>> GetLibraryStorage(
+        [FromServices] ContentSyncTableManager manager,
+        [FromQuery] string? serverKey = null)
+    {
+        ArgumentNullException.ThrowIfNull(manager);
+        var server = string.IsNullOrEmpty(serverKey) ? null : _configManager.Configuration.FindServer(serverKey);
+        if (server is null)
+        {
+            return Ok(new List<LibraryStorage>());
+        }
+
+        var cache = HttpContext?.RequestServices?.GetService(typeof(Services.Links.LinkCache)) as Services.Links.LinkCache;
+        var cachedIds = cache?.List().Select(e => e.LinkId).ToList() ?? new List<string>();
+        return Ok(manager.CountLibraryStorage(server.Key, cachedIds));
+    }
+
+    /// <summary>
     /// Lists the permanent copies one server's Link libraries hold, for the Storage page, with why each is a copy.
     /// Copies already going back to links are listed too.
     /// </summary>
