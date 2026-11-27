@@ -140,6 +140,41 @@ public sealed class ContentHintHandlerTests : IDisposable
     }
 
     /// <summary>
+    /// A hint for a film's other version, which a list by ids leaves out, keeps the link the film's hint wrote for it.
+    /// True: a film added in two versions keeps a link for each, whichever hint lands last.
+    /// False: the second version's hint reads as a file that left and removes its link.
+    /// </summary>
+    [Fact]
+    public async Task ApplyAsync_HintForAnotherVersion_KeepsItsLink()
+    {
+        var origin = QueueSamples.Server();
+        origin.LibraryMappings[0].StorageMode = StorageMode.Link;
+        _config.Configuration.Servers.Add(origin);
+        var key = QueueSamples.ItemId.ToString("N");
+        _table.Upsert(new SyncItem
+        {
+            SourceItemId = key,
+            SourceLibraryId = "lib",
+            LocalLibraryId = "local",
+            SourcePath = "/media/movies/Film (2020)/Film (2020) - 480p.mkv",
+            LocalPath = QueueSamples.LocalPath("Film (2020)/Film (2020) - 480p.strm"),
+            ServerKey = origin.Key,
+            StorageMode = StorageMode.Link,
+            Status = SyncStatus.Synced,
+            StatusDate = DateTime.UtcNow
+        });
+        _peer.On("/Items", _ => QueuePeerHandler.JsonText(QueueSamples.NoItemsJson));
+        _peer.On("/Items/" + QueueSamples.ItemId.ToString("D") + "/Ancestors", _ => QueuePeerHandler.JsonText("[]"));
+        var handler = HandlerWithRehomer();
+
+        using var client = _peer.Client();
+        var result = await handler.ApplyAsync(Hint("/media/movies/Film (2020)/Film (2020) - 480p.mkv", key, "Movie"), origin, client, CancellationToken.None);
+
+        Assert.Equal(HintApplyOutcome.Unchanged, result.Outcome);
+        Assert.Equal(SyncStatus.Synced, _table.GetByKey(key)?.Status);
+    }
+
+    /// <summary>
     /// An item the origin returns without a path is dropped as unreadable.
     /// True: a key that cannot see file paths is named as the cause.
     /// False: the hint retries for a day, or is taken as an item with no file.
@@ -311,6 +346,16 @@ public sealed class ContentHintHandlerTests : IDisposable
             .Add<ISourceServerClientFactory>(new FakeClientFactory())
             .Add(library)
             .Add(new ScanWatermarkStore(_db.Provider, NullLogger<ScanWatermarkStore>.Instance));
+        return new ContentHintHandler(services, _config, _table, library, NullLogger<ContentHintHandler>.Instance);
+    }
+
+    /// <summary>Builds a handler that settles a link whose file left its source, as the plugin does.</summary>
+    private ContentHintHandler HandlerWithRehomer()
+    {
+        var (library, _) = InterfaceStub.Create<ILibraryManager>();
+        var (host, _) = InterfaceStub.Create<MediaBrowser.Controller.IServerApplicationHost>();
+        var rehomer = new Jellyfin.Plugin.Zooid.Services.Links.LinkRehomer(_config, new FakeClientFactory(), _table, host, NullLogger<Jellyfin.Plugin.Zooid.Services.Links.LinkRehomer>.Instance);
+        var services = new QueueServices().Add(rehomer);
         return new ContentHintHandler(services, _config, _table, library, NullLogger<ContentHintHandler>.Instance);
     }
 }

@@ -536,6 +536,25 @@ public partial class SourceServerClient
     }
 
     /// <summary>
+    /// Says whether the server holds an item by its id, by reading the item's folders. Unlike a list by ids, this also finds a film's other version.
+    /// </summary>
+    /// <param name="itemId">The source id of the item.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns><c>true</c> when the server holds the item, and <c>false</c> when it answers that it holds none.</returns>
+    public async Task<bool> HoldsItemAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await GetApiClient().Items[itemId].Ancestors.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (Microsoft.Kiota.Abstractions.ApiException ex) when (ex.ResponseStatusCode == 404)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Downloads an item's file from the source server, from its first byte.
     /// </summary>
     /// <param name="itemId">The source id of the item whose file is downloaded.</param>

@@ -403,6 +403,24 @@ public sealed class SourceServerClientLibraryTests
     }
 
     /// <summary>
+    /// The server holds an item when it answers for the item's folders, does not when it answers 404, and a server that cannot be asked throws.
+    /// True: a film's other version, which a list by ids leaves out, still counts as held.
+    /// False: a version on the source reads as a file that left, or an unreachable source as an empty one.
+    /// </summary>
+    [Fact]
+    public async Task HoldsItemAsync_AnswersFromTheItemsFolders()
+    {
+        var ancestors = "/Items/" + Root + "/Ancestors";
+        using var holding = new ClientStubServer().OnJson(ancestors, "[]").Client();
+        using var empty = new ClientStubServer().OnStatus(ancestors, HttpStatusCode.NotFound).Client();
+        using var refusing = new ClientStubServer().OnStatus(ancestors, HttpStatusCode.InternalServerError).Client();
+
+        Assert.True(await holding.HoldsItemAsync(Root));
+        Assert.False(await empty.HoldsItemAsync(Root));
+        await Assert.ThrowsAnyAsync<ApiException>(() => refusing.HoldsItemAsync(Root));
+    }
+
+    /// <summary>
     /// A whole file download carries the key, no range, and reports the file's length and validator.
     /// True: a first download saves the whole file and can be resumed later.
     /// False: the file would be saved without knowing its size, or a later resume could not be tied to it.

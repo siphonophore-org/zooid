@@ -187,6 +187,15 @@ public class SourceServerClientApiTests
         Assert.False(string.IsNullOrEmpty(details.Path));
     }
 
+    [ApiFact]
+    public async Task HoldsItem_TrueForAnItemAndFalseForAnUnknownId()
+    {
+        Assert.NotEmpty(_fx.SampleItems);
+
+        Assert.True(await _fx.Client.HoldsItemAsync(_fx.SampleItems[0].Id!.Value));
+        Assert.False(await _fx.Client.HoldsItemAsync(Guid.NewGuid()));
+    }
+
     // =====================================================================
     // Persons, the client must return everyone the raw /Persons endpoint
     // lists: no person twice, no name twice, nothing missing. The client

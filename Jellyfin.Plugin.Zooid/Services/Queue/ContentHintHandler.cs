@@ -82,6 +82,13 @@ public sealed class ContentHintHandler
         }
 
         var dto = await client.FindItemDetailsAsync(originItemId, cancellationToken).ConfigureAwait(false);
+
+        // A list by ids leaves out a film's other versions, which the film's own hint brings.
+        if (dto is null && await client.HoldsItemAsync(originItemId, cancellationToken).ConfigureAwait(false))
+        {
+            return HintApplyResult.Kept(HintCode.Unchanged, $"the file is another version of a film on '{origin.DisplayName}', which arrives with the film");
+        }
+
         // An answer with no item means the file is gone. A failed read throws.
         if (dto is null || !dto.Id.HasValue)
         {
@@ -287,8 +294,9 @@ public sealed class ContentHintHandler
                 continue;
             }
 
-            // A file still on the source is a sibling, not the one replaced.
-            if (await client.FindItemDetailsAsync(oldId, cancellationToken).ConfigureAwait(false) is null)
+            // A file still on the source, as an item or another version of a film, is a sibling, not the one replaced.
+            if (await client.FindItemDetailsAsync(oldId, cancellationToken).ConfigureAwait(false) is null
+                && !await client.HoldsItemAsync(oldId, cancellationToken).ConfigureAwait(false))
             {
                 fitting.Add(row);
             }
