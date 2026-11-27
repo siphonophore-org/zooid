@@ -155,8 +155,6 @@ export function libraryCard(mapping, count, type, contentOn, t, shared) {
     if (contentOn) {
         var linked = isLink(mapping);
         badges.push({ label: linked ? t.tr('StorageModeLink') : t.tr('Copy'), color: linked ? 'green' : 'blue' });
-        if (linked && !mapping.ExcludeFromLinkCache) badges.push({ label: t.tr('HeaderLinkCache'), color: 'orange' });
-        if (linked && (mapping.PermanentItems || []).length) badges.push({ label: t.tr('HeaderAlwaysKeep'), color: 'blue' });
     }
     if (mapping.FilterMode === 'Whitelist' || mapping.FilterMode === 'Blacklist') {
         badges.push({ label: t.tr(mapping.FilterMode), color: 'blue' });
@@ -180,11 +178,12 @@ export function libraryCard(mapping, count, type, contentOn, t, shared) {
     if (count.Errored > 0) spec.status = { label: t.format('CountErrored', count.Errored), color: 'red' };
     else if (count.Pending > 0) spec.status = { label: t.format('CountPending', count.Pending), color: 'purple' };
     else if (count.Queued > 0) spec.status = { label: t.format('CountQueued', count.Queued), color: 'orange' };
-    var parts = [];
-    if (count.Copies > 0) parts.push(shared.plural(count.Copies, 'CountCopiesOne', 'CountCopiesMany'));
-    if (count.Links + count.CachedLinks > 0) parts.push(shared.plural(count.Links + count.CachedLinks, 'CountLinksOne', 'CountLinksMany'));
-    if (count.CachedLinks > 0) parts.push(t.format('CountCached', count.CachedLinks));
-    spec.detail = parts.length ? parts.join(', ') : t.tr('EmptyLibraryFiles');
+    // One count fits a phone's row, so a Link library counts its links and a Copy library its copies.
+    var links = count.Links + count.CachedLinks;
+    if (isLink(mapping) && links > 0) spec.detail = shared.plural(links, 'CountLinksOne', 'CountLinksMany');
+    else if (count.Copies > 0) spec.detail = shared.plural(count.Copies, 'CountCopiesOne', 'CountCopiesMany');
+    else if (links > 0) spec.detail = shared.plural(links, 'CountLinksOne', 'CountLinksMany');
+    else spec.detail = t.tr('EmptyLibraryFiles');
     if (count.CopyBytes > 0) spec.size = count.CopyBytes;
     return spec;
 }

@@ -147,7 +147,7 @@ test('libraryCard draws the icon by library type, the Storage badge, and the mos
     var mod = await loadScript('zooid_storage.js');
     var link = mod.libraryCard(mapping('a', 'b', { StorageMode: 'Link', FilterMode: 'Whitelist' }), { Pending: 2, Queued: 1 }, 'tvshows', true, t, bag);
     assert.equal(link.icon, 'tv');
-    assert.deepEqual(link.badges.map(function (b) { return b.label + ':' + b.color; }), ['Link:green', 'Link cache:orange', 'Whitelist:blue']);
+    assert.deepEqual(link.badges.map(function (b) { return b.label + ':' + b.color; }), ['Link:green', 'Whitelist:blue']);
     assert.deepEqual(link.status, { label: '2 pending', color: 'purple' });
     assert.equal(link.subtitle, 'From a there');
     var empty = mod.libraryCard(mapping('a', 'b'), {}, '', true, t, bag);

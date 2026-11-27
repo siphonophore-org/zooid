@@ -152,7 +152,6 @@
   "ConfirmRemoveServerDetail": "Its mappings and synced rows go with it. Downloaded files stay.",
   "ConfirmResetDatabaseCost": "This forgets all tracking data for every sync type, and everything starts over. It cannot be undone.",
   "ConfirmResetTableCost": "This forgets all of its tracking data, and the next scan starts over. It cannot be undone.",
-  "CountCached": "{0} cached",
   "CountChangeMany": "{0} changes",
   "CountChangeOne": "{0} change",
   "CountCopiesMany": "{0} copies",
