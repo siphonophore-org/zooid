@@ -82,7 +82,7 @@ test('each sync type tool has the icon of its Settings section', async function 
     var shared = await loadScript('zooid_shared.js');
     var icons = {};
     shared.zooidTools().forEach(function (tool) { icons[tool.key] = tool.icon; });
-    assert.deepEqual([icons.content, icons.history, icons.metadata, icons.people, icons.users], ['video_library', 'history', 'info', 'people', 'group']);
+    assert.deepEqual([icons.content, icons.history, icons.metadata, icons.people, icons.users], ['video_library', 'history', 'info', 'recent_actors', 'group']);
 });
 
 test('the sidebar has its fold button', async function () {

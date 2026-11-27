@@ -187,7 +187,7 @@ export function zooidTools() {
         { key: 'content', name: tabName('SyncTypeContent', 'Content'), icon: 'video_library', page: 'zooid_content' },
         { key: 'history', name: tabName('SyncTypeHistory', 'History'), icon: 'history', page: 'zooid_history' },
         { key: 'metadata', name: tabName('LabelMetadata', 'Metadata'), icon: 'info', page: 'zooid_metadata' },
-        { key: 'people', name: tabName('People', 'People'), icon: 'people', page: 'zooid_people' },
+        { key: 'people', name: tabName('People', 'People'), icon: 'recent_actors', page: 'zooid_people' },
         { key: 'users', name: tabName('HeaderUsers', 'Users'), icon: 'group', page: 'zooid_users' },
         { key: 'queue', name: tabName('ButtonQueue', 'Queue'), icon: 'swap_horiz', page: 'zooid_queue' },
         { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },

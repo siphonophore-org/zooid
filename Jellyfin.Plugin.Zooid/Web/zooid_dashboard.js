@@ -11,7 +11,7 @@ var SYNC_TYPES = [
     { enable: 'EnableContentSync', route: 'Status', view: 'content', stats: 'Content', title: 'SyncTypeContent', icon: 'video_library' },
     { enable: 'EnableHistorySync', route: 'HistoryStatus', view: 'history', stats: 'History', title: 'SyncTypeHistory', icon: 'history' },
     { enable: 'EnableMetadataSync', route: 'MetadataStatus', view: 'metadata', stats: 'Metadata', title: 'LabelMetadata', icon: 'info' },
-    { enable: 'EnablePeopleSync', route: 'PeopleStatus', view: 'people', stats: 'People', title: 'People', icon: 'people' },
+    { enable: 'EnablePeopleSync', route: 'PeopleStatus', view: 'people', stats: 'People', title: 'People', icon: 'recent_actors' },
     { enable: 'EnableUserSync', route: 'UserStatus', view: 'users', stats: 'User', title: 'HeaderUsers', icon: 'group' }
 ];
 
