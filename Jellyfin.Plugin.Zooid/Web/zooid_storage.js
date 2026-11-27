@@ -306,23 +306,6 @@ export function picksToList(picks) {
     });
 }
 
-// make
-// Builds one element with a class and text.
-//
-// Inputs
-// tag [string]: The tag name.
-// className [string]: The classes, or empty.
-// text [string]: The text, or nothing.
-//
-// Output
-// [HTMLElement]: The element.
-function make(tag, className, text) {
-    var el = document.createElement(tag);
-    if (className) el.className = className;
-    if (text !== undefined && text !== null) el.textContent = text;
-    return el;
-}
-
 // zooid_storage
 // Builds the Storage page. It draws a pill for each server with library mappings, count cards and a row for each of
 // the picked server's enabled mappings, an editor sidecar for one mapping, the permanent copies, and the link cache.
@@ -520,79 +503,6 @@ export default function (view) {
         });
     }
 
-    // choiceGroup
-    // Builds a group of radio cards, one per option, each with its name and one sentence.
-    //
-    // Inputs
-    // name [string]: The radio group's name.
-    // label [string]: The group's accessible name.
-    // options [object[]]: Each as { value, name, text }.
-    // value [string]: The option checked at first.
-    //
-    // Output
-    // [HTMLElement]: The group.
-    function choiceGroup(name, label, options, value) {
-        var group = make('div', 'stolon-choice-group');
-        group.setAttribute('role', 'radiogroup');
-        group.setAttribute('aria-label', label);
-        options.forEach(function (option) {
-            var card = make('label', 'stolon-choice');
-            var input = make('input');
-            input.type = 'radio';
-            input.name = name;
-            input.value = option.value;
-            input.setAttribute('value', option.value);
-            input.checked = option.value === value;
-            card.appendChild(input);
-            card.appendChild(make('span', 'stolon-choice-name', option.name));
-            card.appendChild(make('span', 'stolon-choice-text', option.text));
-            group.appendChild(card);
-        });
-        return group;
-    }
-
-    // checkboxField
-    // Builds a Jellyfin checkbox with its label and description. It is written as markup, so Jellyfin upgrades it.
-    //
-    // Inputs
-    // label [string]: The checkbox label.
-    // help [string]: The description under it.
-    // checked [boolean]: Whether it starts on.
-    //
-    // Output
-    // [object]: element is the container, and input the checkbox, or null where markup is not parsed.
-    function checkboxField(label, help, checked) {
-        var box = make('div', 'checkboxContainer checkboxContainer-withDescription');
-        box.innerHTML = '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox"' + (checked ? ' checked' : '') + ' />' +
-            '<span class="checkboxLabel">' + escapeHtml(label) + '</span></label>' +
-            '<div class="fieldDescription checkboxFieldDescription">' + escapeHtml(help) + '</div>';
-        return { element: box, input: box.querySelector('input') };
-    }
-
-    // selectField
-    // Builds a Jellyfin select with its label and description. It is written as markup, so Jellyfin upgrades it.
-    //
-    // Inputs
-    // label [string]: The field label.
-    // help [string]: The description under it.
-    // options [object[]]: Each as { value, text }.
-    // value [string]: The option chosen at first.
-    //
-    // Output
-    // [object]: element is the container, and select the select, or null where markup is not parsed.
-    function selectField(label, help, options, value) {
-        var box = make('div', 'selectContainer');
-        var id = 'storageEditorSelect' + (++_tableSeq);
-        box.innerHTML = '<label class="selectLabel" for="' + id + '">' + escapeHtml(label) + '</label>' +
-            '<select is="emby-select" id="' + id + '" class="emby-select-withcolor emby-select">' +
-            options.map(function (option) {
-                return '<option value="' + escapeHtml(option.value) + '"' + (option.value === value ? ' selected' : '') + '>' + escapeHtml(option.text) + '</option>';
-            }).join('') +
-            '</select>' +
-            '<div class="fieldDescription">' + escapeHtml(help) + '</div>';
-        return { element: box, select: box.querySelector('select') };
-    }
-
     // pickerTable
     // Builds a table of the source library's items, where selecting a row picks or unpicks it.
     //
@@ -680,9 +590,9 @@ export default function (view) {
         var browsePills = null;
         var choices = null;
         var seq = ++_tableSeq;
-        var body = make('div', 'zooid-storage-editor');
+        var body = zooidModule.make('div', 'zooid-storage-editor');
 
-        var status = make('div', 'stolon-status-text stolon-hidden');
+        var status = zooidModule.make('div', 'stolon-status-text stolon-hidden');
         status.setAttribute('role', 'status');
         body.appendChild(status);
 
@@ -699,72 +609,82 @@ export default function (view) {
 
         // Storage, the link cache, and Always keep are content sync's alone.
         var linkCache = null;
-        var permanentSection = make('div', 'zooid-storage-editor-group');
-        var linkCacheSection = make('div', 'zooid-storage-editor-group');
+        var permanentSection = zooidModule.make('div', 'zooid-storage-editor-group');
+        var linkCacheSection = zooidModule.make('div', 'zooid-storage-editor-group');
         if (contentOn) {
-            var storageSection = make('div', 'zooid-storage-editor-group');
-            storageSection.appendChild(make('h3', 'stolon-subsection-title', tr('TabStorage')));
-            var group = choiceGroup('storageMode' + seq, tr('TabStorage'), [
-                { value: 'Copy', name: tr('Copy'), text: tr('HelpStorageCopy') },
-                { value: 'Link', name: tr('StorageModeLink'), text: tr('HelpStorageLink') }
-            ], isLink(mapping) ? 'Link' : 'Copy');
-            storageSection.appendChild(group);
+            var storageSection = zooidModule.make('div', 'zooid-storage-editor-group');
+            storageSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('TabStorage')));
+            choices = zooidModule.createChoiceGroup(null, {
+                name: 'storageMode' + seq,
+                label: tr('TabStorage'),
+                choices: [
+                    { value: 'Copy', name: tr('Copy'), text: tr('HelpStorageCopy') },
+                    { value: 'Link', name: tr('StorageModeLink'), text: tr('HelpStorageLink') }
+                ],
+                value: isLink(mapping) ? 'Link' : 'Copy',
+                onChange: updateLinkSections
+            });
+            storageSection.appendChild(choices.element);
             body.appendChild(storageSection);
-            choices = zooidModule.createChoiceGroup(group, { onChange: updateLinkSections });
 
-            linkCacheSection.appendChild(make('h3', 'stolon-subsection-title', tr('HeaderLinkCache')));
-            linkCache = checkboxField(tr('LabelCacheLibraryLinks'), tr('HelpCacheLibraryLinks'), !mapping.ExcludeFromLinkCache);
+            linkCacheSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('HeaderLinkCache')));
+            linkCache = zooidModule.createCheckboxField({ label: tr('LabelCacheLibraryLinks'), help: tr('HelpCacheLibraryLinks'), checked: !mapping.ExcludeFromLinkCache });
             linkCacheSection.appendChild(linkCache.element);
             body.appendChild(linkCacheSection);
 
-            permanentSection.appendChild(make('h3', 'stolon-subsection-title', tr('HeaderAlwaysKeep')));
-            permanentSection.appendChild(make('div', 'fieldDescription', tr('HelpAlwaysKeep')));
-            var permanentHolder = make('div');
+            permanentSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('HeaderAlwaysKeep')));
+            permanentSection.appendChild(zooidModule.make('div', 'fieldDescription', null, tr('HelpAlwaysKeep')));
+            var permanentHolder = zooidModule.make('div');
             permanentHolder.id = 'storagePermanentTable_' + seq;
             permanentSection.appendChild(permanentHolder);
             body.appendChild(permanentSection);
         }
 
         // The library filter applies to content, history, and metadata.
-        var filterSection = make('div', 'zooid-storage-editor-group');
-        filterSection.appendChild(make('h3', 'stolon-subsection-title', tr('HeaderLibraryFilter')));
-        var filterMode = selectField(tr('LabelFilterMode'), tr('HelpFilterMode'), [
-            { value: 'AllowAll', text: tr('AllowEmbeddedSubtitlesAllowAllOption') },
-            { value: 'Whitelist', text: tr('Whitelist') },
-            { value: 'Blacklist', text: tr('Blacklist') }
-        ], mapping.FilterMode || 'AllowAll');
+        var filterSection = zooidModule.make('div', 'zooid-storage-editor-group');
+        filterSection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('HeaderLibraryFilter')));
+        var filterMode = zooidModule.createSelectField({
+            label: tr('LabelFilterMode'),
+            help: tr('HelpFilterMode'),
+            options: [
+                { value: 'AllowAll', text: tr('AllowEmbeddedSubtitlesAllowAllOption') },
+                { value: 'Whitelist', text: tr('Whitelist') },
+                { value: 'Blacklist', text: tr('Blacklist') }
+            ],
+            value: mapping.FilterMode || 'AllowAll'
+        });
         filterSection.appendChild(filterMode.element);
-        var filterBrowser = make('div', 'zooid-storage-editor-group');
+        var filterBrowser = zooidModule.make('div', 'zooid-storage-editor-group');
         // Files, Collections, Playlists. Picking a collection or playlist picks its members.
-        var browse = make('div', 'stolon-pill-group');
+        var browse = zooidModule.make('div', 'stolon-pill-group');
         browse.setAttribute('role', 'group');
         browse.setAttribute('aria-label', tr('HeaderLibraryFilter'));
         [['items', tr('HeaderFiles')], ['collections', tr('Collections')], ['playlists', tr('Playlists')]].forEach(function (pair) {
-            var pill = make('button', 'stolon-pill', pair[1]);
+            var pill = zooidModule.make('button', 'stolon-pill', null, pair[1]);
             pill.type = 'button';
             pill.setAttribute('data-value', pair[0]);
             browse.appendChild(pill);
         });
         filterBrowser.appendChild(browse);
-        var filterHolder = make('div');
+        var filterHolder = zooidModule.make('div');
         filterHolder.id = 'storageFilterTable_' + seq;
         filterBrowser.appendChild(filterHolder);
         filterSection.appendChild(filterBrowser);
         body.appendChild(filterSection);
-        if (filterMode.select) filterMode.select.addEventListener('change', updateFilterSection);
+        if (filterMode.input) filterMode.input.addEventListener('change', updateFilterSection);
 
         // Only a Sync server writes history back, so only its libraries offer negotiation, while history sync is on.
         var negotiate = null;
         if (negotiable) {
-            var historySection = make('div', 'zooid-storage-editor-group');
-            historySection.appendChild(make('h3', 'stolon-subsection-title', tr('SyncTypeHistory')));
-            negotiate = checkboxField(tr('LabelNegotiateHistory'), tr('HelpNegotiateHistory'), !!mapping.NegotiateHistory);
+            var historySection = zooidModule.make('div', 'zooid-storage-editor-group');
+            historySection.appendChild(zooidModule.make('h3', 'stolon-subsection-title', null, tr('SyncTypeHistory')));
+            negotiate = zooidModule.createCheckboxField({ label: tr('LabelNegotiateHistory'), help: tr('HelpNegotiateHistory'), checked: !!mapping.NegotiateHistory });
             historySection.appendChild(negotiate.element);
             body.appendChild(historySection);
         }
 
         function filterModeValue() {
-            return (filterMode.select ? filterMode.select.value : mapping.FilterMode) || 'AllowAll';
+            return (filterMode.input ? filterMode.input.value : mapping.FilterMode) || 'AllowAll';
         }
 
         function storageMode() {
