@@ -11,6 +11,27 @@ import { installPage, loadScript, pageView, sidebar, flush, paths } from './supp
 globalThis.setTimeout = function () { return 1; };
 globalThis.clearTimeout = function () {};
 
+// The browser storage key Stolon's tool app keeps the last answers under.
+var SHOWN_KEY = 'stolon.toolApp.zooid.shown';
+
+// shown
+// Writes stored answers as the tool app keeps them.
+function shown(answers) {
+    var out = {};
+    out[SHOWN_KEY] = JSON.stringify(answers);
+    return out;
+}
+
+// ALL_ON
+// A config with every sync type on.
+var ALL_ON = { EnableContentSync: true, EnableHistorySync: true, EnableMetadataSync: true, EnablePeopleSync: true, EnableUserSync: true };
+
+// configNeverLoads
+// Keeps the config from arriving, so the sidebar shows only the stored answers.
+function configNeverLoads() {
+    globalThis.ApiClient.getPluginConfiguration = function () { return new Promise(function () {}); };
+}
+
 var EVERY_TOOL = ['Dashboard', 'Queue', 'Content', 'History', 'Metadata', 'People', 'Users', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting'];
 
 // openApp
@@ -27,18 +48,20 @@ async function openApp(storage, beforeLoad, config) {
 }
 
 test('the sidebar lists the dashboard first, then a tool for each sync type, then the rest', async function () {
-    var view = await openApp({});
+    var view = await openApp({}, null, ALL_ON);
+    await flush();
     assert.deepEqual(sidebar(view).names, EVERY_TOOL);
 });
 
-test('the sidebar leaves Storage out once the stored answer says it is hidden', async function () {
-    var view = await openApp({ 'zooid.storageTab': '0' });
+test('the sidebar leaves Storage out once the stored answer says it is hidden, before the config loads', async function () {
+    var view = await openApp(shown({ storage: false }), configNeverLoads);
     assert.deepEqual(sidebar(view).names, EVERY_TOOL.filter(function (name) { return name !== 'Storage'; }));
 });
 
 test('the sidebar lists every tool when storage is blocked', async function () {
     var view = await openApp({}, function () {
         globalThis.localStorage = { getItem: function () { throw new Error('blocked'); }, setItem: function () {} };
+        configNeverLoads();
     });
     assert.equal(sidebar(view).names.length, EVERY_TOOL.length);
 });
@@ -90,11 +113,8 @@ test('the sidebar has its fold button', async function () {
     assert.ok(view.querySelector('.stolon-tool-shell-fold'));
 });
 
-test('the sync type tools and Statistics leave the sidebar once the stored answers say they are off', async function () {
-    var view = await openApp({
-        'zooid.contentTab': '0', 'zooid.historyTab': '0', 'zooid.metadataTab': '0', 'zooid.peopleTab': '0', 'zooid.usersTab': '0',
-        'zooid.statisticsTab': '0', 'zooid.storageTab': '0'
-    });
+test('the sync type tools and Statistics leave the sidebar once the stored answers say they are off, before the config loads', async function () {
+    var view = await openApp(shown({ content: false, history: false, metadata: false, people: false, users: false, statistics: false, storage: false }), configNeverLoads);
     assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Servers', 'Settings', 'Troubleshooting']);
 });
 
@@ -102,34 +122,32 @@ test('a sync type that is off leaves the sidebar once the app reads the config',
     var view = await openApp({}, null, { EnableContentSync: true, EnableHistorySync: false, EnableMetadataSync: true, EnablePeopleSync: false, EnableUserSync: true });
     await flush();
     assert.deepEqual(sidebar(view).names, ['Dashboard', 'Queue', 'Content', 'Metadata', 'Users', 'Servers', 'Storage', 'Statistics', 'Settings', 'Troubleshooting']);
-    assert.equal(view.page.store['zooid.historyTab'], '0');
-    assert.equal(view.page.store['zooid.contentTab'], '1');
+    var stored = JSON.parse(view.page.store[SHOWN_KEY]);
+    assert.equal(stored.history, false);
+    assert.equal(stored.content, true);
 });
 
 test('a sync type turned back on joins the sidebar once the app reads the config', async function () {
-    var view = await openApp({ 'zooid.peopleTab': '0' }, null, { EnableContentSync: false, EnablePeopleSync: true });
+    var view = await openApp(shown({ people: false }), null, { EnableContentSync: false, EnablePeopleSync: true });
     await flush();
     assert.ok(sidebar(view).names.indexOf('People') > 0);
     assert.ok(sidebar(view).names.indexOf('Content') < 0);
 });
 
-test('toolFlags shows each sync type tool for its own type, Storage for the library ones, and Statistics for links too', async function () {
+test('each sync type tool shows for its own type, Storage for the library ones, and Statistics for links too', async function () {
     installPage({});
     var shared = await loadScript('zooid_shared.js');
-    var off = { content: '0', history: '0', metadata: '0', people: '0', users: '0', storage: '0', statistics: '0' };
-    assert.deepEqual(shared.toolFlags({}), off);
-    assert.deepEqual(shared.toolFlags({ EnableUserSync: true }), Object.assign({}, off, { users: '1', statistics: '1' }));
-    assert.deepEqual(shared.toolFlags({ EnableHistorySync: true }), Object.assign({}, off, { history: '1', storage: '1', statistics: '1' }));
-    assert.deepEqual(shared.toolFlags({ EnablePeopleSync: true }), Object.assign({}, off, { people: '1', statistics: '1' }));
-    assert.deepEqual(shared.toolFlags({ Servers: [{ OffersLinks: true }] }), Object.assign({}, off, { statistics: '1' }));
-});
-
-test('rememberToolFlags says whether what the sidebar shows changed, and ignores a config without the sync switches', async function () {
-    installPage({});
-    var shared = await loadScript('zooid_shared.js');
-    assert.equal(shared.rememberToolFlags({ Other: true }), false);
-    assert.equal(shared.rememberToolFlags(null), false);
-    assert.equal(shared.rememberToolFlags({ EnableContentSync: false }), true);
-    assert.equal(shared.rememberToolFlags({ EnableContentSync: false }), false);
-    assert.equal(shared.rememberToolFlags({ EnableContentSync: true }), true);
+    var rules = {};
+    shared.zooidTools().forEach(function (tool) { if (tool.visibleWhen) rules[tool.key] = tool.visibleWhen; });
+    var showing = function (config) {
+        var out = {};
+        Object.keys(rules).forEach(function (key) { out[key] = rules[key](config); });
+        return out;
+    };
+    var off = { content: false, history: false, metadata: false, people: false, users: false, storage: false, statistics: false };
+    assert.deepEqual(showing({}), off);
+    assert.deepEqual(showing({ EnableUserSync: true }), Object.assign({}, off, { users: true, statistics: true }));
+    assert.deepEqual(showing({ EnableHistorySync: true }), Object.assign({}, off, { history: true, storage: true, statistics: true }));
+    assert.deepEqual(showing({ EnablePeopleSync: true }), Object.assign({}, off, { people: true, statistics: true }));
+    assert.deepEqual(showing({ Servers: [{ OffersLinks: true }] }), Object.assign({}, off, { statistics: true }));
 });

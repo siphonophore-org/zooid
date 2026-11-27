@@ -145,11 +145,10 @@ export function summaryCards(mappings, counts, contentOn, t, formatSize) {
 // type [string]: The local library's collection type, such as movies, or empty when not known.
 // contentOn [boolean]: Whether content sync is on.
 // t [object]: The strings.
-// shared [object]: The helper bag, for plural.
 //
 // Output
 // [object]: The options createMediaCard takes, without onClick.
-export function libraryCard(mapping, count, type, contentOn, t, shared) {
+export function libraryCard(mapping, count, type, contentOn, t) {
     var source = mapping.SourceLibraryName || mapping.SourceLibraryId || t.tr('LabelSourceLibrary');
     var badges = [];
     if (contentOn) {
@@ -180,9 +179,9 @@ export function libraryCard(mapping, count, type, contentOn, t, shared) {
     else if (count.Queued > 0) spec.status = { label: t.format('CountQueued', count.Queued), color: 'orange' };
     // One count fits a phone's row, so a Link library counts its links and a Copy library its copies.
     var links = count.Links + count.CachedLinks;
-    if (isLink(mapping) && links > 0) spec.detail = shared.plural(links, 'CountLinksOne', 'CountLinksMany');
-    else if (count.Copies > 0) spec.detail = shared.plural(count.Copies, 'CountCopiesOne', 'CountCopiesMany');
-    else if (links > 0) spec.detail = shared.plural(links, 'CountLinksOne', 'CountLinksMany');
+    if (isLink(mapping) && links > 0) spec.detail = t.plural(links, 'CountLinksOne', 'CountLinksMany');
+    else if (count.Copies > 0) spec.detail = t.plural(count.Copies, 'CountCopiesOne', 'CountCopiesMany');
+    else if (links > 0) spec.detail = t.plural(links, 'CountLinksOne', 'CountLinksMany');
     else spec.detail = t.tr('EmptyLibraryFiles');
     if (count.CopyBytes > 0) spec.size = count.CopyBytes;
     return spec;
@@ -512,7 +511,7 @@ export default function (view) {
         }
         entries.forEach(function (entry) {
             var type = (knownTypes || {})[idKey(entry.mapping.LocalLibraryId)] || '';
-            var spec = libraryCard(entry.mapping, counts ? (countFor(counts, entry.mapping) || {}) : null, type, contentOn, ZooidShared.t, ZooidShared);
+            var spec = libraryCard(entry.mapping, counts ? (countFor(counts, entry.mapping) || {}) : null, type, contentOn, ZooidShared.t);
             spec.onClick = function () { openEditor(server.Key, entry.index); };
             var card = zooidModule.createMediaCard(spec);
             card.element.setAttribute('data-library', idKey(entry.mapping.LocalLibraryId));
@@ -880,7 +879,7 @@ export default function (view) {
     // [Promise]: Resolves once saved, and rejects with the reason when the mapping is gone or the save failed.
     function saveMapping(serverKey, ref, values) {
         var found = true;
-        return ZooidShared.saveSection(function (config) {
+        return ZooidShared.saveConfigWith(function (config) {
             found = applyMappingEdit(config, serverKey, ref, values);
         }).then(function (saved) {
             currentConfig = saved;
@@ -1015,7 +1014,7 @@ export default function (view) {
         apiRequest('KeptCopies/Unkeep', 'POST', { Ids: rows.map(function (row) { return row.Id; }) }).then(function (result) {
             var queued = (result && result.Queued) || 0;
             var skipped = (result && result.Skipped) || [];
-            var lines = [ZooidShared.plural(queued, 'ToastCopiesUnkeptOne', 'ToastCopiesUnkeptMany')];
+            var lines = [ZooidShared.t.plural(queued, 'ToastCopiesUnkeptOne', 'ToastCopiesUnkeptMany')];
             if (skipped.length) {
                 var picked = 0;
                 var reasons = {};
@@ -1045,14 +1044,14 @@ export default function (view) {
         var rows = selectedCached();
         if (rows.length === 0) return;
         zooidModule.confirmDialog(tr('ConfirmRemoveFromCache'), {
-            title: ZooidShared.plural(rows.length, 'TitleRemoveCachedOne', 'TitleRemoveCachedMany'),
+            title: ZooidShared.t.plural(rows.length, 'TitleRemoveCachedOne', 'TitleRemoveCachedMany'),
             confirmText: tr('ButtonRemoveFromCache'),
             destructive: true
         }).then(function (confirmed) {
             if (!confirmed) return;
             if (btn) btn.disabled = true;
             apiRequest('LinkCache/Remove', 'POST', { SourceItemIds: rows.map(function (row) { return row.SourceItemId; }) }).then(function (result) {
-                ZooidShared.setStatus('storageItemsStatus', ZooidShared.plural((result && result.Removed) || 0, 'ToastCachedRemovedOne', 'ToastCachedRemovedMany'), false);
+                ZooidShared.setStatus('storageItemsStatus', ZooidShared.t.plural((result && result.Removed) || 0, 'ToastCachedRemovedOne', 'ToastCachedRemovedMany'), false);
             }, function (err) {
                 ZooidShared.setStatus('storageItemsStatus', ZooidShared.errorText(err, tr('ErrorRemoveCached')), true);
             }).then(function () { afterBulk(btn); });

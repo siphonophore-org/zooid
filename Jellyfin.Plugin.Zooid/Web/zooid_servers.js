@@ -849,7 +849,7 @@ export default function (view) {
             var stored = storedUrlFor(entry.Key);
             if (urlWasCleared(stored, entry.Url)) entry.Url = stored;
         });
-        return ZooidShared.saveSection(function (config) {
+        return ZooidShared.saveConfigWith(function (config) {
             keepStoredStorageFields(config.Servers, snapshot);
             config.Servers = snapshot;
         }).then(function (saved) {
@@ -1592,7 +1592,9 @@ export default function (view) {
         serverBar = saveBars.add(getEl('serverEditor'), {
             savedText: ZooidShared.t.tr('ToastServerSaved'),
             failedText: ZooidShared.t.tr('ErrorServerSave'),
-            onSave: saveServerConfig
+            onSave: saveServerConfig,
+            // Fields in a closed or hidden part keep their stored values, so Save never stops on them.
+            form: null
         });
     }
 }

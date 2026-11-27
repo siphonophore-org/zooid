@@ -31,8 +31,9 @@ export default function (view) {
     var saveBars = zooidModule.createSaveBars(made.page);
 
     // saveSection
-    // Saves one section for its Save Bar. The config is replaced only once a save has landed, so the page
-    // never holds a change the server did not keep.
+    // Saves one section for its Save Bar through Stolon's saveConfigWith, which reads the config again and applies
+    // only the section's fields. The config is replaced only once a save has landed, so the page never holds a
+    // change the server did not keep.
     //
     // Inputs
     // mutator [function]: Changes the fresh config in place.
@@ -40,7 +41,7 @@ export default function (view) {
     // Output
     // [Promise]: Resolves once the save landed, and rejects when it did not.
     function saveSection(mutator) {
-        return ZooidShared.saveSection(mutator).then(function (saved) {
+        return ZooidShared.saveConfigWith(mutator).then(function (saved) {
             currentConfig = saved;
         });
     }
@@ -293,8 +294,8 @@ export default function (view) {
                 return;
             }
             status.textContent = cache.Waiting
-                ? ZooidShared.plural(cache.Files, 'StatusLinkCacheWaitingOne', 'StatusLinkCacheWaitingMany', cache.UsedFormatted, cache.LimitFormatted, cache.Location, cache.Waiting)
-                : ZooidShared.plural(cache.Files, 'StatusLinkCacheOne', 'StatusLinkCacheMany', cache.UsedFormatted, cache.LimitFormatted, cache.Location);
+                ? ZooidShared.t.plural(cache.Files, 'StatusLinkCacheWaitingOne', 'StatusLinkCacheWaitingMany', cache.UsedFormatted, cache.LimitFormatted, cache.Location, cache.Waiting)
+                : ZooidShared.t.plural(cache.Files, 'StatusLinkCacheOne', 'StatusLinkCacheMany', cache.UsedFormatted, cache.LimitFormatted, cache.Location);
         }).catch(function () {
             status.textContent = '';
         });
@@ -711,7 +712,9 @@ export default function (view) {
             saveBars.add(getEl(section[0]), {
                 savedText: ZooidShared.t.tr(section[2]),
                 failedText: ZooidShared.t.tr(section[3]),
-                onSave: section[1]
+                onSave: section[1],
+                // Fields in a closed or hidden part keep their stored values, so Save never stops on them.
+                form: null
             });
         });
         bindClick('btnClearLinkCache', clearLinkCache);

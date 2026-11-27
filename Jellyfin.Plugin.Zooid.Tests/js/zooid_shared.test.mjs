@@ -1,5 +1,5 @@
 // zooid_shared.test.mjs
-// Tests for zooid_shared.js: the config readers, the request body, the flags of the tools that can be hidden, the save helper,
+// Tests for zooid_shared.js: the config readers, the request body, the config the tool app follows, the section save,
 // the thumbnail markup, and the health banner.
 
 import { test, beforeEach } from 'node:test';
@@ -40,10 +40,10 @@ beforeEach(async function () {
     await build();
 });
 
-test('plural writes the one form for one and the many form for every other count', function () {
-    assert.equal(shared.plural(1, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '1 item ignored.');
-    assert.equal(shared.plural(0, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '0 items ignored.');
-    assert.equal(shared.plural(3, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '3 items ignored.');
+test('t.plural writes the one form for one and the many form for every other count', function () {
+    assert.equal(shared.t.plural(1, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '1 item ignored.');
+    assert.equal(shared.t.plural(0, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '0 items ignored.');
+    assert.equal(shared.t.plural(3, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), '3 items ignored.');
 });
 
 test('scanServers keeps enabled Pull and Sync servers that have a Server URL and API Key, in order', function () {
@@ -122,74 +122,49 @@ test('requestFor allows a private network address unless it is turned off, and s
     assert.equal(body.AuthenticatedUserId, null);
 });
 
-test('rememberTools stores 1 while any of content, history, or metadata sync is on', function () {
-    shared.rememberTools({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: true });
-    assert.equal(page.store[mod.STORAGE_TAB_KEY], '1');
-    shared.rememberTools({ EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: false });
-    assert.equal(page.store[mod.STORAGE_TAB_KEY], '0');
-});
+// configEvents
+// Records the configs the bag hands the tool app, as the events it sends from the view.
+function configEvents() {
+    var seen = [];
+    view.addEventListener('stolontoolconfig', function (e) { seen.push(e.detail); });
+    return seen;
+}
 
-test('rememberTools ignores a config that does not carry the content setting', function () {
-    shared.rememberTools({ Other: true });
-    shared.rememberTools(null);
-    assert.equal(mod.STORAGE_TAB_KEY in page.store, false);
-});
-
-test('rememberTools runs onTabsChanged only when what shows changes', function () {
-    var changes = 0;
-    shared.onTabsChanged = function () { changes++; };
-    shared.rememberTools({ EnableContentSync: false });
-    assert.equal(changes, 1, 'a missing flag showed the tab, so turning it off changes the tabs');
-    shared.rememberTools({ EnableContentSync: false });
-    assert.equal(changes, 1, 'the same answer changes nothing');
-    shared.rememberTools({ EnableContentSync: true });
-    assert.equal(changes, 2, 'turning it back on shows the tab again');
-});
-
-test('rememberTools does not run onTabsChanged when the first answer matches the default of shown', function () {
-    var changes = 0;
-    shared.onTabsChanged = function () { changes++; };
-    shared.rememberTools({ EnableContentSync: true, EnableHistorySync: true, EnableMetadataSync: true, EnablePeopleSync: true, EnableUserSync: true });
-    assert.equal(changes, 0);
-});
-
-test('rememberTools survives storage that throws', async function () {
-    await build();
-    globalThis.localStorage = { getItem: function () { throw new Error('blocked'); }, setItem: function () { throw new Error('blocked'); } };
-    shared.rememberTools({ EnableContentSync: true });
-});
-
-test('getConfig remembers the content setting of the config it reads', async function () {
-    await build({ config: { EnableContentSync: false, EnableHistorySync: false, EnableMetadataSync: false } });
+test('getConfig hands the config it reads to the tool app, so the sidebar follows it', async function () {
+    await build({ config: { EnableContentSync: false } });
+    var seen = configEvents();
     var config = await shared.getConfig();
     assert.equal(config.EnableContentSync, false);
-    assert.equal(page.store[mod.STORAGE_TAB_KEY], '0');
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].EnableContentSync, false);
 });
 
-test('saveConfig remembers the content setting of the config it saved', async function () {
+test('saveConfig hands the config it saved to the tool app', async function () {
+    var seen = configEvents();
     await shared.saveConfig({ EnableContentSync: true });
-    assert.equal(page.store[mod.STORAGE_TAB_KEY], '1');
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].EnableContentSync, true);
 });
 
-test('saveSection saves the changed config and resolves with it', async function () {
+test('saveConfigWith saves the changed config and resolves with it, as a section save expects', async function () {
     await build({ config: { Servers: [] } });
     var seen = null;
-    var saved = await shared.saveSection(function (config) { config.Changed = true; seen = config; });
+    var saved = await shared.saveConfigWith(function (config) { config.Changed = true; seen = config; });
     assert.equal(seen.Changed, true);
     assert.equal(saved.Changed, true);
 });
 
-test('saveSection rejects when the save does not land, so a Save Bar shows it failed', async function () {
+test('saveConfigWith rejects when the save does not land, so a Save Bar shows it failed', async function () {
     await build({ config: {} });
     globalThis.ApiClient.updatePluginConfiguration = function () { return Promise.reject(new Error('refused')); };
-    await assert.rejects(shared.saveSection(function () {}));
+    await assert.rejects(shared.saveConfigWith(function () {}));
 });
 
-test('saveSection rejects when the mutator throws, and never saves', async function () {
+test('saveConfigWith rejects when the mutator throws, and never saves', async function () {
     await build({ config: {} });
     var posted = 0;
     globalThis.ApiClient.updatePluginConfiguration = function () { posted++; return Promise.resolve(); };
-    await assert.rejects(shared.saveSection(function () { throw new Error('removed'); }), /removed/);
+    await assert.rejects(shared.saveConfigWith(function () { throw new Error('removed'); }), /removed/);
     assert.equal(posted, 0);
 });
 

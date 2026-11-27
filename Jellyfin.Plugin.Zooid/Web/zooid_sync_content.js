@@ -202,7 +202,7 @@ export function createContentSyncTableModule(ctx, kit) {
             bulkIgnore: function() {
                 var ids = this.table.getSelectedIds();
                 if (ids.length === 0) return;
-                this.postSelection('IgnoreItems', { SourceItemIds: ids }, ZooidShared.plural(ids.length, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), t.tr('ErrorIgnoreItems'));
+                this.postSelection('IgnoreItems', { SourceItemIds: ids }, ZooidShared.t.plural(ids.length, 'ToastItemsIgnoredOne', 'ToastItemsIgnoredMany'), t.tr('ErrorIgnoreItems'));
             },
 
             // Pending deletions cannot be queued, so they are left out.
@@ -220,7 +220,7 @@ export function createContentSyncTableModule(ctx, kit) {
                     return;
                 }
 
-                this.postSelection('QueueItems', { SourceItemIds: queueable }, ZooidShared.plural(queueable.length, 'ToastItemsQueuedOne', 'ToastItemsQueuedMany'), t.tr('ErrorQueueItems'));
+                this.postSelection('QueueItems', { SourceItemIds: queueable }, ZooidShared.t.plural(queueable.length, 'ToastItemsQueuedOne', 'ToastItemsQueuedMany'), t.tr('ErrorQueueItems'));
             },
 
             // The server checks the local files exist before marking.
@@ -228,9 +228,9 @@ export function createContentSyncTableModule(ctx, kit) {
                 var ids = this.table.getSelectedIds();
                 if (ids.length === 0) return;
                 this.postSelection('MarkSynced', { SourceItemIds: ids }, function(result) {
-                    var msg = ZooidShared.plural((result && result.Synced) || 0, 'MessageMarkedSyncedOne', 'MessageMarkedSyncedMany');
+                    var msg = ZooidShared.t.plural((result && result.Synced) || 0, 'MessageMarkedSyncedOne', 'MessageMarkedSyncedMany');
                     if (result && result.NotFound > 0) {
-                        msg = ZooidShared.plural(result.NotFound, 'MessageLocalFilesMissingOne', 'MessageLocalFilesMissingMany', msg);
+                        msg = ZooidShared.t.plural(result.NotFound, 'MessageLocalFilesMissingOne', 'MessageLocalFilesMissingMany', msg);
                     }
                     return t.format('MessageSentence', msg);
                 }, t.tr('ErrorMarkItemsSynced'));
@@ -258,13 +258,13 @@ export function createContentSyncTableModule(ctx, kit) {
                 var promoted = (result && result.Promoted) || 0;
                 var fromCache = (result && result.FromCache) || 0;
                 var msg = fromCache > 0
-                    ? ZooidShared.plural(fromCache, 'MessageCachedLinksMovingOne', 'MessageCachedLinksMovingMany')
-                    : ZooidShared.plural(promoted, 'MessageLinksCopyNextOne', 'MessageLinksCopyNextMany');
+                    ? ZooidShared.t.plural(fromCache, 'MessageCachedLinksMovingOne', 'MessageCachedLinksMovingMany')
+                    : ZooidShared.t.plural(promoted, 'MessageLinksCopyNextOne', 'MessageLinksCopyNextMany');
                 if (fromCache > 0 && promoted > fromCache) {
                     msg = t.format('MessageAlsoDownloaded', promoted - fromCache, msg);
                 }
                 if (result && result.Skipped > 0) {
-                    msg = ZooidShared.plural(result.Skipped, 'MessageNotLinksOne', 'MessageNotLinksMany', msg);
+                    msg = ZooidShared.t.plural(result.Skipped, 'MessageNotLinksOne', 'MessageNotLinksMany', msg);
                 }
                 return t.format('MessageSentence', msg);
             },
@@ -274,13 +274,13 @@ export function createContentSyncTableModule(ctx, kit) {
                 var ids = this.table.getSelectedIds();
                 if (ids.length === 0) return;
                 confirmDialog(t.tr('ConfirmDeleteItemsDetail'), {
-                    title: ZooidShared.plural(ids.length, 'TitleDeleteItemsOne', 'TitleDeleteItemsMany'),
+                    title: ZooidShared.t.plural(ids.length, 'TitleDeleteItemsOne', 'TitleDeleteItemsMany'),
                     confirmText: t.tr('Delete'),
                     destructive: true
                 }).then(function(confirmed) {
                     if (!confirmed) return;
                     self.postSelection('DeleteLocalItems', { SourceItemIds: ids }, function(result) {
-                        return result && result.Deleted > 0 ? ZooidShared.plural(result.Deleted, 'MessageItemsDeletedOne', 'MessageItemsDeletedMany') : null;
+                        return result && result.Deleted > 0 ? ZooidShared.t.plural(result.Deleted, 'MessageItemsDeletedOne', 'MessageItemsDeletedMany') : null;
                     }, t.tr('ErrorDeleteItems'));
                 });
             },
@@ -351,7 +351,7 @@ export function createContentSyncTableModule(ctx, kit) {
 
                 var retrySection = view.querySelector('#modalRetrySection');
                 if (item.RetryCount > 0) {
-                    view.querySelector('#modalRetryCount').textContent = ZooidShared.plural(item.RetryCount, 'AttemptCountOne', 'AttemptCountMany');
+                    view.querySelector('#modalRetryCount').textContent = ZooidShared.t.plural(item.RetryCount, 'AttemptCountOne', 'AttemptCountMany');
                     retrySection.classList.remove('stolon-hidden');
                 } else {
                     retrySection.classList.add('stolon-hidden');

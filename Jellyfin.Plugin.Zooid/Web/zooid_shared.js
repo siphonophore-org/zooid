@@ -6,10 +6,9 @@
 // bind and load run once it has them, so script text and the marked markup are in the viewer's language.
 //
 // Zooid is one page, zooid, whose sidebar lists every tool, and each tool is its own registered page that the
-// tool app swaps in place. Each sync type has its own tool, listed while that type is on. The sidebar is built
-// before any config is read, so the last known answer for each tool that can be hidden is kept per browser under
-// TOOL_FLAG_KEYS. A missing answer lists the tool. The app reads the config once it is built and again each time
-// a tool shows, and the sidebar is read again whenever an answer changes.
+// tool app swaps in place. Each sync type has its own tool, listed while that type is on. Each tool that can be
+// hidden says when it shows with visibleWhen, and Stolon's tool app keeps the last answers per browser, reads the
+// config itself, and follows every config a page reads or saves.
 
 // The specifier is relative so it resolves against this module's own URL, and a server hosted under
 // a base URL still loads the bundle.
@@ -29,7 +28,7 @@ import {
     createLineChart,
     createUsageMeter,
     createRepeater,
-    createSaveBar,
+    createSaveBars,
     generateGuid,
     bindSidecar,
     confirmDialog,
@@ -37,7 +36,7 @@ import {
     createConfigPage,
     createToolApp,
     setToolTitle,
-    refreshTools,
+    refreshToolConfig,
     openTool,
     createStatusCardGrid,
     createTimeRangeField,
@@ -50,7 +49,7 @@ import {
 
 // Re-exports
 // The Stolon builders and the kept secret sentinel, so a page takes everything from this one module.
-export { createPaginatedTable, createSortableCardList, createChoiceGroup, createPillGroup, createSubTabs, createMediaCard, createDefinitionList, openEditorSidecar, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, SECRET_KEPT };
+export { createSaveBars, createPaginatedTable, createSortableCardList, createChoiceGroup, createPillGroup, createSubTabs, createMediaCard, createDefinitionList, openEditorSidecar, createCheckboxList, createPieChart, createBarChart, createLineChart, createUsageMeter, createRepeater, generateGuid, bindSidecar, confirmDialog, createDialogItem, openTool, createStatusCardGrid, createTimeRangeField, toHours, fromHours, SECRET_KEPT };
 
 var PLUGIN_ID = 'd25d4326-c40f-450a-95d1-377254a318ac';
 
@@ -61,111 +60,32 @@ export var TRANSLATIONS_URL = 'Sync/Translations';
 // The strings once a page has loaded them, so the sidebar names follow the viewer's language.
 var tabStrings = null;
 
-// TOOL_FLAG_KEYS
-// The browser storage keys that hold whether a tool that can be hidden shows, by tool. Each sync type's tool shows
-// while that type is on, Storage while content, history, or metadata sync is on, and Statistics while any sync type
-// is on or a server may link here. The sidebar is built before any config is read, so the last answer is kept.
-export var TOOL_FLAG_KEYS = {
-    content: 'zooid.contentTab',
-    history: 'zooid.historyTab',
-    metadata: 'zooid.metadataTab',
-    people: 'zooid.peopleTab',
-    users: 'zooid.usersTab',
-    storage: 'zooid.storageTab',
-    statistics: 'zooid.statisticsTab'
-};
-
-// STORAGE_TAB_KEY
-// The browser storage key that holds whether the Storage page shows.
-export var STORAGE_TAB_KEY = TOOL_FLAG_KEYS.storage;
-
-// readToolFlag
-// Reads the stored answer for whether a tool shows.
-//
-// Inputs
-// tool [string]: The tool's key in TOOL_FLAG_KEYS.
-//
-// Output
-// [string]: '1' or '0', or null when nothing is stored or storage is blocked.
-function readToolFlag(tool) {
-    try {
-        return window.localStorage.getItem(TOOL_FLAG_KEYS[tool]);
-    } catch (e) {
-        return null;
-    }
-}
-
-// writeToolFlag
-// Stores whether a tool shows. A blocked storage leaves the tool at its default of shown.
-//
-// Inputs
-// tool [string]: The tool's key in TOOL_FLAG_KEYS.
-// value [string]: '1' to show the tool or '0' to hide it.
-function writeToolFlag(tool, value) {
-    try {
-        window.localStorage.setItem(TOOL_FLAG_KEYS[tool], value);
-    } catch (e) {
-        // Storage blocked: the tool keeps its default of shown.
-    }
-}
-
-// toolFlags
-// Works out which tools that can be hidden show for a config.
+// anyTypeOn
+// Says whether any sync type is on.
 //
 // Inputs
 // config [object]: The plugin configuration.
 //
 // Output
-// [object]: '1' or '0' for each tool in TOOL_FLAG_KEYS.
-export function toolFlags(config) {
-    var flag = function (on) { return on ? '1' : '0'; };
-    var anyType = !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync || config.EnablePeopleSync || config.EnableUserSync);
-    var linking = (config.Servers || []).some(function (server) { return server && server.OffersLinks; });
-    return {
-        content: flag(config.EnableContentSync),
-        history: flag(config.EnableHistorySync),
-        metadata: flag(config.EnableMetadataSync),
-        people: flag(config.EnablePeopleSync),
-        users: flag(config.EnableUserSync),
-        storage: flag(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync),
-        statistics: flag(anyType || linking)
-    };
+// [boolean]: Whether content, history, metadata, people, or user sync is on.
+function anyTypeOn(config) {
+    return !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync || config.EnablePeopleSync || config.EnableUserSync);
 }
 
-// rememberToolFlags
-// Records which tools that can be hidden show for a config.
-//
-// Inputs
-// config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
-//
-// Output
-// [boolean]: Whether what the sidebar shows changed.
-export function rememberToolFlags(config) {
-    if (!config || typeof config !== 'object' || !('EnableContentSync' in config)) return false;
-    var flags = toolFlags(config);
-    var changed = false;
-    Object.keys(flags).forEach(function (tool) {
-        var before = readToolFlag(tool);
-        if (before === flags[tool]) return;
-        writeToolFlag(tool, flags[tool]);
-        // A missing flag already showed the tool, so only a change of what shows reads the sidebar again.
-        if ((before !== '0') !== (flags[tool] === '1')) changed = true;
-    });
-    return changed;
-}
-
-// followToolsOff
-// Reads the config again and reads the sidebar again when a tool joins or leaves it, so a sync type turned on or
-// off elsewhere, such as from another browser, shows without a reload.
-//
-// Inputs
-// view [HTMLElement]: Any element inside the tool app.
-function followToolsOff(view) {
-    if (typeof ApiClient === 'undefined' || !ApiClient.getPluginConfiguration) return;
-    ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
-        if (rememberToolFlags(config)) refreshTools(view);
-    }, function () { /* the sidebar stays as it is */ });
-}
+// TOOL_VISIBLE
+// When each tool that can be hidden shows, by tool. Each sync type's tool shows while that type is on, Storage while
+// content, history, or metadata sync is on, and Statistics while any sync type is on or a server may link here.
+export var TOOL_VISIBLE = {
+    content: function (config) { return !!config.EnableContentSync; },
+    history: function (config) { return !!config.EnableHistorySync; },
+    metadata: function (config) { return !!config.EnableMetadataSync; },
+    people: function (config) { return !!config.EnablePeopleSync; },
+    users: function (config) { return !!config.EnableUserSync; },
+    storage: function (config) { return !!(config.EnableContentSync || config.EnableHistorySync || config.EnableMetadataSync); },
+    statistics: function (config) {
+        return anyTypeOn(config) || (config.Servers || []).some(function (server) { return server && server.OffersLinks; });
+    }
+};
 
 // tabName
 // Names a sidebar entry in the viewer's language, or in English until the strings have loaded.
@@ -181,11 +101,11 @@ function tabName(key, english) {
 }
 
 // zooidTools
-// Lists Zooid's tools in the order the sidebar shows them, the dashboard first. A tool in TOOL_FLAG_KEYS is left
-// out while the last config read said it has nothing to show.
+// Lists Zooid's tools in the order the sidebar shows them, the dashboard first. A tool in TOOL_VISIBLE carries its
+// rule as visibleWhen.
 //
 // Output
-// [object[]]: Each tool's key, name, icon, and the registered page it shows.
+// [object[]]: Each tool's key, name, icon, the registered page it shows, and visibleWhen for a tool that can be hidden.
 export function zooidTools() {
     var tools = [
         { key: 'dashboard', name: tabName('TabDashboard', 'Dashboard'), icon: 'dashboard', page: 'zooid_dashboard' },
@@ -198,7 +118,10 @@ export function zooidTools() {
         { key: 'servers', name: tabName('TabServers', 'Servers'), icon: 'dns', page: 'zooid_servers' },
         { key: 'storage', name: tabName('TabStorage', 'Storage'), icon: 'storage', page: 'zooid_storage' },
         { key: 'statistics', name: tabName('TabStatistics', 'Statistics'), icon: 'insights', page: 'zooid_statistics' }
-    ].filter(function (tool) { return !TOOL_FLAG_KEYS[tool.key] || readToolFlag(tool.key) !== '0'; });
+    ];
+    tools.forEach(function (tool) {
+        if (TOOL_VISIBLE[tool.key]) tool.visibleWhen = TOOL_VISIBLE[tool.key];
+    });
     tools.push({ key: 'settings', name: tabName('Settings', 'Settings'), icon: 'settings', page: 'zooid_settings' });
     tools.push({ key: 'troubleshooting', name: tabName('HeaderTroubleshooting', 'Troubleshooting'), icon: 'bug_report', page: 'zooid_troubleshooting' });
     return tools;
@@ -207,7 +130,7 @@ export function zooidTools() {
 // createZooidApp
 // Builds the Zooid page: Stolon's tool app with every Zooid tool, which swaps each tool in place. The app is built
 // at once, so it catches the page's first show. The sidebar names turn to the viewer's language once the strings
-// arrive, and the tools that are off leave it once the config is read.
+// arrive, and the tools that are off leave it once the app reads the config.
 //
 // Inputs
 // view [HTMLElement]: The host page the dashboard passes to the controller.
@@ -215,8 +138,7 @@ export function zooidTools() {
 // Output
 // [object]: The tool app's handle.
 export function createZooidApp(view) {
-    var app = createToolApp(view, { storageKey: 'zooid', name: 'Zooid', tools: zooidTools });
-    followToolsOff(app.shell.content);
+    var app = createToolApp(view, { storageKey: 'zooid', name: 'Zooid', pluginId: PLUGIN_ID, tools: zooidTools });
     loadTranslations(TRANSLATIONS_URL).then(function (t) {
         tabStrings = t;
         app.refreshTools();
@@ -250,81 +172,13 @@ export function createZooidPage(view, opts) {
         },
         load: function () {
             bound.then(function () { if (opts.load) opts.load(bag, page); });
-            followToolsOff(view);
         },
         onHide: pass(opts.onHide)
     });
     bag = createZooidShared(view, page.shared);
-    // A config load or save that turns a sync type on or off adds or drops its tools from the sidebar.
-    bag.onTabsChanged = function () { refreshTools(view); };
     // Sets the heading over the tool, which is the tool's name by default.
     bag.setPageTitle = function (text) { setToolTitle(view, text); };
     return { shared: bag, page: page };
-}
-
-// createSaveBars
-// Ends sections with Stolon's Save Bar and asks before the page is left while one has unsaved changes.
-// A field changed inside a section marks its bar unsaved, and a save that lands clears it.
-//
-// Inputs
-// page [object]: Stolon's page handle, from createZooidPage.
-//
-// Output
-// [object]: add(content, opts) appends a Save Bar to content and returns the bar. opts holds savedText,
-//   failedText, and onSave, which returns the save's promise. A promise that resolves with text shows that
-//   text as the saved line. markDirty(bar) marks a bar unsaved from code. clean() clears every bar, for
-//   after the page loads its values.
-export function createSaveBars(page) {
-    var entries = [];
-
-    function entryOf(bar) {
-        return entries.find(function (entry) { return entry.bar === bar; }) || null;
-    }
-
-    function markDirty(bar) {
-        var entry = entryOf(bar);
-        if (!entry) return;
-        entry.dirty = true;
-        bar.setDirty(true);
-    }
-
-    page.guardUnsaved(function () { return entries.some(function (entry) { return entry.dirty; }); });
-
-    return {
-        add: function (content, opts) {
-            if (!content) return null;
-            var bar = createSaveBar({
-                fill: true,
-                savedText: opts.savedText,
-                failedText: opts.failedText,
-                onSave: function () {
-                    return Promise.resolve().then(opts.onSave).then(function (savedLine) {
-                        var entry = entryOf(bar);
-                        if (entry) entry.dirty = false;
-                        // The bar shows its own saved line once this resolves, so a line of the save's own follows it.
-                        if (typeof savedLine === 'string' && savedLine) setTimeout(function () { bar.setState('saved', savedLine); }, 0);
-                    });
-                }
-            });
-            entries.push({ bar: bar, dirty: false });
-            content.appendChild(bar.element);
-            // A table's search and filters only change what it shows, so they leave the section saved.
-            var mark = function (e) {
-                if (bar.element.contains(e.target) || (e.target.closest && e.target.closest('.stolon-table-controls'))) return;
-                markDirty(bar);
-            };
-            content.addEventListener('input', mark);
-            content.addEventListener('change', mark);
-            return bar;
-        },
-        markDirty: markDirty,
-        clean: function () {
-            entries.forEach(function (entry) {
-                entry.dirty = false;
-                entry.bar.setDirty(false);
-            });
-        }
-    };
 }
 
 // createZooidShared
@@ -351,35 +205,23 @@ export function createZooidShared(view, bag) {
         return t;
     });
 
-    // Set by a page to read the sidebar again when a tool appears or disappears.
-    shared.onTabsChanged = null;
-
-    // rememberTools
-    // Records which tools that can be hidden show, and tells the page when that changed the sidebar.
-    //
-    // Inputs
-    // config [object]: The plugin configuration. Anything without EnableContentSync is ignored.
-    shared.rememberTools = function (config) {
-        if (rememberToolFlags(config) && typeof shared.onTabsChanged === 'function') shared.onTabsChanged();
-    };
-
     var baseGetConfig = shared.getConfig;
     var baseSaveConfig = shared.saveConfig;
 
     // getConfig
-    // Reads the plugin configuration and remembers which tools show.
+    // Reads the plugin configuration and hands it to the tool app, so the sidebar follows a sync type turned on or off.
     //
     // Output
     // [Promise]: Resolves with the configuration.
     shared.getConfig = function () {
         return baseGetConfig.apply(shared, arguments).then(function (config) {
-            shared.rememberTools(config);
+            refreshToolConfig(view, config);
             return config;
         });
     };
 
     // saveConfig
-    // Saves the plugin configuration and remembers which tools show.
+    // Saves the plugin configuration and hands it to the tool app, so the sidebar follows at once.
     //
     // Inputs
     // config [object]: The configuration to save.
@@ -388,7 +230,7 @@ export function createZooidShared(view, bag) {
     // [Promise]: Resolves when the save landed.
     shared.saveConfig = function (config) {
         return baseSaveConfig.apply(shared, arguments).then(function (result) {
-            shared.rememberTools(config);
+            refreshToolConfig(view, config);
             return result;
         });
     };
@@ -576,26 +418,6 @@ export function createZooidShared(view, bag) {
         };
     };
 
-    // saveSection
-    // Saves one section of the config through Stolon's saveConfigWith. It reads the config again, applies only
-    // that section's fields, and saves, since posting a page load snapshot whole would overwrite what other
-    // writers changed since, such as the timestamps and failure records the tasks write, or the other
-    // dashboard pages' sections.
-    //
-    // Inputs
-    // mutator [function]: Called with the fresh config, and changes it in place.
-    //
-    // Output
-    // [Promise]: Resolves with the saved config, and rejects when the save failed, so a Save Bar shows the
-    // result. The caller keeps its own copy of the config and updates it only from a save the server kept.
-    shared.saveSection = function (mutator) {
-        var pending = null;
-        return shared.saveConfigWith(function (config) {
-            mutator(config);
-            pending = config;
-        }).then(function () { return pending; });
-    };
-
     // pageHelpers
     // Binds the helpers the Servers, Settings, and Storage pages call by bare name to this bag, so a page
     // takes the ones it uses in one destructuring assignment once the module has loaded.
@@ -616,22 +438,6 @@ export function createZooidShared(view, bag) {
             getIntValue: shared.getIntValue.bind(shared),
             requestFor: shared.requestFor
         };
-    };
-
-    // plural
-    // Writes a text with a count in the right form, such as "1 item ignored." or "3 items ignored.".
-    //
-    // Inputs
-    // count [number]: How many there are, filled in as {0}.
-    // one [string]: The key of the text for exactly one.
-    // many [string]: The key of the text for any other count.
-    // ...args [any]: More values, filled in as {1}, {2}.
-    //
-    // Output
-    // [string]: The text in the viewer's language.
-    shared.plural = function (count, one, many) {
-        var args = Array.prototype.slice.call(arguments, 3);
-        return shared.t.format.apply(null, [count === 1 ? one : many, count].concat(args));
     };
 
     // syncStatus

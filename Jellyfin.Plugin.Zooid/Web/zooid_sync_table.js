@@ -288,12 +288,12 @@ export function createSyncTableKit(ctx) {
 
             bulkIgnore: function() {
                 var m = spec.messages;
-                this._bulk('Ignore', function(n) { return ZooidShared.plural(n, m.ignoredOne, m.ignoredMany); }, tr(m.ignoreFailed));
+                this._bulk('Ignore', function(n) { return ZooidShared.t.plural(n, m.ignoredOne, m.ignoredMany); }, tr(m.ignoreFailed));
             },
 
             bulkQueue: function() {
                 var m = spec.messages;
-                this._bulk('Queue', function(n) { return ZooidShared.plural(n, m.queuedOne, m.queuedMany); }, tr(m.queueFailed));
+                this._bulk('Queue', function(n) { return ZooidShared.t.plural(n, m.queuedOne, m.queuedMany); }, tr(m.queueFailed));
             },
 
             _bulk: function(action, done, failMessage) {
@@ -396,7 +396,7 @@ export function createSyncTableKit(ctx) {
     function formatImageDisplay(size, count) {
         if (count === 0) return '-';
         if (!size) {
-            return ZooidShared.plural(count, 'ImageCountOne', 'ImageCountMany');
+            return ZooidShared.t.plural(count, 'ImageCountOne', 'ImageCountMany');
         }
         var sizeStr = ZooidShared.formatSize(size);
         return count > 1 ? sizeStr + ' (' + count + ')' : sizeStr;
@@ -413,7 +413,7 @@ export function createSyncTableKit(ctx) {
             if (updated === 0) {
                 ZooidShared.syncStatus(tr(messages.retryNone), false);
             } else if (updated !== null) {
-                ZooidShared.syncStatus(ZooidShared.plural(updated, messages.retriedOne, messages.retriedMany), false);
+                ZooidShared.syncStatus(ZooidShared.t.plural(updated, messages.retriedOne, messages.retriedMany), false);
             } else {
                 ZooidShared.syncStatus(tr(messages.retriedUnknown), false);
             }

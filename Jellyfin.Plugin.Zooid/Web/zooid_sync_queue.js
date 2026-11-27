@@ -197,7 +197,7 @@ export function createQueueModule(ctx) {
             buttons.forEach(function(b) { b.disabled = true; });
             ZooidShared.apiRequest(route, method).then(function(result) {
                 return self.load(true).then(function() {
-                    ZooidShared.syncStatus(ZooidShared.plural((result && result[countKey]) || 0, doneOne, doneMany), false);
+                    ZooidShared.syncStatus(ZooidShared.t.plural((result && result[countKey]) || 0, doneOne, doneMany), false);
                 });
             }).catch(function() {
                 ZooidShared.syncStatus(t.tr('ErrorQueueFailedAction'), true);
@@ -258,8 +258,8 @@ export function createQueueModule(ctx) {
             unmatchedEl.classList.toggle('stolon-hidden', unmatched === 0);
             if (unmatched > 0) {
                 unmatchedEl.querySelector('#queueUnmatchedText').textContent = data.LastUnmatched
-                    ? ZooidShared.plural(unmatched, 'QueueUnmatchedLastOne', 'QueueUnmatchedLastMany', data.LastUnmatched)
-                    : ZooidShared.plural(unmatched, 'QueueUnmatchedOne', 'QueueUnmatchedMany');
+                    ? ZooidShared.t.plural(unmatched, 'QueueUnmatchedLastOne', 'QueueUnmatchedLastMany', data.LastUnmatched)
+                    : ZooidShared.t.plural(unmatched, 'QueueUnmatchedOne', 'QueueUnmatchedMany');
             }
 
             // Peer filters follow the peers that exist.

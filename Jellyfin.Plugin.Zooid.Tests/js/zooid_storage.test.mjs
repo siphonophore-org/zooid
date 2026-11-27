@@ -21,12 +21,7 @@ var t = {
     format: function (key) {
         var args = Array.prototype.slice.call(arguments, 1);
         return strings[key].replace(/\{(\d+)\}/g, function (m, i) { return String(args[i]); });
-    }
-};
-
-// bag
-// The helper bag the pure helpers take: plural over the same strings.
-var bag = {
+    },
     plural: function (count, one, many) { return t.format(count === 1 ? one : many, count); }
 };
 
@@ -145,16 +140,16 @@ test('summaryCards shows only the library count before the counts arrive', async
 
 test('libraryCard draws the icon by library type, the Storage badge, and the most urgent state', async function () {
     var mod = await loadScript('zooid_storage.js');
-    var link = mod.libraryCard(mapping('a', 'b', { StorageMode: 'Link', FilterMode: 'Whitelist' }), { Pending: 2, Queued: 1 }, 'tvshows', true, t, bag);
+    var link = mod.libraryCard(mapping('a', 'b', { StorageMode: 'Link', FilterMode: 'Whitelist' }), { Pending: 2, Queued: 1 }, 'tvshows', true, t);
     assert.equal(link.icon, 'tv');
     assert.deepEqual(link.badges.map(function (b) { return b.label + ':' + b.color; }), ['Link:green', 'Whitelist:blue']);
     assert.deepEqual(link.status, { label: '2 pending', color: 'purple' });
     assert.equal(link.subtitle, 'From a there');
-    var empty = mod.libraryCard(mapping('a', 'b'), {}, '', true, t, bag);
+    var empty = mod.libraryCard(mapping('a', 'b'), {}, '', true, t);
     assert.equal(empty.icon, 'video_library');
     assert.equal(empty.detail, 'Nothing synced yet.');
     assert.equal(empty.status, null);
-    var filtersOnly = mod.libraryCard(mapping('a', 'b'), { Copies: 3 }, '', false, t, bag);
+    var filtersOnly = mod.libraryCard(mapping('a', 'b'), { Copies: 3 }, '', false, t);
     assert.deepEqual(filtersOnly.badges, []);
     assert.equal(filtersOnly.detail, null);
 });
